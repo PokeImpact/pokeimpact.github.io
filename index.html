@@ -125,6 +125,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Oponentes (bots)</span><span class="row" id="nbots"></span></div>
     <div class="row"><span class="lbl">Vidas</span><span class="row" id="nlives"></span></div>
+    <div class="row"><span class="lbl">Mapa</span><span class="row" id="nmap"></span></div>
     <div class="row" id="netRow"><span class="lbl">Online</span><input id="nick" placeholder="Seu nome" maxlength="12"><button class="ghost" id="mkRoom">Criar sala</button><input id="roomIn" placeholder="Código" maxlength="4" style="width:90px;text-transform:uppercase"><button class="ghost" id="joinRoom">Entrar</button></div>
     <div id="lobby" hidden></div>
     <div class="row" style="justify-content:space-between"><button class="ghost" id="cfgBtn2">⚙ Controles e teclas</button><button class="go" id="play">Jogar</button></div>
@@ -236,7 +237,7 @@ const dirRow = ang => (Math.round((Math.PI / 2 - ang) / (Math.PI / 4)) % 8 + 8) 
 /* ---------- configuração ---------- */
 const DEF_KEYS = { mode:'mouse', mouse:['KeyQ','KeyW','KeyE','KeyR','KeyA'], wasd:['M0','KeyQ','KeyE','KeyR','Space'] };
 let KEYS = Object.assign({}, DEF_KEYS, store.get('nt-keys') || {});
-const CFG = Object.assign({ sp:6, bots:5, lives:5 }, store.get('nt-cfg') || {});
+const CFG = Object.assign({ sp:6, bots:5, lives:5, map:'rand' }, store.get('nt-cfg') || {});
 const keyName = c => !c ? '—' : c === 'M0' ? 'Clique esq.' : c === 'M2' ? 'Clique dir.' : c === 'M1' ? 'Rodinha' : c === 'Space' ? 'Espaço' : c.replace(/^Key|^Digit/, '').replace(/Left$|Right$/, '');
 
 /* ---------- estado ---------- */
@@ -334,13 +335,26 @@ function makeObstacles(){
   } else {
     const d = Math.max(2, Math.round(SIZE * .25));
     for (const [a, b] of [[d, 0], [-d, 0], [0, d], [0, -d]]) G.obs.push({ k:'tree', x:c + a, y:c + b, r:OBR.tree });
-    G.obs.push({ k:'volt', x:c, y:c, r:OBR.volt, hitT:0 });
+    G.obs.push({ k:'volt', x:c, y:c, r:OBR.volt, hitT:0, chg:0, boom:0, down:0, by:null });
   }
 }
 const onIce = (x, y) => G.ice.some(p => Math.hypot(x - p.x, y - p.y) < p.r) && onPlat(x, y);
+const VOLT_MAX = 20;   // cada projétil rebatido enche 1
+function voltCharge(o, by){ if (o.down > 0 || o.boom > 0) return; o.chg++; if (by) o.by = by; if (o.chg >= VOLT_MAX){ o.boom = 1; txt(o.x, o.y - 1, 'vai explodir!', '#ff5d5d'); } }
+function voltExplode(o){
+  const rad = 2.8;
+  for (const e of G.units){ if (!e.alive || e.air) continue; const ex = e.x - o.x, ey = e.y - o.y, el = Math.hypot(ex, ey); if (el > rad + POKE[e.sp].rad) continue;
+    const k = el < 1.2 ? 1 : 1 - .5 * (el - 1.2) / (rad - 1.2);
+    damage(e, 8 * DMG * k, o.by && o.by !== e ? o.by : null); push(e, ex / (el || 1), ey / (el || 1), 13 * k); }
+  G.fx.push({ ring:1, x:o.x, y:o.y, r:rad, t:0, life:.5, col:'#ffe066' }); G.fx.push({ ring:1, x:o.x, y:o.y, r:rad * .6, t:0, life:.4, col:'#ff5d5d' });
+  for (let k = 0; k < 40; k++) fx(o.x, o.y, rnd(-7, 7), rnd(-7, 7), .5, pick(['#ffe066','#ff5d5d','#fff']), 8);
+  feed('O Voltorb explodiu!', '#ffe066');
+  o.chg = 0; o.boom = 0; o.down = 8;   // desmaia por 8 s: o centro fica livre
+}
 function obstacleStep(dt){
   for (const o of G.obs){
     if (o.hitT > 0) o.hitT -= dt;
+    if (o.k === 'volt'){ if (o.boom > 0 && (o.boom -= dt) <= 0) voltExplode(o); if (o.down > 0 && (o.down -= dt) <= 0){ o.down = 0; G.fx.push({ ring:1, x:o.x, y:o.y, r:.8, t:0, life:.4, col:'#ffe066' }); } continue; }
     if (o.k !== 'lapras') continue;
     // Lapras: de tempos em tempos gira e solta um Raio de Gelo que deixa rastro de gelo
     if (o.charge > 0){
@@ -362,7 +376,7 @@ function obstacleStep(dt){
 // Pokémon contra obstáculos: árvore e Lapras seguram; Voltorb rebate
 function obstacleUnits(){
   for (const u of G.units){ if (!u.alive || u.air) continue;
-    for (const o of G.obs){ const dx = u.x - o.x, dy = u.y - o.y, d = Math.hypot(dx, dy) || .001, rr = o.r + POKE[u.sp].rad;
+    for (const o of G.obs){ if (o.down > 0) continue; const dx = u.x - o.x, dy = u.y - o.y, d = Math.hypot(dx, dy) || .001, rr = o.r + POKE[u.sp].rad;
       if (d >= rr) continue;
       const nx = dx / d, ny = dy / d; u.x = o.x + nx * rr; u.y = o.y + ny * rr;
       const vn = u.vx * nx + u.vy * ny;
@@ -376,10 +390,10 @@ function obstacleUnits(){
 }
 // projétil contra obstáculo: Voltorb rebate (a bola volta com o mesmo dono); árvore e Lapras seguram
 function obstacleShot(s){
-  for (const o of G.obs){ const dx = s.x - o.x, dy = s.y - o.y, d = Math.hypot(dx, dy) || .001; if (d >= o.r + s.d.r) continue;
+  for (const o of G.obs){ if (o.down > 0) continue; const dx = s.x - o.x, dy = s.y - o.y, d = Math.hypot(dx, dy) || .001; if (d >= o.r + s.d.r) continue;
     const nx = dx / d, ny = dy / d;
     if (o.k === 'volt'){ const vn = s.vx * nx + s.vy * ny; if (vn < 0){ s.vx -= 2 * vn * nx; s.vy -= 2 * vn * ny; }
-      s.x = s.bx = o.x + nx * (o.r + s.d.r + .02); s.y = s.by = o.y + ny * (o.r + s.d.r + .02); o.hitT = .3;
+      s.x = s.bx = o.x + nx * (o.r + s.d.r + .02); s.y = s.by = o.y + ny * (o.r + s.d.r + .02); o.hitT = .3; voltCharge(o, s.o);
       G.fx.push({ ring:1, x:o.x, y:o.y, r:.6, t:0, life:.3, col:'#ffe066' }); return false; }
     if (s.d.tele){ teleTo(s.o, o.x + nx * (o.r + .45), o.y + ny * (o.r + .45)); return true; }
     if (s.d.aoe) explode(s);
@@ -534,14 +548,15 @@ function newMatch(){
   for (let i = 0; i < nb; i++) G.units.push(makeUnit(pick(ids), BOTNAMES[i], false, G.units.length));
   if (NET.on) netStartMsg();
   G.round = 0; G.t = 0;
+  G.matchMap = CFG.map === 'rand' ? (Math.random() < .5 ? 'sq' : 'rd') : CFG.map;   // o mesmo mapa a partida inteira
   for (const id of ['menu','endOv','shopOv']) $('#' + id).hidden = true;
   for (const id of ['top','gold','plist','emo']) $('#' + id).hidden = false;
   $('#bar').hidden = false;
   buildBar(); buildEmotes(); startRound();
 }
 function startRound(){
-  G.round++; SIZE = sizeFor(G.units.filter(u => !u.out).length); G.P = { x0:0, y0:0, x1:SIZE, y1:SIZE }; G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
-  G.map = Math.random() < .5 ? 'sq' : 'rd'; G.R = SIZE / 2 + .45; makeObstacles();
+  G.round++; G.map = G.matchMap || 'sq'; SIZE = sizeFor(G.units.filter(u => !u.out).length) + (G.map === 'rd' ? 2 : 0); G.P = { x0:0, y0:0, x1:SIZE, y1:SIZE }; G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
+  G.R = SIZE / 2 + .45; makeObstacles();
   G.shots = []; G.zones = []; G.marks = []; G.decoys = []; G.falling = []; G.fx = []; G.txt = [];
   const live = G.units.filter(u => !u.out), n = live.length, off = Math.random() * Math.PI * 2;
   live.forEach((u, k) => {
@@ -552,7 +567,7 @@ function startRound(){
   });
   for (const u of G.units) if (u.out) u.alive = false;
   G.phase = 'count'; G.timer = 3;
-  feed(`Mapa ${G.map === 'rd' ? 'redondo: cuidado com o gelo do Lapras' : 'quadrado: o Voltorb rebate tudo'}`, '#9fd8ff');
+  if (G.round === 1) feed(`Mapa ${G.map === 'rd' ? 'redondo: cuidado com o gelo do Lapras' : 'quadrado: o Voltorb rebate tudo e explode quando enche'}`, '#9fd8ff');
   hudList(true);
 }
 function endRound(){
@@ -636,7 +651,7 @@ function botThink(u, dt){
   if (tgt && w > 2){ let ax = C.x - tgt.x, ay = C.y - tgt.y; const al = Math.hypot(ax, ay) || 1; gx = tgt.x + ax / al * u.ai.want; gy = tgt.y + ay / al * u.ai.want;
     const px = -(tgt.y - u.y) / (best || 1), py = (tgt.x - u.x) / (best || 1); gx += px * u.ai.side * 1.2; gy += py * u.ai.side * 1.2; }
   [gx, gy] = clampSafe(gx, gy, w > 3 ? 1.1 : .5);
-  for (const o of G.obs){ const dx = gx - o.x, dy = gy - o.y, d = Math.hypot(dx, dy) || .01; if (d < o.r + .8){ gx = o.x + dx / d * (o.r + .8); gy = o.y + dy / d * (o.r + .8); } }
+  for (const o of G.obs){ const dx = gx - o.x, dy = gy - o.y, d = Math.hypot(dx, dy) || .01, keep = o.boom > 0 ? 3.4 : o.r + .8; if (d < keep){ gx = o.x + dx / d * keep; gy = o.y + dy / d * keep; } }
   if (Math.random() < .03) u.ai.side *= -1;
   // desviar de projéteis
   let dodge = null;
@@ -967,8 +982,15 @@ function drawObstacle(o){
     cx.fillStyle = '#6b4a2a'; cx.fillRect(x - T * .08, y - T * .3, T * .16, T * .36);
     for (const [dx, dy, r, c] of [[0, -.75, .42, '#2f7a34'], [-.2, -.55, .3, '#3c9440'], [.2, -.55, .3, '#3c9440'], [0, -.95, .26, '#4fae4f']]){ cx.fillStyle = c; cx.beginPath(); cx.arc(x + dx * T, y + dy * T, r * T, 0, 7); cx.fill(); }
     cx.strokeStyle = '#1d4a22'; cx.lineWidth = 2; cx.beginPath(); cx.arc(x, y - .75 * T, .42 * T, 0, 7); cx.stroke(); return; }
-  if (o.k === 'volt'){ const sh = o.hitT > 0; drawSprite(100, sh ? 'Hurt' : 'Idle', G.t, Math.PI / 2, o.x, o.y, T / 24, 1);
-    if (sh){ cx.strokeStyle = '#ffe066'; cx.lineWidth = 3; cx.beginPath(); cx.arc(sx(o.x), sy(o.y) - T * .3, T * .55, 0, 7); cx.stroke(); } return; }
+  if (o.k === 'volt'){ const sh = o.hitT > 0, f = Math.min(1, o.chg / VOLT_MAX), x = sx(o.x), y = sy(o.y) - T * .3;
+    if (o.down > 0){ drawSprite(100, 'Hurt', 0, Math.PI / 2, o.x, o.y, T / 19, .35); cx.font = `800 ${Math.max(10, T * .26)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = '#ffe066'; cx.fillText(Math.ceil(o.down), x, y - T * .55); return; }
+    drawSprite(100, sh || o.boom > 0 ? 'Hurt' : 'Idle', G.t, Math.PI / 2, o.x, o.y, T / 19, 1);
+    const red = o.boom > 0 ? .45 + .4 * Math.sin(G.t * 30) : f * .55;
+    if (red > 0){ cx.fillStyle = `rgba(255,40,40,${red})`; cx.beginPath(); cx.arc(x, y + T * .05, T * .34, 0, 7); cx.fill(); }
+    if (o.boom > 0){ cx.strokeStyle = 'rgba(255,93,93,.8)'; cx.setLineDash([5, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(o.x), sy(o.y), 2.8 * T, 0, 7); cx.stroke(); cx.setLineDash([]); }
+    if (sh){ cx.strokeStyle = '#ffe066'; cx.lineWidth = 3; cx.beginPath(); cx.arc(x, y, T * .55, 0, 7); cx.stroke(); }
+    const bw = T * .8; cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(x - bw / 2 - 1, y - T * .62, bw + 2, 6); cx.fillStyle = f >= 1 ? '#ff5d5d' : '#ffb03a'; cx.fillRect(x - bw / 2, y - T * .62 + 1, bw * f, 4);
+    return; }
   if (o.k === 'lapras') drawSprite(131, o.charge > 0 ? 'Charge' : o.anim > 0 ? 'Shoot' : 'Idle', G.t, o.face, o.x, o.y, T / 21, 1);
 }
 function drawSprite(sp, an, t, face, x, y, sc, alpha){
@@ -1101,12 +1123,14 @@ function renderMenu(){
   $('#picks').innerHTML = Object.entries(POKE).map(([sp, p]) => `<button class="pk" data-sp="${sp}" aria-pressed="${+sp === CFG.sp}"><img src="${IMG[sp] ? IMG[sp].por : ''}" alt=""><span><b>${p.n}</b><small>${p.desc}</small><small style="color:var(--fg);margin-top:4px">Começa com ${SK[p.kit[0]].ic} ${SK[p.kit[0]].n}</small></span></button>`).join('');
   $('#nbots').innerHTML = (NET.on ? [0,1,2,3,5,7] : [1,2,3,5,7]).map(n => `<button class="chip" data-nb="${n}" aria-pressed="${n === CFG.bots}">${n}</button>`).join('');
   $('#nlives').innerHTML = [1,3,5].map(n => `<button class="chip" data-nl="${n}" aria-pressed="${n === CFG.lives}">${n}</button>`).join('');
+  $('#nmap').innerHTML = [['rand','Sorteado'],['sq','Quadrado'],['rd','Redondo']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
 }
 $('#menu').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.sp){ CFG.sp = +b.dataset.sp; if (isClient()) netSend({ t:'sp', sp:CFG.sp }); else if (NET.on) netLobby(); }
   if (b.dataset.nb) CFG.bots = +b.dataset.nb;
   if (b.dataset.nl) CFG.lives = +b.dataset.nl;
+  if (b.dataset.mp) CFG.map = b.dataset.mp;
   store.set('nt-cfg', CFG); renderMenu();
 });
 $('#play').onclick = () => { if (!isClient()) newMatch(); };
@@ -1200,7 +1224,7 @@ function netBroadcast(){
     z:G.zones.map(z => [skId(z.d), r2(z.x), r2(z.y), z.rad]),
     m:G.marks.map(m => [skId(m.d), r2(m.x), r2(m.y), r2(m.t)]),
     d:G.decoys.map(c => [G.units.indexOf(c.o), r2(c.x), r2(c.y), r2(c.face)]),
-    mp:G.map, R:G.R, ob:G.obs.map(o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0]),
+    mp:G.map, R:G.R, ob:G.obs.map(o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0, o.chg || 0, r2(o.boom || 0), r2(o.down || 0)]),
     ic:G.ice.map(p => [r2(p.x), r2(p.y), p.r, r2(Math.min(p.t, 99))]),
     ev:NET.ev.concat(fxs)
   };
@@ -1252,7 +1276,7 @@ function applySnap(S){
   // plataforma encolheu: anima as casas caindo
   if (S.rd === G.round && S.mp === G.map && (S.R !== G.R || S.P.x0 !== G.P.x0)) addFalling(platCells(), platCells(S.mp, S.R, S.P));
   Object.assign(G, { phase:S.ph, timer:S.tm, round:S.rd, shrinkIn:S.si, step:S.st, P:S.P, map:S.mp, R:S.R });
-  G.obs = S.ob.map(a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0 }));
+  G.obs = S.ob.map(a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0, chg:a[8], boom:a[9], down:a[10] }));
   G.ice = S.ic.map(a => ({ x:a[0], y:a[1], r:a[2], t:a[3] }));
   S.u.forEach((a, i) => { const u = G.units[i]; if (!u) return;
     const jump = Math.hypot(a[0] - (u.tx ?? a[0]), a[1] - (u.ty ?? a[1])) > 2 || !u.alive;
