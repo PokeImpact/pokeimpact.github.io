@@ -120,7 +120,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact</h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v9 · 08/11</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Cada rodada sorteia um mapa: quadrado com árvores e um Voltorb que rebate tudo, ou redondo com o Lapras e seu gelo escorregadio. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Oponentes (bots)</span><span class="row" id="nbots"></span></div>
@@ -183,7 +183,7 @@ const POKE = {
 const SK = {
   brasa:    { n:'Brasa', ic:'🔥', k:'shot', cd:2.6, price:0, spd:5.5, range:9, r:.3, dmg:6, push:7.5, burn:[3,2.2], col:'#ff7a1a', l3:{ splash:1.2 }, d3:'explode ao acertar e empurra quem estiver perto', desc:'Bola de fogo de longo alcance. Empurra e queima.' },
   voo:      { n:'Voo', ic:'🪽', k:'leap', cd:9, price:10, range:4.5, dur:.7, desc:'Salta voando até o cursor. No ar não leva dano nem é empurrado.' },
-  rugido:   { n:'Rugido', ic:'🗯️', k:'nova', cd:8, price:10, rad:2.1, dmg:0, push:7, col:'#f4f1e8', wind:1, desc:'Ruge e solta uma rajada de vento em volta: afasta quem estiver perto.' },
+  rugido:   { n:'Rugido', ic:'🗯️', k:'nova', cd:8, price:10, rad:2.1, dmg:0, push:7, col:'#f4f1e8', wind:1, windup:.55, desc:'Enche o peito por meio segundo (aparece o círculo) e ruge: uma rajada de vento afasta quem estiver perto.' },
   turbilhao:{ n:'Redemoinho de Fogo', ic:'🌀', k:'zone', cd:12, price:10, range:7, rad:1.4, dur:3.5, dps:6, col:'#ff6a1a', desc:'Deixa uma área em chamas: dano a quem ficar dentro.' },
   explosao: { n:'Rajada Explosiva', ic:'💥', k:'shot', cd:18, price:16, ult:1, spd:4, range:10, r:.45, dmg:16, push:11, aoe:1.8, col:'#ffd23f', desc:'Bola lenta que explode em área e arremessa todos longe.' },
   jato:     { n:'Jato d\'Água', ic:'💧', k:'shot', cd:2.6, price:0, spd:5, range:7.5, r:.3, dmg:4, push:8.5, col:'#4dabff', l3:{ slowAoe:[1.3, 1.6, .45] }, d3:'estoura ao acertar e deixa lentos todos em volta', desc:'Jato que empurra forte.' },
@@ -459,11 +459,8 @@ function cast(u, i, ax, ay){
       break;
     case 'zone': { const r = Math.min(dl, d.range); G.zones.push({ o:u, x:u.x + dx * r, y:u.y + dy * r, rad:d.rad, t:d.dur, d, L }); break; }
     case 'nova':
-      for (const e of foesOf(u)){ const ex = e.x - u.x, ey = e.y - u.y, el = Math.hypot(ex, ey); if (el <= d.rad + .3) hit(u, e, d, L, ex / (el || 1), ey / (el || 1)); }
-      G.fx.push({ ring:1, x:u.x, y:u.y, r:d.rad, t:0, life:.45, col:d.col });
-      if (d.wind) for (let k = 0; k < 36; k++){ const a = k / 36 * 6.283 + rnd(-.08, .08), v = rnd(5, 8); fx(u.x + Math.cos(a) * .4, u.y + Math.sin(a) * .4, Math.cos(a) * v, Math.sin(a) * v, rnd(.3, .45), pick(['rgba(255,255,255,.9)','rgba(220,235,255,.8)']), rnd(3, 6)); }
-      if (s.id === 'giroL') u.anim = { n:'Rotate', t:0 };
-      break;
+      if (d.windup){ u.wind = { t:d.windup, nova:1, d, L, id:s.id, dx:0, dy:0 }; u.vx *= .3; u.vy *= .3; break; }   // Rugido: carrega antes, todo mundo vê o círculo
+      doNova(u, d, L, s.id); break;
     case 'beam': u.wind = { t:d.windup, dx, dy, d, L }; break;
     case 'dash': u.dash = { vx:dx * d.spd, vy:dy * d.spd, left:d.dist, d, L, hit:new Set() }; u.anim = { n:'Rotate', t:0 }; break;
     case 'self':
@@ -474,6 +471,12 @@ function cast(u, i, ax, ay){
       break;
   }
   return true;
+}
+function doNova(u, d, L, id){
+  for (const e of foesOf(u)){ const ex = e.x - u.x, ey = e.y - u.y, el = Math.hypot(ex, ey); if (el <= d.rad + .3) hit(u, e, d, L, ex / (el || 1), ey / (el || 1)); }
+  G.fx.push({ ring:1, x:u.x, y:u.y, r:d.rad, t:0, life:.45, col:d.col });
+  if (d.wind) for (let k = 0; k < 36; k++){ const a = k / 36 * 6.283 + rnd(-.08, .08), v = rnd(5, 8); fx(u.x + Math.cos(a) * .4, u.y + Math.sin(a) * .4, Math.cos(a) * v, Math.sin(a) * v, rnd(.3, .45), pick(['rgba(255,255,255,.9)','rgba(220,235,255,.8)']), rnd(3, 6)); }
+  u.anim = { n:id === 'giroL' ? 'Rotate' : 'Shoot', t:0 };
 }
 function mkShot(u, dx, dy, d, L, q, ph){
   return { o:u, x:u.x + dx * .4, y:u.y + dy * .4, bx:u.x + dx * .4, by:u.y + dy * .4, vx:dx * d.spd, vy:dy * d.spd, left:d.range, d, L, age:0, q, ph };
@@ -758,7 +761,8 @@ function updateWorld(dt){
       if (D.left <= 0) u.dash = null;
     } else if (u.wind){
       u.wind.t -= dt;
-      if (u.wind.t <= 0){ const { dx, dy, d, L } = u.wind; u.wind = null;
+      if (u.wind.t <= 0 && u.wind.nova){ const W = u.wind; u.wind = null; doNova(u, W.d, W.L, W.id); }
+      else if (u.wind.t <= 0){ const { dx, dy, d, L } = u.wind; u.wind = null;
         for (const e of foesOf(u)){ const ex = e.x - u.x, ey = e.y - u.y, along = ex * dx + ey * dy, perp = Math.abs(ex * dy - ey * dx); if (along > 0 && along < d.len && perp < d.w + .3) hit(u, e, d, L, dx, dy); }
         G.fx.push({ beam:1, x:u.x, y:u.y, dx, dy, len:d.len, w:d.w, t:0, life:.3, col:d.col });
       }
@@ -911,7 +915,10 @@ function draw(){
     cx.fillStyle = `rgba(110,30,170,${.3 + .3 * k})`; cx.beginPath(); cx.arc(sx(m.x), sy(m.y), m.d.rad * .35 * T, 0, 7); cx.fill();
     cx.beginPath(); cx.arc(sx(m.x), sy(m.y), m.d.rad * T * k, 0, 7); cx.stroke(); }
   // avisos (Hidro Bomba carregando)
-  for (const u of G.units) if (u.alive && u.wind){ const w = u.wind; cx.save(); cx.translate(sx(u.x), sy(u.y)); cx.rotate(Math.atan2(w.dy, w.dx)); cx.fillStyle = 'rgba(108,198,255,.22)'; cx.fillRect(0, -w.d.w * T, w.d.len * T, w.d.w * 2 * T); cx.restore(); }
+  for (const u of G.units) if (u.alive && u.wind && u.wind.nova){ const w = u.wind, k = 1 - Math.max(0, w.t) / (w.d.windup || .55), r = w.d.rad * T;
+    cx.fillStyle = `rgba(255,250,235,${.1 + .18 * k})`; cx.strokeStyle = `rgba(255,255,255,${.5 + .4 * Math.sin(G.t * 30)})`; cx.lineWidth = 2;
+    cx.beginPath(); cx.arc(sx(u.x), sy(u.y), r, 0, 7); cx.fill(); cx.stroke(); cx.beginPath(); cx.arc(sx(u.x), sy(u.y), r * k, 0, 7); cx.stroke(); }
+  for (const u of G.units) if (u.alive && u.wind && !u.wind.nova){ const w = u.wind; cx.save(); cx.translate(sx(u.x), sy(u.y)); cx.rotate(Math.atan2(w.dy, w.dx)); cx.fillStyle = 'rgba(108,198,255,.22)'; cx.fillRect(0, -w.d.w * T, w.d.len * T, w.d.w * 2 * T); cx.restore(); }
   // mira do jogador
   const me = G.me;
   if (me && me.alive && G.phase === 'play' && !touch.on){
@@ -1219,7 +1226,7 @@ function netBroadcast(){
     u:G.units.map(u => { const b = u.b, fl = (b.inv > 0 ? 1 : 0) | (b.shell > 0 ? 2 : 0) | (b.refl > 0 ? 4 : 0) | (b.sd > 0 ? 8 : 0) | (b.slow > 0 ? 16 : 0) | (b.burn > 0 ? 32 : 0) | (Math.hypot(u.rvx, u.rvy) > .3 ? 64 : 0);
       return [r2(u.x), r2(u.y), r2(u.face), Math.round(u.hp * 10) / 10, u.maxhp, u.alive ? 1 : 0, u.out ? 1 : 0, u.lives, ANIMS.indexOf(u.anim.n), r2(u.anim.t), fl,
         u.air ? r2(Math.min(1, u.air.t / u.air.dur)) : -1, u.emo ? u.emo.e : '', u.wins, u.kills, Math.round(u.dmg), u.place,
-        u.wind ? [r2(u.wind.dx), r2(u.wind.dy), u.wind.d.len, u.wind.d.w] : 0, u.human ? 1 : 0]; }),
+        u.wind ? (u.wind.nova ? [0, 0, 0, 0, u.wind.d.rad, r2(u.wind.t), u.wind.d.windup] : [r2(u.wind.dx), r2(u.wind.dy), u.wind.d.len, u.wind.d.w]) : 0, u.human ? 1 : 0]; }),
     s:G.shots.filter(x => !x.dead).map(x => [skId(x.d), r2(x.x), r2(x.y), r2(x.vx), r2(x.vy), x.lob ? [r2(x.tx), r2(x.ty), r2(x.left), r2(x.tot)] : 0]),
     z:G.zones.map(z => [skId(z.d), r2(z.x), r2(z.y), z.rad]),
     m:G.marks.map(m => [skId(m.d), r2(m.x), r2(m.y), r2(m.t)]),
@@ -1288,7 +1295,7 @@ function applySnap(S){
     u.air = a[11] >= 0 ? { t:a[11], dur:1 } : null;
     if (a[12]){ if (!u.emo || u.emo.e !== a[12]) u.emo = { e:a[12], t:2.6 }; } else u.emo = null;
     u.wins = a[13]; u.kills = a[14]; u.dmg = a[15]; u.place = a[16];
-    u.wind = a[17] ? { dx:a[17][0], dy:a[17][1], d:{ len:a[17][2], w:a[17][3] } } : null; u.human = !!a[18]; });
+    u.wind = !a[17] ? null : a[17][4] ? { nova:1, t:a[17][5], d:{ rad:a[17][4], windup:a[17][6] } } : { dx:a[17][0], dy:a[17][1], d:{ len:a[17][2], w:a[17][3] } }; u.human = !!a[18]; });
   G.shots = S.s.map(a => { const d = SK[a[0]]; const o = { d, x:a[1], y:a[2], vx:a[3], vy:a[4] }; if (a[5]){ Object.assign(o, { lob:1, tx:a[5][0], ty:a[5][1], left:a[5][2], tot:a[5][3] }); } return o; });
   G.zones = S.z.map(a => ({ d:SK[a[0]], x:a[1], y:a[2], rad:a[3] }));
   G.marks = S.m.map(a => ({ d:SK[a[0]], x:a[1], y:a[2], t:a[3] }));
