@@ -129,7 +129,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v13 · 09/11</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v14 · 09/11</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Oponentes (bots)</span><span class="row" id="nbots"></span></div>
@@ -1308,7 +1308,9 @@ async function netHost(){
   Object.assign(NET, { on:true, host:true, nick, code, peers:[] });
   NET.peer = new Peer(roomId(code), { debug:0 });
   NET.peer.on('open', () => netLobby());
-  NET.peer.on('error', e => { if (e.type === 'unavailable-id'){ NET.peer.destroy(); netHost(); } else lobbyMsg('Erro no online: ' + e.type); });
+  // se a conexão com o servidor das salas cair (aba escondida, internet piscou), reconecta com o mesmo código
+  NET.peer.on('disconnected', () => { if (NET.on && NET.host && NET.peer && !NET.peer.destroyed) setTimeout(() => { try { NET.peer.reconnect(); } catch(e){} }, 1000); });
+  NET.peer.on('error', e => { if (e.type === 'unavailable-id'){ NET.peer.destroy(); netHost(); } else if (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error' || e.type === 'socket-closed'){ if (G.phase === 'menu') lobbyMsg('Conexão com o servidor das salas caiu. Tentando de novo… (o código continua ' + NET.code + ')'); setTimeout(() => { try { NET.peer.reconnect(); } catch(x){} }, 2000); } else lobbyMsg('Erro no online: ' + e.type); });
   NET.peer.on('connection', c => {
     c.on('data', m => netHostRecv(c, m));
     c.on('close', () => netDrop(c));
