@@ -129,7 +129,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v15 · 09/11</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v16 · 09/11</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Oponentes (bots)</span><span class="row" id="nbots"></span></div>
@@ -368,14 +368,14 @@ function makeObstacles(){
     G.ice.push({ x:c, y:c, r:2.5, t:1e9 });
   } else if (G.map === 'fl' || G.map === 'flr'){
     // floresta: 3 árvores grandes (2×2), 2 pedras (1 casa) e 1 árvore de Natal com gelo em volta, espalhadas ao acaso
-    const want = [['tree', .9], ['tree', .9], ['tree', .9], ['rock', .38], ['rock', .38], ['xmas', .62]];
+    const want = [['tree', .58], ['tree', .58], ['tree', .58], ['rock', .38], ['rock', .38], ['xmas', .62]];
     const rd = isRd(), maxR = rd ? G.R - 2.6 : 0;
     for (const [k, r] of want){
       for (let t = 0; t < 300; t++){
         const x = rd ? c + Math.cos(t * 2.4 + Math.random()) * Math.sqrt(Math.random()) * maxR : rnd(2.2, SIZE - 2.2), y = rd ? c + Math.sin(t * 2.4 + Math.random()) * Math.sqrt(Math.random()) * maxR : rnd(2.2, SIZE - 2.2);
         if (rd && Math.hypot(x - c, y - c) > maxR) continue;
         if (G.obs.some(o => Math.hypot(o.x - x, o.y - y) < o.r + r + 1.5)) continue;
-        const o = { k, x, y, r }; G.obs.push(o);
+        const o = { k, x, y, r, dr:k === 'tree' ? .9 : r }; G.obs.push(o);   // árvore grande: desenho 2×2, mas o corpo (hitbox) é menor
         if (k === 'xmas'){ const p = { x, y, r:1.7, t:1e9, o }; G.ice.push(p); o.ice = p; }
         break; }
     }
@@ -1089,7 +1089,7 @@ function cellPath(i, j, m, inset){ cx.beginPath(); let first = true;
   cx.closePath(); }
 function drawObstacle(o){
   cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(sx(o.x), sy(o.y) + T * .12, T * o.r, T * o.r * .4, 0, 0, 7); cx.fill();
-  if (o.k === 'tree'){ const x = sx(o.x), y = sy(o.y), k = o.r / OBR.tree;
+  if (o.k === 'tree'){ const x = sx(o.x), y = sy(o.y), k = (o.dr || o.r) / OBR.tree;
     cx.fillStyle = '#6b4a2a'; cx.fillRect(x - T * .08 * k, y - T * .3 * k, T * .16 * k, T * .36 * k);
     for (const [dx, dy, r, c] of [[0, -.75, .42, '#2f7a34'], [-.2, -.55, .3, '#3c9440'], [.2, -.55, .3, '#3c9440'], [0, -.95, .26, '#4fae4f']]){ cx.fillStyle = c; cx.beginPath(); cx.arc(x + dx * T * k, y + dy * T * k, r * T * k, 0, 7); cx.fill(); }
     cx.strokeStyle = '#1d4a22'; cx.lineWidth = 2; cx.beginPath(); cx.arc(x, y - .75 * T * k, .42 * T * k, 0, 7); cx.stroke(); return; }
@@ -1374,7 +1374,7 @@ function netBroadcast(){
     z:G.zones.map(z => [skId(z.d), r2(z.x), r2(z.y), z.rad]),
     m:G.marks.map(m => [skId(m.d), r2(m.x), r2(m.y), r2(m.t)]),
     d:G.decoys.map(c => [G.units.indexOf(c.o), r2(c.x), r2(c.y), r2(c.face)]),
-    mp:G.map, R:G.R, ob:G.obs.map(o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0, o.chg || 0, r2(o.boom || 0), r2(o.down || 0), o.frenzy || 0, o.r]),
+    mp:G.map, R:G.R, ob:G.obs.map(o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0, o.chg || 0, r2(o.boom || 0), r2(o.down || 0), o.frenzy || 0, o.r, o.dr || 0]),
     ic:G.ice.map(p => [r2(p.x), r2(p.y), p.r, r2(Math.min(p.t, 99))]),
     ev:NET.ev.concat(fxs)
   };
@@ -1428,7 +1428,7 @@ function applySnap(S){
   // plataforma encolheu: anima as casas caindo
   if (S.rd === G.round && S.mp === G.map && (S.R !== G.R || S.P.x0 !== G.P.x0)) addFalling(platCells(), platCells(S.mp, S.R, S.P));
   Object.assign(G, { phase:S.ph, timer:S.tm, round:S.rd, shrinkIn:S.si, step:S.st, P:S.P, map:S.mp, R:S.R });
-  G.obs = S.ob.map(a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0, chg:a[8], boom:a[9], down:a[10], frenzy:a[11], r:a[12] || OBR[a[0]] }));
+  G.obs = S.ob.map(a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0, chg:a[8], boom:a[9], down:a[10], frenzy:a[11], r:a[12] || OBR[a[0]], dr:a[13] || 0 }));
   G.ice = S.ic.map(a => ({ x:a[0], y:a[1], r:a[2], t:a[3] }));
   S.u.forEach((a, i) => { const u = G.units[i]; if (!u) return;
     const jump = Math.hypot(a[0] - (u.tx ?? a[0]), a[1] - (u.ty ?? a[1])) > 2 || !u.alive;
