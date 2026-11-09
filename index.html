@@ -120,8 +120,8 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v11 · 09/11</small></h1>
-    <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, ou o dos Voltorbs (1 a 4 por rodada). Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo.</p>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v12 · 09/11</small></h1>
+    <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Oponentes (bots)</span><span class="row" id="nbots"></span></div>
     <div class="row"><span class="lbl">Vidas</span><span class="row" id="nlives"></span></div>
@@ -280,15 +280,17 @@ const cellOn = m => m === 15 || bits(m) === 3;
 function inCell(m, fx, fy){ if (m === 15) return true; if (bits(m) !== 3) return false;
   const out = [0,1,2,3].find(k => !(m >> k & 1));
   return out === 0 ? fx + fy >= 1 : out === 1 ? fy >= fx : out === 2 ? fx + fy <= 1 : fx >= fy; }
+const isRd = (m = G.map) => m === 'rd' || m === 'flr';
 function onPlat(x, y){
-  if (G.map !== 'rd') return x >= G.P.x0 && x < G.P.x1 && y >= G.P.y0 && y < G.P.y1;
+  if (!isRd()) return x >= G.P.x0 && x < G.P.x1 && y >= G.P.y0 && y < G.P.y1;
   const i = Math.floor(x), j = Math.floor(y); if (i < 0 || j < 0 || i >= SIZE || j >= SIZE) return false;
   return inCell(cellMask(i, j, G.R), x - i, y - j);
 }
-const platCenter = () => G.map === 'rd' ? { x:SIZE / 2, y:SIZE / 2 } : { x:(G.P.x0 + G.P.x1) / 2, y:(G.P.y0 + G.P.y1) / 2 };
+const platCenter = () => isRd() ? { x:SIZE / 2, y:SIZE / 2 } : { x:(G.P.x0 + G.P.x1) / 2, y:(G.P.y0 + G.P.y1) / 2 };
 // casas que existem agora (chave i,j → máscara)
 const PCACHE = {};
-const MAPNAME = { sq:'quadrado', rd:'redondo', vt:'dos Voltorbs' };
+const MAPNAME = { sq:'quadrado', rd:'redondo', vt:'dos Voltorbs', fl:'floresta', flr:'floresta redonda' };
+const FLLINE = ['Árvores, pedras e um pinheiro de Natal escorregadio.', 'O Alakazam pode trocar de lugar com árvores e pedras.', 'Esconder atrás da árvore de Natal? Cuidado com o gelo.', 'Cada rodada a floresta muda de lugar.'];
 const VOLTLINE = { 1:['Esta rodada terá 1 Voltorb', 'Um só… mas ele não perdoa.'], 2:['Esta rodada terá 2 Voltorbs', 'Cuidado com a tabelinha dupla!'],
   3:['Esta rodada terá 3 Voltorbs', 'Ninguém vai saber de onde veio a bola.'], 4:['⚠ ESTA RODADA TERÁ 4 VOLTORBS ⚠', 'Que os deuses do pinball tenham piedade de vocês.'] };
 const LAPLINE = [
@@ -302,24 +304,25 @@ const SQLINE = ['O Voltorb no meio não é decoração.', 'Árvores: ótimas par
 function countSub(){
   const base = `Rodada ${G.round} · mapa ${MAPNAME[G.map] || 'quadrado'}`;
   if (G.map === 'rd'){ const L = LAPLINE[(G.round - 1) % LAPLINE.length]; return `${base}<br><b style="color:#bff3ff">${L[0]}</b><br><span>${L[1]}</span>`; }
+  if (G.map === 'fl' || G.map === 'flr') return `${base}<br><span>${FLLINE[(G.round - 1) % FLLINE.length]}</span>`;
   if (G.map !== 'vt'){ const L = SQLINE[(G.round - 1) % SQLINE.length]; return `${base}<br><span>${L}</span>`; }
   const n = G.obs.filter(o => o.k === 'volt').length || 1, L = VOLTLINE[Math.min(4, n)];
   return n >= 4 ? `${base}<br><b style="color:#ff4040;font-size:1.5em;text-shadow:0 0 12px rgba(255,0,0,.7)">${L[0]}</b><br><span style="color:#ff8080">${L[1]}</span>`
     : `${base}<br><b style="color:#ffe066">${L[0]}</b><br><span>${L[1]}</span>`;
 }
 function platCells(map = G.map, Rr = G.R, P = G.P){ const key = map + '|' + Rr + '|' + SIZE + '|' + P.x0 + ',' + P.x1; if (PCACHE.k === key) return PCACHE.v; const out = new Map(); PCACHE.k = key; PCACHE.v = out;
-  if (map === 'rd'){ for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE; j++){ const m = cellMask(i, j, Rr); if (cellOn(m)) out.set(i + ',' + j, m); } }
+  if (isRd(map)){ for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE; j++){ const m = cellMask(i, j, Rr); if (cellOn(m)) out.set(i + ',' + j, m); } }
   else for (let i = P.x0; i < P.x1; i++) for (let j = P.y0; j < P.y1; j++) out.set(i + ',' + j, 15);
   return out; }
-const platGone = () => G.map === 'rd' ? platCells().size === 0 : G.P.x1 <= G.P.x0;
+const platGone = () => isRd() ? platCells().size === 0 : G.P.x1 <= G.P.x0;
 // distância até a borda (para os bots) e ponto seguro dentro da plataforma (a próxima, se vai encolher logo)
-function edgeDist(x, y){ if (G.map === 'rd') return G.R - .5 - Math.hypot(x - SIZE / 2, y - SIZE / 2); return Math.min(x - G.P.x0, G.P.x1 - x, y - G.P.y0, G.P.y1 - y); }
+function edgeDist(x, y){ if (isRd()) return G.R - .5 - Math.hypot(x - SIZE / 2, y - SIZE / 2); return Math.min(x - G.P.x0, G.P.x1 - x, y - G.P.y0, G.P.y1 - y); }
 function clampSafe(x, y, m){
   const soon = G.shrinkIn <= WARN + 1;
-  if (G.map === 'rd'){ const c = SIZE / 2, rr = Math.max(.2, (soon ? G.R - 1 : G.R) - .6 - m * .6), dx = x - c, dy = y - c, d = Math.hypot(dx, dy); return d <= rr ? [x, y] : [c + dx / d * rr, c + dy / d * rr]; }
+  if (isRd()){ const c = SIZE / 2, rr = Math.max(.2, (soon ? G.R - 1 : G.R) - .6 - m * .6), dx = x - c, dy = y - c, d = Math.hypot(dx, dy); return d <= rr ? [x, y] : [c + dx / d * rr, c + dy / d * rr]; }
   const N = soon ? nextP() : G.P; return [clamp(x, N.x0 + m, Math.max(N.x0 + m, N.x1 - m)), clamp(y, N.y0 + m, Math.max(N.y0 + m, N.y1 - m))];
 }
-function platWidth(){ return G.map === 'rd' ? Math.max(0, Math.round(G.R * 2)) : G.P.x1 - G.P.x0; }
+function platWidth(){ return isRd() ? Math.max(0, Math.round(G.R * 2)) : G.P.x1 - G.P.x0; }
 function nextP(){ // a cada passo some o anel inteiro da borda: 10×10 vira 8×8
   const P = Object.assign({}, G.P);
   if (P.x1 - P.x0 <= 0) return P;
@@ -328,17 +331,17 @@ function nextP(){ // a cada passo some o anel inteiro da borda: 10×10 vira 8×8
   return P;
 }
 function willFall(i, j, m){ if (G.shrinkIn > WARN) return false;
-  if (G.map === 'rd') return cellMask(i, j, G.R - 1) !== m;
+  if (isRd()) return cellMask(i, j, G.R - 1) !== m;
   const N = nextP(); return (i >= G.P.x0 && i < G.P.x1 && j >= G.P.y0 && j < G.P.y1) && !(i >= N.x0 && i < N.x1 && j >= N.y0 && j < N.y1); }
 function doShrink(){
   const before = platCells();
-  if (G.map === 'rd') G.R -= 1; else G.P = nextP();
+  if (isRd()) G.R -= 1; else G.P = nextP();
   addFalling(before, platCells());
   G.step++; G.shrinkIn = SHRINK;
   for (const o of G.obs) if (!o.gone && (!onPlat(o.x, o.y) || (o.k === 'lapras' && G.R < 2.2))){ o.gone = true;
     feed(o.k === 'lapras' ? 'O Lapras mergulhou na névoa!' : o.k === 'volt' ? 'O Voltorb caiu na névoa' : 'Uma árvore caiu na névoa', '#9fd8ff');
     for (let k = 0; k < 18; k++) fx(o.x, o.y, rnd(-3, 3), rnd(-3, 3), .5, o.k === 'tree' ? '#3f8a3a' : '#9fd8ff', 7); }
-  G.obs = G.obs.filter(o => !o.gone);
+  G.obs = G.obs.filter(o => !o.gone); G.ice = G.ice.filter(p => !p.o || !p.o.gone);
   feed(platGone() ? 'A plataforma sumiu! Só resta a névoa.' : 'A plataforma encolheu', '#9be36a');
 }
 function addFalling(before, after){ for (const [k, m] of before) if (after.get(k) !== m){ const [i, j] = k.split(',').map(Number); G.falling.push({ i, j, t:0, m }); } }
@@ -346,13 +349,26 @@ const mistDps = () => (platGone() ? 12 : 4 + G.step * .7);   // fraca no começo
 
 /* ---------- obstáculos e gelo ---------- */
 // tree: Árvore de Corte (bloqueia e segura quem bate) · volt: Voltorb (rebate projéteis e Pokémon, como no Pokémon Pinball) · lapras: centro do mapa redondo
-const OBR = { tree:.42, volt:.38, lapras:.85 };
+const OBR = { tree:.42, volt:.38, lapras:.85, rock:.38, xmas:.62 };
 const VOLT_BIG = .57;   // Voltorb sozinho: 1,5× maior, mais fácil de mirar a tabela
 function makeObstacles(){
   const c = SIZE / 2; G.obs = []; G.ice = [];
   if (G.map === 'rd'){
     G.obs.push({ k:'lapras', x:c, y:c, r:OBR.lapras, face:Math.PI / 2, cd:rnd(4, 6), charge:0, aim:0 });
     G.ice.push({ x:c, y:c, r:2.5, t:1e9 });
+  } else if (G.map === 'fl' || G.map === 'flr'){
+    // floresta: 3 árvores grandes (2×2), 2 pedras (1 casa) e 1 árvore de Natal com gelo em volta, espalhadas ao acaso
+    const want = [['tree', .9], ['tree', .9], ['tree', .9], ['rock', .38], ['rock', .38], ['xmas', .62]];
+    const rd = isRd(), maxR = rd ? G.R - 2.6 : 0;
+    for (const [k, r] of want){
+      for (let t = 0; t < 300; t++){
+        const x = rd ? c + Math.cos(t * 2.4 + Math.random()) * Math.sqrt(Math.random()) * maxR : rnd(2.2, SIZE - 2.2), y = rd ? c + Math.sin(t * 2.4 + Math.random()) * Math.sqrt(Math.random()) * maxR : rnd(2.2, SIZE - 2.2);
+        if (rd && Math.hypot(x - c, y - c) > maxR) continue;
+        if (G.obs.some(o => Math.hypot(o.x - x, o.y - y) < o.r + r + 1.5)) continue;
+        const o = { k, x, y, r }; G.obs.push(o);
+        if (k === 'xmas'){ const p = { x, y, r:1.7, t:1e9, o }; G.ice.push(p); o.ice = p; }
+        break; }
+    }
   } else if (G.map === 'vt'){
     // mapa dos Voltorbs: sorteia 1 a 4 por rodada
     const n = 1 + Math.floor(Math.random() * 4), q = SIZE / 4, t = SIZE * .27;
@@ -432,7 +448,12 @@ function obstacleShot(s){
       s.x = s.bx = o.x + nx * (o.r + s.d.r + .02); s.y = s.by = o.y + ny * (o.r + s.d.r + .02); o.hitT = .3; voltCharge(o, s.o);
       G.fx.push({ ring:1, x:o.x, y:o.y, r:.6, t:0, life:.3, col:'#ffe066' }); return false; }
     if (o.k === 'lapras') lapRage(o);
-    if (s.d.tele){ teleTo(s.o, o.x + nx * (o.r + .45), o.y + ny * (o.r + .45)); return true; }
+    if (s.d.tele){
+      if (o.k === 'lapras'){ teleTo(s.o, o.x + nx * (o.r + .45), o.y + ny * (o.r + .45)); return true; }
+      const u = s.o, ux = u.x, uy = u.y; teleTo(u, o.x, o.y); o.x = ux; o.y = uy; if (o.ice){ o.ice.x = ux; o.ice.y = uy; }
+      G.fx.push({ ring:1, x:ux, y:uy, r:o.r + .4, t:0, life:.4, col:'#ffb3ff' }); txt(ux, uy - 1, 'trocou!', '#ffb3ff');
+      if (!onPlat(ux, uy)){ o.gone = true; G.obs = G.obs.filter(q => !q.gone); G.ice = G.ice.filter(p => !p.o || !p.o.gone); feed(`${u.name} jogou ${o.k === 'volt' ? 'o Voltorb' : o.k === 'rock' ? 'uma pedra' : 'uma árvore'} na névoa`, '#ffb3ff'); }
+      return true; }
     if (s.d.aoe) explode(s);
     for (let k = 0; k < 8; k++) fx(s.x, s.y, rnd(-3, 3), rnd(-3, 3), .3, s.d.col, 5);
     return true; }
@@ -588,14 +609,15 @@ function newMatch(){
   for (let i = 0; i < nb; i++) G.units.push(makeUnit(pick(ids), BOTNAMES[i], false, G.units.length));
   if (NET.on) netStartMsg();
   G.round = 0; G.t = 0;
-  G.matchMap = CFG.map === 'rand' ? pick(['sq','rd','vt']) : CFG.map;   // o mesmo mapa a partida inteira
+  const pm = CFG.map === 'rand' ? pick(['sq','rd','vt','fl']) : CFG.map;
+  G.matchMap = pm === 'fl' ? pick(['fl','flr']) : pm;   // floresta: quadrada ou redonda   // o mesmo mapa a partida inteira
   for (const id of ['menu','endOv','shopOv']) $('#' + id).hidden = true;
   for (const id of ['top','gold','plist','emo']) $('#' + id).hidden = false;
   $('#bar').hidden = false;
   buildBar(); buildEmotes(); startRound();
 }
 function startRound(){
-  G.round++; G.map = G.matchMap || 'sq'; SIZE = sizeFor(G.units.filter(u => !u.out).length) + (G.map === 'rd' ? 2 : 0); G.P = { x0:0, y0:0, x1:SIZE, y1:SIZE }; G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
+  G.round++; G.map = G.matchMap || 'sq'; SIZE = sizeFor(G.units.filter(u => !u.out).length) + (isRd() ? 2 : 0); G.P = { x0:0, y0:0, x1:SIZE, y1:SIZE }; G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
   G.R = SIZE / 2 + .45; makeObstacles();
   G.shots = []; G.zones = []; G.marks = []; G.decoys = []; G.falling = []; G.fx = []; G.txt = [];
   const live = G.units.filter(u => !u.out), n = live.length, off = Math.random() * Math.PI * 2;
@@ -607,7 +629,8 @@ function startRound(){
   });
   for (const u of G.units) if (u.out) u.alive = false;
   G.phase = 'count'; G.timer = 3;
-  if (G.round === 1) feed(G.map === 'rd' ? 'Mapa redondo: cuidado com o gelo do Lapras (golpes nele o deixam furioso)' : G.map === 'vt' ? 'Mapa dos Voltorbs: 1 a 4 por rodada, rebatem tudo' : 'Mapa quadrado: o Voltorb rebate tudo e explode quando enche', '#9fd8ff');
+  if (G.round === 1 && (G.map === 'fl' || G.map === 'flr')) feed('Floresta: árvores e pedras mudam de lugar a cada rodada. O Alakazam troca de lugar com elas.', '#7fd36a');
+  else if (G.round === 1) feed(G.map === 'rd' ? 'Mapa redondo: cuidado com o gelo do Lapras (golpes nele o deixam furioso)' : G.map === 'vt' ? 'Mapa dos Voltorbs: 1 a 4 por rodada, rebatem tudo' : 'Mapa quadrado: o Voltorb rebate tudo e explode quando enche', '#9fd8ff');
   if (G.map === 'vt') feed(VOLTLINE[G.nvolt][0], G.nvolt === 4 ? '#ff5d5d' : '#ffe066');
   hudList(true);
 }
@@ -923,7 +946,7 @@ function draw(){
   }
   // plataforma
   const P = G.P;
-  if (G.map === 'rd'){
+  if (isRd()){
     for (const [key, m] of platCells()){ const [i, j] = key.split(',').map(Number), s = tileShade(i, j);
       cellPath(i, j, m, 1); cx.fillStyle = `rgb(${118 + s},${108 + s},${94 + s})`; cx.fill();
       if (willFall(i, j, m)){ cellPath(i, j, m, 1); cx.fillStyle = `rgba(155,227,106,${.25 + .25 * Math.sin(G.t * 14)})`; cx.fill(); } }
@@ -1023,10 +1046,19 @@ function cellPath(i, j, m, inset){ cx.beginPath(); let first = true;
   cx.closePath(); }
 function drawObstacle(o){
   cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(sx(o.x), sy(o.y) + T * .12, T * o.r, T * o.r * .4, 0, 0, 7); cx.fill();
-  if (o.k === 'tree'){ const x = sx(o.x), y = sy(o.y);
-    cx.fillStyle = '#6b4a2a'; cx.fillRect(x - T * .08, y - T * .3, T * .16, T * .36);
-    for (const [dx, dy, r, c] of [[0, -.75, .42, '#2f7a34'], [-.2, -.55, .3, '#3c9440'], [.2, -.55, .3, '#3c9440'], [0, -.95, .26, '#4fae4f']]){ cx.fillStyle = c; cx.beginPath(); cx.arc(x + dx * T, y + dy * T, r * T, 0, 7); cx.fill(); }
-    cx.strokeStyle = '#1d4a22'; cx.lineWidth = 2; cx.beginPath(); cx.arc(x, y - .75 * T, .42 * T, 0, 7); cx.stroke(); return; }
+  if (o.k === 'tree'){ const x = sx(o.x), y = sy(o.y), k = o.r / OBR.tree;
+    cx.fillStyle = '#6b4a2a'; cx.fillRect(x - T * .08 * k, y - T * .3 * k, T * .16 * k, T * .36 * k);
+    for (const [dx, dy, r, c] of [[0, -.75, .42, '#2f7a34'], [-.2, -.55, .3, '#3c9440'], [.2, -.55, .3, '#3c9440'], [0, -.95, .26, '#4fae4f']]){ cx.fillStyle = c; cx.beginPath(); cx.arc(x + dx * T * k, y + dy * T * k, r * T * k, 0, 7); cx.fill(); }
+    cx.strokeStyle = '#1d4a22'; cx.lineWidth = 2; cx.beginPath(); cx.arc(x, y - .75 * T * k, .42 * T * k, 0, 7); cx.stroke(); return; }
+  if (o.k === 'rock'){ const x = sx(o.x), y = sy(o.y) - T * .12, r = o.r * T;
+    cx.fillStyle = '#8a8478'; cx.beginPath(); cx.ellipse(x, y, r * 1.1, r * .85, 0, 0, 7); cx.fill();
+    cx.fillStyle = '#a39d90'; cx.beginPath(); cx.ellipse(x - r * .25, y - r * .25, r * .55, r * .4, -.3, 0, 7); cx.fill();
+    cx.strokeStyle = '#4e4a42'; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(x, y, r * 1.1, r * .85, 0, 0, 7); cx.stroke(); return; }
+  if (o.k === 'xmas'){ const x = sx(o.x), y = sy(o.y), u = T * o.r;
+    cx.fillStyle = '#6b4a2a'; cx.fillRect(x - u * .15, y - u * .35, u * .3, u * .4);
+    for (const [w, h, yy] of [[1.15, .8, -.3], [.9, .7, -.85], [.6, .6, -1.35]]){ cx.fillStyle = '#1f6b34'; cx.beginPath(); cx.moveTo(x - u * w, y + u * yy); cx.lineTo(x + u * w, y + u * yy); cx.lineTo(x, y + u * (yy - h * 1.2)); cx.closePath(); cx.fill(); cx.strokeStyle = '#e8f6ff'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(x - u * w, y + u * yy); cx.lineTo(x + u * w, y + u * yy); cx.stroke(); }
+    for (const [dx, dy, c] of [[-.4, -.5, '#ff4d4d'], [.35, -.65, '#ffd23f'], [-.15, -1.05, '#4dabff'], [.25, -1.25, '#ff4d4d'], [-.5, -.15, '#ffd23f'], [.55, -.2, '#4dabff']]){ cx.fillStyle = c; cx.beginPath(); cx.arc(x + dx * u, y + dy * u, u * .1, 0, 7); cx.fill(); }
+    cx.fillStyle = '#ffe066'; cx.font = `${u * .6}px system-ui`; cx.textAlign = 'center'; cx.fillText('★', x, y - u * 2.1); return; }
   if (o.k === 'volt'){ const sh = o.hitT > 0, f = Math.min(1, o.chg / VOLT_MAX), x = sx(o.x), y = sy(o.y) - T * .3;
     if (o.down > 0){ drawSprite(100, 'Hurt', 0, Math.PI / 2, o.x, o.y, T / 19 * o.r / OBR.volt, .35); cx.font = `800 ${Math.max(10, T * .26)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = '#ffe066'; cx.fillText(Math.ceil(o.down), x, y - T * .55); return; }
     drawSprite(100, sh || o.boom > 0 ? 'Hurt' : 'Idle', G.t, Math.PI / 2, o.x, o.y, T / 19 * o.r / OBR.volt, 1);
@@ -1073,7 +1105,7 @@ function hudList(force){
 }
 function hudTop(){
   const w = platWidth(), s = Math.ceil(G.shrinkIn);
-  $('#top').innerHTML = `<span>Rodada ${G.round}</span><span class="sh">${platGone() ? 'sem chão' : G.map === 'rd' ? 'redondo' : w + '×' + w}</span>` + (!platGone() && G.phase === 'play' ? `<span class="${s <= WARN ? 'warn' : ''}">encolhe em ${s} s</span>` : '') + (G.me && G.me.out ? '<span class="warn">assistindo</span>' : G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">você caiu: assistindo</span>' : '');
+  $('#top').innerHTML = `<span>Rodada ${G.round}</span><span class="sh">${platGone() ? 'sem chão' : isRd() ? 'redondo' : w + '×' + w}</span>` + (!platGone() && G.phase === 'play' ? `<span class="${s <= WARN ? 'warn' : ''}">encolhe em ${s} s</span>` : '') + (G.me && G.me.out ? '<span class="warn">assistindo</span>' : G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">você caiu: assistindo</span>' : '');
   $('#goldv').textContent = '🪙 ' + (G.me ? G.me.gold : 0);
 }
 function buildEmotes(){ $('#emo').innerHTML = EMOTES.map((e, i) => `<button data-e="${i}" title="Tecla ${i + 1}">${e}</button>`).join(''); }
@@ -1174,7 +1206,7 @@ function renderMenu(){
   $('#picks').innerHTML = Object.entries(POKE).map(([sp, p]) => `<button class="pk" data-sp="${sp}" aria-pressed="${+sp === CFG.sp}"><img src="${IMG[sp] ? IMG[sp].por : ''}" alt=""><span><b>${p.n}</b><small>${p.desc}</small><small style="color:var(--fg);margin-top:4px">Começa com ${SK[p.kit[0]].ic} ${SK[p.kit[0]].n}</small></span></button>`).join('');
   $('#nbots').innerHTML = (NET.on ? [0,1,2,3,5,7] : [1,2,3,5,7]).map(n => `<button class="chip" data-nb="${n}" aria-pressed="${n === CFG.bots}">${n}</button>`).join('');
   $('#nlives').innerHTML = [1,3,5].map(n => `<button class="chip" data-nl="${n}" aria-pressed="${n === CFG.lives}">${n}</button>`).join('');
-  $('#nmap').innerHTML = [['rand','Sorteado'],['sq','Quadrado'],['rd','Redondo'],['vt','Voltorbs']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
+  $('#nmap').innerHTML = [['rand','Sorteado'],['sq','Quadrado'],['rd','Redondo'],['vt','Voltorbs'],['fl','Floresta']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
 }
 $('#menu').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
