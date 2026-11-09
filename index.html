@@ -120,7 +120,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v9 · 08/11</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v10 · 09/11</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Cada rodada sorteia um mapa: quadrado com árvores e um Voltorb que rebate tudo, ou redondo com o Lapras e seu gelo escorregadio. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Oponentes (bots)</span><span class="row" id="nbots"></span></div>
@@ -150,6 +150,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
     <p class="sub" id="cfgHelp"></p>
     <div id="binds" style="display:flex;flex-direction:column;gap:6px"></div>
     <div class="row" style="justify-content:space-between"><button class="ghost" id="cfgReset">Voltar ao padrão</button><button class="go" id="cfgOk">Fechar</button></div>
+    <div class="row" id="quitRow" hidden style="border-top:1px solid var(--line);padding-top:12px;justify-content:space-between"><small style="color:var(--dim);max-width:46ch" id="quitHelp"></small><button class="ghost" id="quitBtn" style="color:var(--hot);border-color:var(--hot)"></button></div>
   </div>
 </div>
 
@@ -1101,7 +1102,10 @@ addEventListener('touchend', e => {
 });
 
 /* ---------- teclas configuráveis ---------- */
-function openCfg(){ $('#cfgOv').hidden = false; if (G.phase === 'play' && !NET.on) G.paused = true; renderBinds(); }
+function openCfg(){ $('#cfgOv').hidden = false;
+  const inGame = G.phase !== 'menu' && G.phase !== 'over'; $('#quitRow').hidden = !inGame;
+  if (inGame){ $('#quitBtn').textContent = !NET.on ? 'Sair da partida' : NET.host ? 'Encerrar e voltar à sala' : 'Sair da sala';
+    $('#quitHelp').textContent = !NET.on ? 'Volta para a tela inicial: dá para trocar o Pokémon, o mapa e os bots.' : NET.host ? 'Acaba a partida para todos e leva todo mundo de volta à sala, onde cada um pode trocar de Pokémon.' : 'Você sai da sala e um bot assume o seu Pokémon. Para trocar de Pokémon sem sair, peça ao anfitrião para encerrar.'; } if (G.phase === 'play' && !NET.on) G.paused = true; renderBinds(); }
 function renderBinds(){
   document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === KEYS.mode));
   $('#cfgHelp').textContent = KEYS.mode === 'mouse' ? 'Clique com o botão direito para andar (pode segurar). Mire com o mouse e use as teclas para soltar os golpes, como no Warcraft e no LoL.' : 'Ande com W A S D (ou setas). Mire com o mouse. O clique esquerdo também pode ser uma habilidade.';
@@ -1142,7 +1146,20 @@ $('#menu').addEventListener('click', e => {
 });
 $('#play').onclick = () => { if (!isClient()) newMatch(); };
 $('#again').onclick = () => { if (isClient()){ banner('Esperando o anfitrião', 'Ele começa a próxima partida', 3); return; } newMatch(); };
-$('#toMenu').onclick = () => { if (NET.on && !NET.host){ netLeave(); } $('#endOv').hidden = true; $('#menu').hidden = false; G.phase = 'menu'; for (const id of ['top','gold','plist','emo','bar']) $('#' + id).hidden = true; renderMenu(); };
+// volta para a tela inicial (no online, para a sala): dá para trocar de Pokémon, mapa, vidas
+function goMenu(){
+  for (const id of ['endOv','shopOv','cfgOv']) $('#' + id).hidden = true;
+  $('#menu').hidden = false; G.phase = 'menu'; G.paused = false; G.units = []; G.me = null; G.shots = []; G.zones = []; G.marks = []; G.decoys = []; G.obs = []; G.ice = []; G.fx = []; G.txt = [];
+  for (const id of ['top','gold','plist','emo','bar']) $('#' + id).hidden = true; $('#banner').innerHTML = '';
+  renderMenu();
+}
+function hostToLobby(){ for (const c of NET.peers){ c.u = null; if (c.open) c.send({ t:'tolobby' }); } goMenu(); netLobby(); }
+$('#toMenu').onclick = () => { if (NET.on && NET.host) hostToLobby(); else { goMenu(); if (isClient()) banner('', ''); } };
+$('#quitBtn').onclick = () => {
+  if (!NET.on) goMenu();
+  else if (NET.host) hostToLobby();
+  else { netLeave(); goMenu(); }
+};
 renderMenu();
 
 /* ---------- laço ---------- */
@@ -1265,6 +1282,7 @@ function netSend(m){ if (NET.conn && NET.conn.open) NET.conn.send(m); }
 function netLeave(){ try { NET.peer && NET.peer.destroy(); } catch(e){} Object.assign(NET, { on:false, host:false, conn:null, peers:[], peer:null }); $('#lobby').hidden = true; $('#play').hidden = false; $('#mkRoom').disabled = $('#joinRoom').disabled = false; }
 function netClientRecv(m){
   if (m.t === 'lobby'){ renderLobby(m.list); return; }
+  if (m.t === 'tolobby'){ goMenu(); banner('', ''); return; }
   if (m.t === 'full'){ lobbyMsg(m.why); netLeave(); $('#lobby').hidden = false; return; }
   if (m.t === 'start'){
     CFG.lives = m.lives;
@@ -1277,6 +1295,7 @@ function netClientRecv(m){
   if (m.t === 's') applySnap(m);
 }
 function applySnap(S){
+  if (!G.me) return;   // voltou para a sala: ignora estados atrasados
   const nw = performance.now(); if (!(nw - (NET.hb || 0) < 1000)){ NET.hb = nw; netSend({ t:'hb' }); }
   const prev = G.phase;
   if (S.SZ !== SIZE){ SIZE = S.SZ; camera(true); }
