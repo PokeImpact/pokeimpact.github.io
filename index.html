@@ -48,6 +48,15 @@ h2{font-family:var(--font-d);font-weight:400;font-size:24px;margin:0;color:var(-
 #lobby .code{font-family:var(--font-d);font-size:30px;color:var(--gold);letter-spacing:4px}
 #lobby .pl{display:flex;gap:8px;align-items:center;font-weight:800}
 #lobby .pl img{width:28px;height:28px;image-rendering:pixelated;border-radius:6px;background:#0e0a13}
+.pod{display:flex;gap:12px;flex-wrap:wrap}
+.podc{flex:1 1 220px;min-width:0;border-radius:14px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.podc.win{background:linear-gradient(180deg,#3a2f12,#1f1a0c);border:2px solid var(--gold)}
+.podc.lose{background:linear-gradient(180deg,#2a1a22,#170f14);border:2px solid #6b3a4a}
+.podc canvas{width:150px;height:130px;image-rendering:pixelated}
+.podc .tt{font-family:var(--font-d);font-size:22px;letter-spacing:.5px}
+.podc.win .tt{color:var(--gold)} .podc.lose .tt{color:#ff6a8a}
+.podc .nm{font-weight:800;font-size:17px}
+.podc small{color:var(--dim);font-weight:700;line-height:1.35}
 .ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 14px}
 /* HUD */
 #top{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:5;display:flex;gap:10px;align-items:center;background:rgba(21,15,28,.82);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:14px}
@@ -120,7 +129,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v12 · 09/11</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v13 · 09/11</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Oponentes (bots)</span><span class="row" id="nbots"></span></div>
@@ -157,6 +166,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 <div class="ov" id="endOv" hidden>
   <div class="box">
     <h2 id="endT">Fim de jogo</h2>
+    <div class="pod" id="pod"></div>
     <div style="overflow-x:auto"><table id="endTb"></table></div>
     <div class="row" style="justify-content:flex-end"><button class="ghost" id="toMenu">Trocar Pokémon</button><button class="go" id="again">Jogar de novo</button></div>
   </div>
@@ -658,7 +668,40 @@ function gameOver(){
   $('#endT').textContent = w ? (w === G.me ? 'Você venceu!' : `${w.name} venceu`) : 'Fim de jogo';
   $('#endTb').innerHTML = '<tr><th>#</th><th>Jogador</th><th>Pokémon</th><th>Rodadas</th><th>Derrubou</th><th>Dano</th></tr>' +
     rows.map(u => `<tr><td>${u.place}º</td><td style="color:${u.col};font-weight:800">${u.name}</td><td>${POKE[u.sp].n}</td><td>${u.wins}</td><td>${u.kills}</td><td>${Math.round(u.dmg)}</td></tr>`).join('');
+  renderPodium(w, rows);
   $('#endOv').hidden = false;
+}
+// pódio: campeão com coroa comemorando, último colocado deitado chorando (e zoado)
+const LOSELINE = ['Dormiu no ponto. O Snorlax mandou lembranças.', 'Lixo tóxico: combinou direitinho com a névoa.', 'O Weezing agradece pela refeição.', 'Volte ao Centro Pokémon e pense no que fez.', 'Até o Magikarp teria durado mais.', 'Virou fumaça antes de todo mundo.'];
+const WINLINE = ['Rei da arena!', 'Ninguém conseguiu tirar do chão.', 'Imbatível (por enquanto).', 'Pode pedir música no Fantástico.'];
+function renderPodium(w, rows){
+  const others = rows.filter(u => u !== w && u.place > 0), worst = others.length ? Math.max(...others.map(u => u.place)) : 0;
+  const losers = others.filter(u => u.place === worst);
+  const card = (u, win) => `<div class="podc ${win ? 'win' : 'lose'}"><span class="tt">${win ? '👑 CAMPEÃO' : losers.length > 1 ? '🗑️ PERDEDORES' : '🗑️ PERDEDOR'}</span>
+    <canvas data-sp="${u.sp}" data-win="${win ? 1 : 0}" width="150" height="130"></canvas>
+    <span class="nm" style="color:${u.col}">${u.name}</span><small>${POKE[u.sp].n} · ${win ? pick(WINLINE) : pick(LOSELINE)}</small></div>`;
+  $('#pod').innerHTML = (w ? card(w, true) : '') + losers.slice(0, 3).map(u => card(u, false)).join('');
+  if (!podAnim.started) podAnim();
+}
+function podAnim(){
+  if ($('#endOv').hidden && podAnim.started) { podAnim.started = false; return; }
+  podAnim.started = true;
+  const t = performance.now() / 1000;
+  document.querySelectorAll('#pod canvas').forEach(c => {
+    const g = c.getContext('2d'), sp = +c.dataset.sp, win = c.dataset.win === '1'; g.imageSmoothingEnabled = false; g.clearRect(0, 0, c.width, c.height);
+    const S = IMG[sp]; if (!S) return;
+    const a = win ? (S.a.Shoot || S.a.Idle) : (S.a.Hurt || S.a.Idle); if (!a || !a.im.complete) return;
+    let f = 0, tick = Math.floor(t * 60) % a.tot; for (let i = 0; i < a.d.length; i++){ if (tick < a.d[i]){ f = i; break; } tick -= a.d[i]; }
+    const sc = 2.4 * (POKE[sp].sc || 1), wpx = a.w * sc, hpx = a.h * sc;
+    g.save();
+    if (win){ const hop = Math.abs(Math.sin(t * 4)) * 10; g.translate(75, 108 - hop); g.drawImage(a.im, f * a.w, 0, a.w, a.h, -wpx / 2, -hpx * .75, wpx, hpx);
+      g.restore(); g.font = '30px system-ui'; g.textAlign = 'center'; g.fillText('👑', 75, 108 - hop - hpx * .62 - 4);
+      for (let k = 0; k < 6; k++){ const a2 = t * 2 + k; g.fillStyle = ['#ffd23f','#ff5d5d','#4dabff','#6bdc6b'][k % 4]; g.fillRect(75 + Math.cos(a2) * 60, 20 + ((t * 40 + k * 23) % 100), 4, 4); } }
+    else { g.translate(75, 100); g.rotate(Math.PI / 2 * .95); g.globalAlpha = .85; g.drawImage(a.im, 0, 0, a.w, a.h, -wpx / 2, -hpx * .75, wpx, hpx); g.restore();
+      g.font = '24px system-ui'; g.textAlign = 'center'; g.fillText('😭', 52 + Math.sin(t * 3) * 3, 46); g.fillText('💤', 108, 34 + Math.sin(t * 2) * 4);
+      g.fillStyle = 'rgba(120,190,255,.8)'; for (let k = 0; k < 3; k++){ g.beginPath(); g.arc(40 + k * 6, 60 + ((t * 30 + k * 12) % 30), 2.5, 0, 7); g.fill(); } }
+  });
+  requestAnimationFrame(podAnim);
 }
 
 /* ---------- loja ---------- */
