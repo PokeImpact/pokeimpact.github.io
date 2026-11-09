@@ -120,8 +120,8 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v10 · 09/11</small></h1>
-    <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Cada rodada sorteia um mapa: quadrado com árvores e um Voltorb que rebate tudo, ou redondo com o Lapras e seu gelo escorregadio. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo.</p>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v11 · 09/11</small></h1>
+    <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, ou o dos Voltorbs (1 a 4 por rodada). Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Oponentes (bots)</span><span class="row" id="nbots"></span></div>
     <div class="row"><span class="lbl">Vidas</span><span class="row" id="nlives"></span></div>
@@ -288,6 +288,25 @@ function onPlat(x, y){
 const platCenter = () => G.map === 'rd' ? { x:SIZE / 2, y:SIZE / 2 } : { x:(G.P.x0 + G.P.x1) / 2, y:(G.P.y0 + G.P.y1) / 2 };
 // casas que existem agora (chave i,j → máscara)
 const PCACHE = {};
+const MAPNAME = { sq:'quadrado', rd:'redondo', vt:'dos Voltorbs' };
+const VOLTLINE = { 1:['Esta rodada terá 1 Voltorb', 'Um só… mas ele não perdoa.'], 2:['Esta rodada terá 2 Voltorbs', 'Cuidado com a tabelinha dupla!'],
+  3:['Esta rodada terá 3 Voltorbs', 'Ninguém vai saber de onde veio a bola.'], 4:['⚠ ESTA RODADA TERÁ 4 VOLTORBS ⚠', 'Que os deuses do pinball tenham piedade de vocês.'] };
+const LAPLINE = [
+  ['Esta partida terá o Lapras 🧊', 'Todo mundo de blusa de frio!'],
+  ['O Lapras acordou de mau humor', 'Não acertem ele… ou acertem, se tiverem coragem.'],
+  ['Pista de patinação aberta', 'Freio é opcional. Cair também.'],
+  ['Previsão do tempo: neve forte', 'Com chance de Raio de Gelo na sua cara.'],
+  ['O Lapras quer paz', 'Cada golpe nele enche a barra da fúria.'] ];
+const SQLINE = ['O Voltorb no meio não é decoração.', 'Árvores: ótimas para se esconder, péssimas para bater.', 'Tabelinha no Voltorb vale ponto extra (de humilhação).', 'Quem ficar no canto vai conhecer a névoa de perto.'];
+// texto embaixo da contagem: no mapa dos Voltorbs anuncia quantos vieram (4 = vermelho e maior)
+function countSub(){
+  const base = `Rodada ${G.round} · mapa ${MAPNAME[G.map] || 'quadrado'}`;
+  if (G.map === 'rd'){ const L = LAPLINE[(G.round - 1) % LAPLINE.length]; return `${base}<br><b style="color:#bff3ff">${L[0]}</b><br><span>${L[1]}</span>`; }
+  if (G.map !== 'vt'){ const L = SQLINE[(G.round - 1) % SQLINE.length]; return `${base}<br><span>${L}</span>`; }
+  const n = G.obs.filter(o => o.k === 'volt').length || 1, L = VOLTLINE[Math.min(4, n)];
+  return n >= 4 ? `${base}<br><b style="color:#ff4040;font-size:1.5em;text-shadow:0 0 12px rgba(255,0,0,.7)">${L[0]}</b><br><span style="color:#ff8080">${L[1]}</span>`
+    : `${base}<br><b style="color:#ffe066">${L[0]}</b><br><span>${L[1]}</span>`;
+}
 function platCells(map = G.map, Rr = G.R, P = G.P){ const key = map + '|' + Rr + '|' + SIZE + '|' + P.x0 + ',' + P.x1; if (PCACHE.k === key) return PCACHE.v; const out = new Map(); PCACHE.k = key; PCACHE.v = out;
   if (map === 'rd'){ for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE; j++){ const m = cellMask(i, j, Rr); if (cellOn(m)) out.set(i + ',' + j, m); } }
   else for (let i = P.x0; i < P.x1; i++) for (let j = P.y0; j < P.y1; j++) out.set(i + ',' + j, 15);
@@ -328,18 +347,32 @@ const mistDps = () => (platGone() ? 12 : 4 + G.step * .7);   // fraca no começo
 /* ---------- obstáculos e gelo ---------- */
 // tree: Árvore de Corte (bloqueia e segura quem bate) · volt: Voltorb (rebate projéteis e Pokémon, como no Pokémon Pinball) · lapras: centro do mapa redondo
 const OBR = { tree:.42, volt:.38, lapras:.85 };
+const VOLT_BIG = .57;   // Voltorb sozinho: 1,5× maior, mais fácil de mirar a tabela
 function makeObstacles(){
   const c = SIZE / 2; G.obs = []; G.ice = [];
   if (G.map === 'rd'){
     G.obs.push({ k:'lapras', x:c, y:c, r:OBR.lapras, face:Math.PI / 2, cd:rnd(4, 6), charge:0, aim:0 });
     G.ice.push({ x:c, y:c, r:2.5, t:1e9 });
+  } else if (G.map === 'vt'){
+    // mapa dos Voltorbs: sorteia 1 a 4 por rodada
+    const n = 1 + Math.floor(Math.random() * 4), q = SIZE / 4, t = SIZE * .27;
+    const spots = n === 1 ? [[c, c]]
+      : n === 2 ? [[c, SIZE / 3], [c, SIZE * 2 / 3]]                                    // na linha do meio, distâncias iguais
+      : n === 3 ? [-90, 30, 150].map(a => [c + Math.cos(a * Math.PI / 180) * t, c + Math.sin(a * Math.PI / 180) * t])   // triângulo
+      : [[c - q, c - q], [c + q, c - q], [c - q, c + q], [c + q, c + q]];               // um em cada canto
+    for (const [x, y] of spots) G.obs.push({ k:'volt', x, y, r:n === 1 ? VOLT_BIG : OBR.volt, hitT:0, chg:0, boom:0, down:0, by:null });
+    G.nvolt = n;
   } else {
     const d = Math.max(2, Math.round(SIZE * .25));
     for (const [a, b] of [[d, 0], [-d, 0], [0, d], [0, -d]]) G.obs.push({ k:'tree', x:c + a, y:c + b, r:OBR.tree });
-    G.obs.push({ k:'volt', x:c, y:c, r:OBR.volt, hitT:0, chg:0, boom:0, down:0, by:null });
+    G.obs.push({ k:'volt', x:c, y:c, r:VOLT_BIG, hitT:0, chg:0, boom:0, down:0, by:null });
   }
 }
 const onIce = (x, y) => G.ice.some(p => Math.hypot(x - p.x, y - p.y) < p.r) && onPlat(x, y);
+const LAP_MAX = 20;   // golpes no Lapras até ele ficar furioso
+function lapRage(o){ if (o.frenzy > 0) return; o.chg = (o.chg || 0) + 1;
+  if (o.chg >= LAP_MAX){ o.chg = 0; o.frenzy = 5; o.charge = .6; o.aim = lapAim(o); feed('O Lapras ficou furioso!', '#bff3ff'); txt(o.x, o.y - 1.3, 'furioso!', '#bff3ff'); } }
+function lapAim(o){ const alive = G.units.filter(u => u.alive), t = alive.length && Math.random() < .5 ? pick(alive) : null; return t ? Math.atan2(t.y - o.y, t.x - o.x) : rnd(0, 6.283); }
 const VOLT_MAX = 20;   // cada projétil rebatido enche 1
 function voltCharge(o, by){ if (o.down > 0 || o.boom > 0) return; o.chg++; if (by) o.by = by; if (o.chg >= VOLT_MAX){ o.boom = 1; txt(o.x, o.y - 1, 'vai explodir!', '#ff5d5d'); } }
 function voltExplode(o){
@@ -366,10 +399,11 @@ function obstacleStep(dt){
           if (al > 0 && al < len && pp < .55 + POKE[e.sp].rad){ damage(e, 3 * DMG, null); push(e, dx, dy, 6); e.b.slow = 1; e.b.slowF = .35; } }
         for (let a = o.r + .3; a < len; a += .7) G.ice.push({ x:o.x + dx * a, y:o.y + dy * a, r:.6, t:10 });
         G.fx.push({ beam:1, x:o.x, y:o.y, dx, dy, len, w:.5, t:0, life:.4, col:'#bff3ff' });
-        o.cd = rnd(6, 9); o.anim = .6; }
+        o.anim = .6;
+        if (o.frenzy > 0){ o.frenzy--; o.charge = o.frenzy > 0 ? .4 : 0; o.aim = lapAim(o); if (!o.frenzy) o.cd = rnd(6, 9); }   // fúria: 5 raios seguidos
+        else o.cd = rnd(6, 9); }
     } else if ((o.cd -= dt) <= 0){
-      const alive = G.units.filter(u => u.alive), t = alive.length && Math.random() < .5 ? pick(alive) : null;
-      o.aim = t ? Math.atan2(t.y - o.y, t.x - o.x) : rnd(0, 6.283); o.charge = 1.2; }
+      o.aim = lapAim(o); o.charge = 1.2; }
     if (o.anim > 0) o.anim -= dt;
   }
   G.ice = G.ice.filter(p => (p.t -= dt) > 0);
@@ -384,6 +418,7 @@ function obstacleUnits(){
       if (vn < 0){
         if (o.k === 'volt'){ const k = Math.max(2.5, -vn * 1.15); u.vx += nx * (k - vn); u.vy += ny * (k - vn); o.hitT = .3;   // quica longe
           if (-vn > 1.5){ G.fx.push({ ring:1, x:o.x, y:o.y, r:.7, t:0, life:.3, col:'#ffe066' }); txt(o.x, o.y - .8, 'boing!', '#ffe066'); } }
+        else if (o.k === 'lapras'){ const k = Math.max(1.2, -vn * .75); u.vx += nx * (k - vn); u.vy += ny * (k - vn); }
         else { u.vx = (u.vx - vn * nx) * .5; u.vy = (u.vy - vn * ny) * .5; if (-vn > 3) for (let k = 0; k < 6; k++) fx(u.x - nx * .3, u.y - ny * .3, rnd(-2, 2), rnd(-2, 2), .3, '#c9b28a', 5); }
       }
     }
@@ -396,6 +431,7 @@ function obstacleShot(s){
     if (o.k === 'volt'){ const vn = s.vx * nx + s.vy * ny; if (vn < 0){ s.vx -= 2 * vn * nx; s.vy -= 2 * vn * ny; }
       s.x = s.bx = o.x + nx * (o.r + s.d.r + .02); s.y = s.by = o.y + ny * (o.r + s.d.r + .02); o.hitT = .3; voltCharge(o, s.o);
       G.fx.push({ ring:1, x:o.x, y:o.y, r:.6, t:0, life:.3, col:'#ffe066' }); return false; }
+    if (o.k === 'lapras') lapRage(o);
     if (s.d.tele){ teleTo(s.o, o.x + nx * (o.r + .45), o.y + ny * (o.r + .45)); return true; }
     if (s.d.aoe) explode(s);
     for (let k = 0; k < 8; k++) fx(s.x, s.y, rnd(-3, 3), rnd(-3, 3), .3, s.d.col, 5);
@@ -552,7 +588,7 @@ function newMatch(){
   for (let i = 0; i < nb; i++) G.units.push(makeUnit(pick(ids), BOTNAMES[i], false, G.units.length));
   if (NET.on) netStartMsg();
   G.round = 0; G.t = 0;
-  G.matchMap = CFG.map === 'rand' ? (Math.random() < .5 ? 'sq' : 'rd') : CFG.map;   // o mesmo mapa a partida inteira
+  G.matchMap = CFG.map === 'rand' ? pick(['sq','rd','vt']) : CFG.map;   // o mesmo mapa a partida inteira
   for (const id of ['menu','endOv','shopOv']) $('#' + id).hidden = true;
   for (const id of ['top','gold','plist','emo']) $('#' + id).hidden = false;
   $('#bar').hidden = false;
@@ -571,7 +607,8 @@ function startRound(){
   });
   for (const u of G.units) if (u.out) u.alive = false;
   G.phase = 'count'; G.timer = 3;
-  if (G.round === 1) feed(`Mapa ${G.map === 'rd' ? 'redondo: cuidado com o gelo do Lapras' : 'quadrado: o Voltorb rebate tudo e explode quando enche'}`, '#9fd8ff');
+  if (G.round === 1) feed(G.map === 'rd' ? 'Mapa redondo: cuidado com o gelo do Lapras (golpes nele o deixam furioso)' : G.map === 'vt' ? 'Mapa dos Voltorbs: 1 a 4 por rodada, rebatem tudo' : 'Mapa quadrado: o Voltorb rebate tudo e explode quando enche', '#9fd8ff');
+  if (G.map === 'vt') feed(VOLTLINE[G.nvolt][0], G.nvolt === 4 ? '#ff5d5d' : '#ffe066');
   hudList(true);
 }
 function endRound(){
@@ -710,7 +747,7 @@ function update(dt){
   for (const f of G.falling) f.t += dt; G.falling = G.falling.filter(f => f.t < .8);
   for (const u of G.units) if (u.emo && (u.emo.t -= dt) <= 0){ u.emo = null; hudList(true); }
 
-  if (G.phase === 'count'){ G.timer -= dt; const n = Math.ceil(G.timer); banner(n > 0 ? String(n) : 'Já!', n > 0 ? `Rodada ${G.round} · mapa ${G.map === 'rd' ? 'redondo' : 'quadrado'}` : '', .5); if (G.timer <= 0){ G.phase = 'play'; banner('Já!', '', .6); } return; }
+  if (G.phase === 'count'){ G.timer -= dt; const n = Math.ceil(G.timer); banner(n > 0 ? String(n) : 'Já!', n > 0 ? countSub() : '', .5); if (G.timer <= 0){ G.phase = 'play'; banner('Já!', '', .6); } return; }
   if (G.phase === 'roundEnd'){ G.timer -= dt; if (G.timer <= 0) afterRound(); return; }
   if (G.phase === 'shop'){ G.timer -= dt; $('#shopTime').textContent = `⏱ ${Math.ceil(G.timer)} s`; if (G.timer <= 0) closeShop(); return; }
   if (G.phase !== 'play') return;
@@ -991,15 +1028,18 @@ function drawObstacle(o){
     for (const [dx, dy, r, c] of [[0, -.75, .42, '#2f7a34'], [-.2, -.55, .3, '#3c9440'], [.2, -.55, .3, '#3c9440'], [0, -.95, .26, '#4fae4f']]){ cx.fillStyle = c; cx.beginPath(); cx.arc(x + dx * T, y + dy * T, r * T, 0, 7); cx.fill(); }
     cx.strokeStyle = '#1d4a22'; cx.lineWidth = 2; cx.beginPath(); cx.arc(x, y - .75 * T, .42 * T, 0, 7); cx.stroke(); return; }
   if (o.k === 'volt'){ const sh = o.hitT > 0, f = Math.min(1, o.chg / VOLT_MAX), x = sx(o.x), y = sy(o.y) - T * .3;
-    if (o.down > 0){ drawSprite(100, 'Hurt', 0, Math.PI / 2, o.x, o.y, T / 19, .35); cx.font = `800 ${Math.max(10, T * .26)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = '#ffe066'; cx.fillText(Math.ceil(o.down), x, y - T * .55); return; }
-    drawSprite(100, sh || o.boom > 0 ? 'Hurt' : 'Idle', G.t, Math.PI / 2, o.x, o.y, T / 19, 1);
+    if (o.down > 0){ drawSprite(100, 'Hurt', 0, Math.PI / 2, o.x, o.y, T / 19 * o.r / OBR.volt, .35); cx.font = `800 ${Math.max(10, T * .26)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = '#ffe066'; cx.fillText(Math.ceil(o.down), x, y - T * .55); return; }
+    drawSprite(100, sh || o.boom > 0 ? 'Hurt' : 'Idle', G.t, Math.PI / 2, o.x, o.y, T / 19 * o.r / OBR.volt, 1);
     const red = o.boom > 0 ? .45 + .4 * Math.sin(G.t * 30) : f * .55;
-    if (red > 0){ cx.fillStyle = `rgba(255,40,40,${red})`; cx.beginPath(); cx.arc(x, y + T * .05, T * .34, 0, 7); cx.fill(); }
+    if (red > 0){ cx.fillStyle = `rgba(255,40,40,${red})`; cx.beginPath(); cx.arc(x, y + T * .05, T * .34 * o.r / OBR.volt, 0, 7); cx.fill(); }
     if (o.boom > 0){ cx.strokeStyle = 'rgba(255,93,93,.8)'; cx.setLineDash([5, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(o.x), sy(o.y), 2.8 * T, 0, 7); cx.stroke(); cx.setLineDash([]); }
     if (sh){ cx.strokeStyle = '#ffe066'; cx.lineWidth = 3; cx.beginPath(); cx.arc(x, y, T * .55, 0, 7); cx.stroke(); }
     const bw = T * .8; cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(x - bw / 2 - 1, y - T * .62, bw + 2, 6); cx.fillStyle = f >= 1 ? '#ff5d5d' : '#ffb03a'; cx.fillRect(x - bw / 2, y - T * .62 + 1, bw * f, 4);
     return; }
-  if (o.k === 'lapras') drawSprite(131, o.charge > 0 ? 'Charge' : o.anim > 0 ? 'Shoot' : 'Idle', G.t, o.face, o.x, o.y, T / 21, 1);
+  if (o.k === 'lapras'){ drawSprite(131, o.charge > 0 ? 'Charge' : o.anim > 0 ? 'Shoot' : 'Idle', G.t, o.face, o.x, o.y, T / 21, 1);
+    const x = sx(o.x), y = sy(o.y) - T * 1.35, f = o.frenzy > 0 ? 1 : Math.min(1, (o.chg || 0) / LAP_MAX), bw = T * 1.1;
+    if (o.frenzy > 0){ cx.strokeStyle = `rgba(191,243,255,${.6 + .4 * Math.sin(G.t * 24)})`; cx.lineWidth = 3; cx.beginPath(); cx.arc(sx(o.x), sy(o.y) - T * .4, T * 1.05, 0, 7); cx.stroke(); }
+    cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(x - bw / 2 - 1, y - 1, bw + 2, 6); cx.fillStyle = f >= 1 ? '#ffffff' : '#7fd8ff'; cx.fillRect(x - bw / 2, y, bw * f, 4); }
 }
 function drawSprite(sp, an, t, face, x, y, sc, alpha){
   const F = frameOf(sp, an, t); if (!F) return;
@@ -1134,7 +1174,7 @@ function renderMenu(){
   $('#picks').innerHTML = Object.entries(POKE).map(([sp, p]) => `<button class="pk" data-sp="${sp}" aria-pressed="${+sp === CFG.sp}"><img src="${IMG[sp] ? IMG[sp].por : ''}" alt=""><span><b>${p.n}</b><small>${p.desc}</small><small style="color:var(--fg);margin-top:4px">Começa com ${SK[p.kit[0]].ic} ${SK[p.kit[0]].n}</small></span></button>`).join('');
   $('#nbots').innerHTML = (NET.on ? [0,1,2,3,5,7] : [1,2,3,5,7]).map(n => `<button class="chip" data-nb="${n}" aria-pressed="${n === CFG.bots}">${n}</button>`).join('');
   $('#nlives').innerHTML = [1,3,5].map(n => `<button class="chip" data-nl="${n}" aria-pressed="${n === CFG.lives}">${n}</button>`).join('');
-  $('#nmap').innerHTML = [['rand','Sorteado'],['sq','Quadrado'],['rd','Redondo']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
+  $('#nmap').innerHTML = [['rand','Sorteado'],['sq','Quadrado'],['rd','Redondo'],['vt','Voltorbs']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
 }
 $('#menu').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -1248,7 +1288,7 @@ function netBroadcast(){
     z:G.zones.map(z => [skId(z.d), r2(z.x), r2(z.y), z.rad]),
     m:G.marks.map(m => [skId(m.d), r2(m.x), r2(m.y), r2(m.t)]),
     d:G.decoys.map(c => [G.units.indexOf(c.o), r2(c.x), r2(c.y), r2(c.face)]),
-    mp:G.map, R:G.R, ob:G.obs.map(o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0, o.chg || 0, r2(o.boom || 0), r2(o.down || 0)]),
+    mp:G.map, R:G.R, ob:G.obs.map(o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0, o.chg || 0, r2(o.boom || 0), r2(o.down || 0), o.frenzy || 0, o.r]),
     ic:G.ice.map(p => [r2(p.x), r2(p.y), p.r, r2(Math.min(p.t, 99))]),
     ev:NET.ev.concat(fxs)
   };
@@ -1302,7 +1342,7 @@ function applySnap(S){
   // plataforma encolheu: anima as casas caindo
   if (S.rd === G.round && S.mp === G.map && (S.R !== G.R || S.P.x0 !== G.P.x0)) addFalling(platCells(), platCells(S.mp, S.R, S.P));
   Object.assign(G, { phase:S.ph, timer:S.tm, round:S.rd, shrinkIn:S.si, step:S.st, P:S.P, map:S.mp, R:S.R });
-  G.obs = S.ob.map(a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0, chg:a[8], boom:a[9], down:a[10] }));
+  G.obs = S.ob.map(a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0, chg:a[8], boom:a[9], down:a[10], frenzy:a[11], r:a[12] || OBR[a[0]] }));
   G.ice = S.ic.map(a => ({ x:a[0], y:a[1], r:a[2], t:a[3] }));
   S.u.forEach((a, i) => { const u = G.units[i]; if (!u) return;
     const jump = Math.hypot(a[0] - (u.tx ?? a[0]), a[1] - (u.ty ?? a[1])) > 2 || !u.alive;
@@ -1347,7 +1387,7 @@ function clientUpdate(dt){
   for (const t of G.txt) t.t += dt; G.txt = G.txt.filter(t => t.t < 1);
   for (const f of G.falling) f.t += dt; G.falling = G.falling.filter(f => f.t < .8);
   for (const u of G.units) if (u.emo && (u.emo.t -= dt) <= 0) u.emo = null;
-  if (G.phase === 'count'){ const n = Math.ceil(G.timer); banner(n > 0 ? String(n) : 'Já!', n > 0 ? `Rodada ${G.round}` : '', .5); }
+  if (G.phase === 'count'){ const n = Math.ceil(G.timer); banner(n > 0 ? String(n) : 'Já!', n > 0 ? countSub() : '', .5); }
   for (const s of G.shots){ if (!s.lob){ s.x += s.vx * dt; s.y += s.vy * dt; if (Math.random() < .8) fx(s.x, s.y, rnd(-.6, .6), rnd(-.6, .6), .3, s.d.col, s.d.r * T * .5); } else { const sp = Math.hypot(s.vx, s.vy); s.x += s.vx * dt; s.y += s.vy * dt; s.left = Math.max(0, s.left - sp * dt); } }
   for (const z of G.zones) if (Math.random() < .6){ const a = rnd(0, 6.3), r = rnd(0, z.rad); fx(z.x + Math.cos(a) * r, z.y + Math.sin(a) * r, 0, z.d.zc ? -.3 : -1.4, .45, z.d.zc ? pick(['#6e5030','#9a7a4a']) : pick(['#ff6a1a','#ffd23f']), 6); }
   for (const m of G.marks) m.t = Math.max(0, m.t - dt);
