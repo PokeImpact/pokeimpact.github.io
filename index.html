@@ -84,6 +84,7 @@ h2{font-family:var(--font-d);font-weight:400;font-size:24px;margin:0;color:var(-
 #gold span{background:rgba(21,15,28,.82);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
 #emo{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;gap:4px}
 #emo button{background:rgba(21,15,28,.82);border:1px solid var(--line);border-radius:10px;font-size:20px;width:40px;height:40px;padding:0}
+.chip.soon{opacity:.45;cursor:not-allowed;border-style:dashed}
 #spec{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:6;background:rgba(14,10,24,.86);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:8px 12px;font-size:12px;max-width:calc(100vw - 24px);overflow-x:auto;pointer-events:none}
 #spec table{border-collapse:collapse;margin-top:4px}#spec th,#spec td{padding:2px 8px;text-align:right;white-space:nowrap}#spec th:first-child,#spec td:first-child{text-align:left}#spec th{color:#a99bc4;font-weight:600}#spec small{color:#a99bc4}#spec tr.dd td{opacity:.55}
 #feed{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));top:calc(52px + env(safe-area-inset-top,0px));z-index:5;display:flex;flex-direction:column;gap:4px;align-items:flex-end;pointer-events:none}
@@ -131,8 +132,8 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v19 · 10/11</small></h1>
-    <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Na Zona Estratégica, fique dentro dos círculos para enchê-los com a sua cor. Na Pokébol, empurre a bola até o gol do outro time (sempre em times; 2v2 se nada for escolhido). Nesses dois modos quem cai volta em 3 s.</p>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v20 · 10/11</small></h1>
+    <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol (futebol).</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
     <div class="row"><span class="lbl">Formato</span><span class="row" id="nfmt"></span></div>
@@ -216,7 +217,7 @@ const SK = {
   teleporte:{ n:'Teletransporte', ic:'✨', k:'shot', cd:11, price:10, spd:4.2, range:6.5, r:.3, dmg:0, push:0, tele:1, col:'#ffb3ff', desc:'Esfera lenta. Se acertar alguém, vocês trocam de lugar. Se não acertar, você aparece onde ela parar. Aperte de novo para aparecer onde ela está.' },
   psiquico: { n:'Psíquico', ic:'🔮', k:'multi', cd:10, price:10, spd:3.4, range:9, r:.24, dmg:4, push:5.5, home:1.1, col:'#c77dff', desc:'Solta uma esfera lenta que persegue cada inimigo, curvando atrás dele. Quanto mais perto do alvo, mais forte ela puxa a curva.' },
   esferas:  { n:'Esferas Psíquicas', ic:'🟣', k:'orbit', cd:13, price:10, dur:6, cnt:3, orad:1.05, dmg:4, push:7.5, col:'#d98cff', desc:'Três esferas giram em volta de você por 6 s: empurram quem encostar e destroem projéteis.' },
-  futuro:   { n:'Premonição', ic:'👁️', k:'delay', cd:16, price:16, ult:1, range:8, rad:1.8, delay:1.4, dmg:12, push:12, core:.35, col:'#b14dff', l3:{ core:.55 }, d3:'o miolo escuro fica bem maior', desc:'Marca uma área que puxa os inimigos para o centro como gravidade. 1,4 s depois ela explode e arremessa longe. No miolo escuro empurra muito mais do que na beirada.' },
+  futuro:   { n:'Premonição', ic:'👁️', k:'delay', cd:16, price:16, ult:1, range:8, rad:1.8, delay:1.4, dmg:12, push:12, core:.35, col:'#b14dff', l3:{ core:.55 }, d3:'o miolo escuro fica bem maior', desc:'Marca uma área que puxa inimigos e projéteis para o centro como gravidade (projéteis leves curvam mais). 1,4 s depois ela explode e arremessa longe. No miolo escuro empurra muito mais do que na beirada.' },
   furia:    { n:'Corte Fúria', ic:'✂️', k:'cone', cd:1.8, price:10, range:1.7, ang:.85, dmg:9, push:5, fury:1, col:'#b8f57a', parts:['#e8ffd0','#b8f57a','#ffffff'], desc:'Corte curto à frente. Cada acerto seguido no mesmo alvo (até 3 s entre eles) fica 40% mais forte, até 3 vezes.' },
   reflexo:  { n:'Reflexo', ic:'🪞', k:'self', cd:9, price:10, dur:1.4, desc:'Barreira psíquica por 1,4 s: devolve os projéteis que baterem em você. Dá para andar.' },
   danca:    { n:'Dança das Espadas', ic:'🗡️', k:'self', cd:15, price:16, ult:1, dur:5, desc:'Por 5 s seus golpes dão quase o dobro de dano e empurram mais.' },
@@ -498,6 +499,9 @@ function stat(u){
 }
 const isZona = () => G.mode === 'zn';
 const isPb = () => G.mode === 'pb';
+// peso dos projéteis na gravidade da Premonição: maior = mais leve (curva mais)
+const SHOTWT = { lamina:1.4, explosao:1.5, confusao:1.2, brasa:1, teleporte:1, jato:.7, psiquico:.6 };
+for (const k in SHOTWT) SK[k].wt = SHOTWT[k];
 const respawns = () => isZona() || isPb();   // modos em que quem cai volta
 const GOALW = 1.6, PBGOALS = 3, PBTIME = 120;
 // Pokébol: a bola anda com os golpes e com os corpos
@@ -698,12 +702,21 @@ function banner(h, s, dur = 1.6){ if (NET.on && NET.host && G.phase !== 'count')
 
 /* ---------- partida e rodadas ---------- */
 function newMatch(){
-  G.units = []; $('#spec').hidden = true; G.mode = CFG.mode || 'cl'; G.fmt = CFG.fmt || (CFG.mode === 'pb' ? 2 : 0); G.teamWins = {}; G.caps = [];
+  G.units = []; $('#spec').hidden = true; G.mode = 'cl'; G.fmt = CFG.fmt || 0; G.teamWins = {}; G.caps = [];
   G.me = makeUnit(CFG.sp, NET.on ? NET.nick : 'Você', true, 0); G.units.push(G.me);
   if (NET.on) for (const c of NET.peers){ const u = makeUnit(c.sp, c.nick, true, G.units.length); u.remote = c; c.u = u; G.units.push(u); }
-  const ids = Object.keys(POKE).map(Number), nb = G.fmt ? Math.max(0, G.fmt * 2 - G.units.length) : Math.min(NET.on ? CFG.bots : Math.max(1, CFG.bots), 8 - G.units.length);
-  for (let i = 0; i < nb; i++) G.units.push(makeUnit(pick(ids), BOTNAMES[i], false, G.units.length));
-  const tc = [0, 0]; G.units.forEach((u, i) => { u.team = G.fmt ? i % 2 : i; if (G.fmt){ u.col = TEAMCOL[u.team][tc[u.team]++ % 4]; } });
+  const ids = Object.keys(POKE).map(Number);
+  if (G.fmt){   // times: primeiro quem escolheu, depois os "automático" no time menor, e os bots completam
+    G.me.pref = NET.on ? (NET.tm ?? -1) : -1; for (const c of NET.peers) if (c.u) c.u.pref = c.tm ?? -1;
+    const n = [0, 0]; for (const u of G.units) if (u.pref === 0 || u.pref === 1){ u.team = u.pref; n[u.team]++; }
+    for (const u of G.units) if (u.team == null){ u.team = n[0] <= n[1] ? 0 : 1; n[u.team]++; }
+    let bi = 0; for (const t of [0, 1]) while (n[t] < G.fmt && G.units.length < 8){ const b = makeUnit(pick(ids), BOTNAMES[bi++], false, G.units.length); b.team = t; n[t]++; G.units.push(b); }
+    const tc = [0, 0]; for (const u of G.units) u.col = TEAMCOL[u.team][tc[u.team]++ % 4];
+  } else {
+    const nb = Math.min(NET.on ? CFG.bots : Math.max(1, CFG.bots), 8 - G.units.length);
+    for (let i = 0; i < nb; i++) G.units.push(makeUnit(pick(ids), BOTNAMES[i], false, G.units.length));
+    G.units.forEach((u, i) => u.team = i);
+  }
   if (NET.on) netStartMsg();
   G.round = 0; G.t = 0;
   const pm = CFG.map === 'rand' ? pick(['sq','rd','vt','fl']) : CFG.map;
@@ -1086,6 +1099,9 @@ function updateWorld(dt){
   for (const m of G.marks){ m.t -= dt; const co = m.d.core || .35;
     if (m.t > 0) for (const e of foesOf(m.o)){ if (e.air || e.b.shell > 0 || e.b.intang > 0) continue; const ex = m.x - e.x, ey = m.y - e.y, el = Math.hypot(ex, ey), R0 = m.d.rad + .3;   // gravidade: puxa para o centro
       if (el < R0 && el > .05){ const a = 4.5 * (.45 + .55 * (1 - el / R0)) * dt; e.vx += ex / el * a; e.vy += ey / el * a; } }
+    if (m.t > 0) for (const q of G.shots){ if (q.dead || q.lob) continue; const ex = m.x - q.bx, ey = m.y - q.by, el = Math.hypot(ex, ey), R0 = m.d.rad + .6;   // projéteis também curvam
+      if (el < R0 && el > .05){ const sp = Math.hypot(q.vx, q.vy), cur = Math.atan2(q.vy, q.vx); let da = Math.atan2(ey, ex) - cur; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
+        const tr = 3 * (q.d.wt ?? 1) * (.4 + .6 * (1 - el / R0)) * dt, na = cur + clamp(da, -tr, tr); q.vx = Math.cos(na) * sp; q.vy = Math.sin(na) * sp; } }
     if (m.t <= 0){ for (const e of foesOf(m.o)){ const ex = e.x - m.x, ey = e.y - m.y, el = Math.hypot(ex, ey); if (el <= m.d.rad + .3) hit(m.o, e, m.d, m.L, ex / (el || 1), ey / (el || 1), el < m.d.rad * co ? 1.25 : 1 - .55 * (el - m.d.rad * co) / (m.d.rad * (1 - co))); }
       G.fx.push({ ring:1, x:m.x, y:m.y, r:m.d.rad, t:0, life:.45, col:m.d.col }); ballArea(m.x, m.y, m.d.rad + .3, m.d.push * m.L.p);
       for (let k = 0; k < 26; k++) fx(m.x, m.y, rnd(-5, 5), rnd(-5, 5), .45, pick(['#b14dff','#e07bff','#fff']), 7); }
@@ -1376,7 +1392,10 @@ addEventListener('keydown', e => {
   if (e.code === 'Minus' || e.code === 'NumpadSubtract') return setZoom((CFG.zoom || 1) / 1.15);
   const m = /^Digit([1-5])$/.exec(e.code); if (m && G.me && G.phase !== 'menu') myEmote(EMOTES[+m[1] - 1]);
   if (e.code === 'Escape' && G.phase !== 'menu') openCfg();
+  if ((e.code === 'KeyP' || (e.code === 'KeyS' && KEYS.mode === 'mouse')) && !NET.on && G.phase !== 'menu' && G.phase !== 'over') togglePause();
 });
+// pausa só contra bots (no online atrapalharia os outros)
+function togglePause(){ G.paused = !G.paused; if (G.paused){ $('#banner').innerHTML = 'Pausado<small>Aperte S ou P para continuar</small>'; bannerT = 0; } else $('#banner').innerHTML = ''; }
 addEventListener('keyup', e => { held[e.code] = false; });
 addEventListener('blur', () => { for (const k in held) held[k] = false; mouse.rdown = false; });
 
@@ -1442,7 +1461,8 @@ $('#cfgBtn').onclick = openCfg; $('#cfgBtn2').onclick = openCfg;
 function renderMenu(){
   $('#picks').innerHTML = Object.entries(POKE).map(([sp, p]) => `<button class="pk" data-sp="${sp}" aria-pressed="${+sp === CFG.sp}"><img src="${IMG[sp] ? IMG[sp].por : ''}" alt=""><span><b>${p.n}</b><small>${p.desc}</small><small style="color:var(--fg);margin-top:4px">Começa com ${SK[p.kit[0]].ic} ${SK[p.kit[0]].n}</small></span></button>`).join('');
   $('#nbots').innerHTML = (NET.on ? [0,1,2,3,5,7] : [1,2,3,5,7]).map(n => `<button class="chip" data-nb="${n}" aria-pressed="${n === CFG.bots}">${n}</button>`).join('');
-  $('#nmode').innerHTML = [['cl','Clássico'],['zn','Zona Estratégica'],['pb','Pokébol (futebol)']].map(([k, n]) => `<button class="chip" data-mo="${k}" aria-pressed="${k === (CFG.mode || 'cl')}">${n}</button>`).join('');
+  CFG.mode = 'cl';   // Zona e Pokébol ainda em desenvolvimento
+  $('#nmode').innerHTML = [['cl','Clássico'],['zn','Zona Estratégica'],['pb','Pokébol (futebol)']].map(([k, n]) => k === 'cl' ? `<button class="chip" data-mo="${k}" aria-pressed="true">${n}</button>` : `<button class="chip soon" disabled title="Novo modo em desenvolvimento">${n} · em breve</button>`).join('');
   $('#nfmt').innerHTML = [[0,'Todos contra todos'],[2,'2v2'],[3,'3v3'],[4,'4v4']].map(([k, n]) => `<button class="chip" data-fm="${k}" aria-pressed="${k === (CFG.fmt || 0)}">${n}</button>`).join('');
   $('#botsRow').hidden = !!CFG.fmt || CFG.mode === 'pb'; $('#livesRow').hidden = CFG.mode === 'zn' || CFG.mode === 'pb';
   $('#nlives').innerHTML = [1,3,5].map(n => `<button class="chip" data-nl="${n}" aria-pressed="${n === CFG.lives}">${n}</button>`).join('');
@@ -1454,9 +1474,10 @@ $('#menu').addEventListener('click', e => {
   if (b.dataset.nb) CFG.bots = +b.dataset.nb;
   if (b.dataset.nl) CFG.lives = +b.dataset.nl;
   if (b.dataset.mp) CFG.map = b.dataset.mp;
+  if (b.dataset.tm != null){ NET.tm = +b.dataset.tm; if (isClient()){ netSend({ t:'tm', tm:NET.tm }); b.parentNode.querySelectorAll('[data-tm]').forEach(x => x.setAttribute('aria-pressed', x === b)); } else if (NET.on) netLobby(); return; }
   if (b.dataset.mo) CFG.mode = b.dataset.mo;
   if (b.dataset.fm) CFG.fmt = +b.dataset.fm;
-  store.set('nt-cfg', CFG); renderMenu();
+  store.set('nt-cfg', CFG); renderMenu(); if (NET.on && NET.host && G.phase === 'menu') netLobby();
 });
 $('#play').onclick = () => { if (!isClient()) newMatch(); };
 $('#again').onclick = () => { if (isClient()){ banner('Esperando o anfitrião', 'Ele começa a próxima partida', 3); return; } newMatch(); };
@@ -1523,13 +1544,15 @@ function netDrop(c){
   if (G.phase === 'menu') netLobby();
 }
 function netLobby(){
-  const list = [{ nick:NET.nick, sp:CFG.sp }].concat(NET.peers.map(c => ({ nick:c.nick, sp:c.sp })));
-  for (const c of NET.peers) if (c.open) c.send({ t:'lobby', list, code:NET.code });
+  const list = [{ nick:NET.nick, sp:CFG.sp, tm:NET.tm ?? -1 }].concat(NET.peers.map(c => ({ nick:c.nick, sp:c.sp, tm:c.tm ?? -1 })));
+  NET.fm = CFG.fmt || 0;
+  for (const c of NET.peers) if (c.open) c.send({ t:'lobby', list, code:NET.code, fm:NET.fm });
   renderLobby(list);
 }
 function renderLobby(list){
   lobbyMsg(`<span class="lbl">Código da sala</span><span class="code">${NET.code}</span><small style="color:var(--dim)">${NET.host ? 'Passe o código para os amigos. Quando todos entrarem, aperte Jogar. Bots completam as vagas (máx. 8).' : 'Você entrou. Esperando o anfitrião começar…'}</small>` +
-    list.map(p => `<span class="pl"><img src="${IMG[p.sp] ? IMG[p.sp].por : ''}" alt="">${p.nick} · ${POKE[p.sp].n}</span>`).join(''));
+    list.map(p => `<span class="pl"><img src="${IMG[p.sp] ? IMG[p.sp].por : ''}" alt="">${p.nick} · ${POKE[p.sp].n}${NET.fm ? ` · <b style="color:${p.tm >= 0 ? TEAMCOL[p.tm][0] : 'var(--dim)'}">${p.tm >= 0 ? TEAMNAME[p.tm] : 'automático'}</b>` : ''}</span>`).join('') +
+    (NET.fm ? `<span class="row" style="gap:6px"><span class="lbl">Meu time</span>${[[0,'Azul'],[1,'Vermelho'],[-1,'Automático']].map(([t, n]) => `<button class="chip" data-tm="${t}" aria-pressed="${(NET.tm ?? -1) === t}">${n}</button>`).join('')}</span>` : ''));
   $('#play').hidden = !NET.host; $('#mkRoom').disabled = $('#joinRoom').disabled = true;
 }
 function netHostRecv(c, m){
@@ -1539,6 +1562,7 @@ function netHostRecv(c, m){
     c.nick = String(m.nick || 'Amigo').slice(0, 12); c.sp = POKE[m.sp] ? m.sp : 6; NET.peers.push(c); netLobby(); return;
   }
   if (m.t === 'sp' && POKE[m.sp]){ c.sp = m.sp; if (G.phase === 'menu') netLobby(); return; }
+  if (m.t === 'tm'){ c.tm = [0, 1].includes(m.tm) ? m.tm : -1; if (G.phase === 'menu') netLobby(); return; }
   const u = c.u; if (!u || u.remote !== c) return;
   if (m.t === 'in' && Array.isArray(m.mv)){ const l = Math.hypot(m.mv[0], m.mv[1]); u.mvx = l > 1 ? m.mv[0] / l : +m.mv[0] || 0; u.mvy = l > 1 ? m.mv[1] / l : +m.mv[1] || 0; }
   else if (m.t === 'c') cast(u, m.i | 0, +m.x, +m.y);
@@ -1599,7 +1623,7 @@ async function netJoin(){
 function netSend(m){ if (NET.conn && NET.conn.open) NET.conn.send(m); }
 function netLeave(){ try { NET.peer && NET.peer.destroy(); } catch(e){} Object.assign(NET, { on:false, host:false, conn:null, peers:[], peer:null }); $('#lobby').hidden = true; $('#play').hidden = false; $('#mkRoom').disabled = $('#joinRoom').disabled = false; }
 function netClientRecv(m){
-  if (m.t === 'lobby'){ renderLobby(m.list); return; }
+  if (m.t === 'lobby'){ NET.fm = m.fm || 0; renderLobby(m.list); return; }
   if (m.t === 'tolobby'){ goMenu(); banner('', ''); return; }
   if (m.t === 'full'){ lobbyMsg(m.why); netLeave(); $('#lobby').hidden = false; return; }
   if (m.t === 'start'){
