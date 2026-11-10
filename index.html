@@ -77,7 +77,7 @@ h2{font-family:var(--font-d);font-weight:400;font-size:24px;margin:0;color:var(-
 .sl.ult{border-color:var(--gold)}
 .sl .k{position:absolute;left:3px;top:1px;font-size:11px;font-weight:800;color:var(--fg);text-shadow:0 1px 2px #000}
 .sl .lv{position:absolute;right:3px;bottom:1px;font-size:10px;color:var(--gold);font-weight:800}
-.sl .cd{position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.62);height:0}
+.sl .cd{position:absolute;inset:0;pointer-events:none}
 .sl .ct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;text-shadow:0 1px 3px #000}
 .sl.lock{opacity:.35;filter:grayscale(1)}
 #gold{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:flex;gap:6px}
@@ -129,7 +129,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v16 · 09/11</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v17 · 09/11</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Oponentes (bots)</span><span class="row" id="nbots"></span></div>
@@ -196,7 +196,7 @@ const SK = {
   voo:      { n:'Voo', ic:'🪽', k:'leap', cd:9, price:10, range:4.5, dur:.7, desc:'Salta voando até o cursor. No ar não leva dano nem é empurrado.' },
   rugido:   { n:'Rugido', ic:'🗯️', k:'nova', cd:8, price:10, rad:2.1, dmg:0, push:7, col:'#f4f1e8', wind:1, windup:.55, desc:'Enche o peito por meio segundo (aparece o círculo) e ruge: uma rajada de vento afasta quem estiver perto.' },
   turbilhao:{ n:'Redemoinho de Fogo', ic:'🌀', k:'zone', cd:12, price:10, range:7, rad:1.4, dur:3.5, dps:6, col:'#ff6a1a', desc:'Deixa uma área em chamas: dano a quem ficar dentro.' },
-  explosao: { n:'Rajada Explosiva', ic:'💥', k:'shot', cd:18, price:16, ult:1, spd:4, range:10, r:.45, dmg:16, push:11, aoe:1.8, col:'#ffd23f', desc:'Bola lenta que explode em área e arremessa todos longe.' },
+  explosao: { n:'Onda de Calor', ic:'🔥', k:'wave', cd:16, price:16, ult:1, spd:4.2, range:8, w:3.4, dmg:8, push:10, burn:[4, 3], col:'#ff6a1a', desc:'Uma labareda larga avança à sua frente: empurra e deixa queimando todos que atravessa. Não é anulada pelos golpes Q.' },
   jato:     { n:'Jato d\'Água', ic:'💧', k:'shot', cd:2.6, price:0, spd:5, range:7.5, r:.3, dmg:4, push:8.5, col:'#4dabff', l3:{ slowAoe:[1.3, 1.6, .45] }, d3:'estoura ao acertar e deixa lentos todos em volta', desc:'Jato que empurra forte.' },
   concha:   { n:'Concha', ic:'🐚', k:'self', cd:10, price:10, dur:2, l3:{ refl:1 }, d3:'no primeiro segundo, devolve os projéteis que baterem nela', desc:'Entra na concha por 2 s: não leva dano nem é empurrado, mas fica parado.' },
   hidro:    { n:'Hidro Bomba', ic:'🌊', k:'beam', cd:9, price:10, windup:.7, len:8, w:.45, dmg:10, push:13, col:'#6cc6ff', desc:'Carrega e dispara um jato em linha reta que arremessa longe.' },
@@ -207,7 +207,7 @@ const SK = {
   agilidade:{ n:'Agilidade', ic:'👻', k:'self', cd:11, price:10, dur:2.5, l3:{ clone:1 }, d3:'deixa um clone parado no lugar; aperte de novo para voltar até ele', desc:'Some por 2,5 s e corre mais. No começo os golpes atravessam você.' },
   giroL:    { n:'Giro de Lâminas', ic:'⚔️', k:'nova', cd:7, price:10, l3:{ rad:2.6 }, d3:'área bem maior', rad:1.9, dmg:8, push:11, col:'#d8ffb0', desc:'Gira as lâminas e joga longe quem estiver perto.' },
   xtesoura: { n:'Tesoura X', ic:'✂️', k:'dash', cd:6, price:10, dist:3.5, spd:10, dmg:12, push:5, col:'#b8f57a', desc:'Investida cortante: muito dano em quem você atravessar.' },
-  confusao: { n:'Confusão', ic:'🌀', k:'shot', cd:2.4, price:0, spd:5, range:8, r:.32, dmg:5, push:7.5, zig:.3, col:'#e07bff', l3:{ twin:1 }, d3:'solta duas ondas cruzadas', desc:'Onda psíquica em zigue-zague: difícil de prever, empurra pouco.' },
+  confusao: { n:'Confusão', ic:'🌀', k:'shot', cd:2.4, price:0, spd:5, range:8, r:.26, dmg:5, push:7.5, zig:.45, col:'#e07bff', l3:{ twin:1 }, d3:'solta duas ondas cruzadas', desc:'Onda psíquica em zigue-zague: difícil de prever, empurra pouco.' },
   teleporte:{ n:'Teletransporte', ic:'✨', k:'shot', cd:11, price:10, spd:4.2, range:6.5, r:.3, dmg:0, push:0, tele:1, col:'#ffb3ff', desc:'Esfera lenta. Se acertar alguém, vocês trocam de lugar. Se não acertar, você aparece onde ela parar. Aperte de novo para aparecer onde ela está.' },
   psiquico: { n:'Psíquico', ic:'🔮', k:'multi', cd:10, price:10, spd:3.4, range:9, r:.24, dmg:4, push:5.5, home:1.1, col:'#c77dff', desc:'Solta uma esfera lenta que persegue cada inimigo, curvando atrás dele.' },
   esferas:  { n:'Esferas Psíquicas', ic:'🟣', k:'orbit', cd:13, price:10, dur:6, cnt:3, orad:1.05, dmg:4, push:7.5, col:'#d98cff', desc:'Três esferas giram em volta de você por 6 s: empurram quem encostar e destroem projéteis.' },
@@ -252,7 +252,7 @@ const CFG = Object.assign({ sp:6, bots:5, lives:5, map:'rand' }, store.get('nt-c
 const keyName = c => !c ? '—' : c === 'M0' ? 'Clique esq.' : c === 'M2' ? 'Clique dir.' : c === 'M1' ? 'Rodinha' : c === 'Space' ? 'Espaço' : c.replace(/^Key|^Digit/, '').replace(/Left$|Right$/, '');
 
 /* ---------- estado ---------- */
-const G = { phase:'menu', t:0, round:0, units:[], shots:[], zones:[], marks:[], decoys:[], obs:[], ice:[], map:'sq', R:8, fx:[], txt:[], falling:[], P:{x0:0,y0:0,x1:SIZE,y1:SIZE}, shrinkIn:SHRINK, step:0, paused:false, timer:0, me:null };
+const G = { phase:'menu', t:0, round:0, units:[], shots:[], zones:[], marks:[], waves:[], decoys:[], obs:[], ice:[], map:'sq', R:8, fx:[], txt:[], falling:[], P:{x0:0,y0:0,x1:SIZE,y1:SIZE}, shrinkIn:SHRINK, step:0, paused:false, timer:0, me:null };
 const NET = { on:false, host:false, peer:null, conn:null, peers:[], code:'', nick:'', ev:[], sendT:0, inT:0 };
 const isClient = () => NET.on && !NET.host;
 const mouse = { x:0, y:0, wx:5, wy:5, rdown:false };
@@ -515,6 +515,7 @@ function cast(u, i, ax, ay){
       G.fx.push({ ring:1, x:u.x, y:u.y, r:1.2, t:0, life:.4, col:d.col }); break; }
     case 'orbit': u.orbs = { t:d.dur, d, L, a:0, alive:Array(d.cnt).fill(true) }; break;
     case 'lob': { const r = Math.min(dl, d.range); G.shots.push({ o:u, lob:1, x:u.x, y:u.y, bx:u.x, by:u.y, sx0:u.x, sy0:u.y, tx:u.x + dx * r, ty:u.y + dy * r, vx:dx * d.spd, vy:dy * d.spd, left:r, tot:r, d, L, age:0, q:false, ph:1 }); break; }
+    case 'wave': G.waves.push({ o:u, x:u.x + dx * .5, y:u.y + dy * .5, dx, dy, left:d.range, d, L, hit:new Set() }); break;
     case 'delay': { const r = Math.min(dl, d.range); G.marks.push({ o:u, x:u.x + dx * r, y:u.y + dy * r, t:d.delay, d, L }); break; }
     case 'leap': { const r = Math.min(dl, d.range); u.air = { t:0, dur:d.dur, sx:u.x, sy:u.y, ex:u.x + dx * r, ey:u.y + dy * r }; u.mt = null; u.anim = { n:'Hop', t:0 }; break; }
     case 'cone':
@@ -581,7 +582,7 @@ function damage(e, a, by, quiet){
   if (!e.alive || a <= 0 || e.b.shell > 0) return;
   e.hp -= a; e.hurtT = G.t;
   if (by && by !== e){ e.last = { by, t:G.t }; by.dmg += a; by.rdmg = (by.rdmg || 0) + a; }
-  if (quiet){ e.acc = (e.acc || 0) + a; } else txt(e.x, e.y - .9, Math.round(a), by ? '#fff' : '#9be36a');
+  if (quiet === 'fire'){ e.accF = (e.accF || 0) + a; } else if (quiet){ e.acc = (e.acc || 0) + a; } else txt(e.x, e.y - .9, Math.round(a), by ? '#fff' : '#9be36a');
   if (e.hp <= 0){
     if (e.items.faixa && !e.sash){ e.hp = 1; e.sash = true; txt(e.x, e.y - 1.2, 'Faixa do Foco!', '#ffcf4a'); }
     else die(e);
@@ -629,7 +630,7 @@ function newMatch(){
 function startRound(){
   G.round++; G.map = G.matchMap || 'sq'; SIZE = sizeFor(G.units.filter(u => !u.out).length) + (isRd() ? 2 : 0); G.P = { x0:0, y0:0, x1:SIZE, y1:SIZE }; G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
   G.R = SIZE / 2 + .45; makeObstacles();
-  G.shots = []; G.zones = []; G.marks = []; G.decoys = []; G.falling = []; G.fx = []; G.txt = [];
+  G.shots = []; G.zones = []; G.marks = []; G.waves = []; G.decoys = []; G.falling = []; G.fx = []; G.txt = [];
   const live = G.units.filter(u => !u.out), n = live.length, off = Math.random() * Math.PI * 2;
   live.forEach((u, k) => {
     const a = off + k / n * Math.PI * 2;
@@ -711,12 +712,20 @@ function buy(u, kind, id){
   const it = ITEMS[id]; if (u.items[id] || u.gold < it.price) return false; u.gold -= it.price; u.items[id] = 1; return true;
 }
 const skPrice = s => s.lvl === 0 ? SK[s.id].price : Math.max(8, SK[s.id].price || 8);
+// o que muda ao comprar o próximo nível: força (dano e empurrão) e recarga
+function lvlInfo(s, d){
+  const cdOf = l => (d.cd * lvMul(l).cd).toFixed(1).replace('.', ',') + ' s', pw = l => Math.round(lvMul(l).p * 100 - 100);
+  if (!s.lvl) return `<br><span style="color:var(--fg)">Recarga ${cdOf(1)}.</span>${d.l3 ? `<br><span style="color:var(--dim)">No nível 3: ${d.d3}.</span>` : ''}`;
+  if (s.lvl >= 3) return `<br><b style="color:var(--gold)">Nível 3 (máximo): +${pw(3)}% de força, recarga ${cdOf(3)}${d.l3 ? ' · ' + d.d3 : ''}.</b>`;
+  const n = s.lvl + 1;
+  return `<br><b style="color:var(--gold)">Nível ${s.lvl} → ${n}: força +${pw(s.lvl)}% → +${pw(n)}% (dano e empurrão), recarga ${cdOf(s.lvl)} → ${cdOf(n)}${n === 3 && d.l3 ? ` · e ${d.d3}` : ''}.</b>${n < 3 && d.l3 ? `<br><span style="color:var(--dim)">No nível 3: ${d.d3}.</span>` : ''}`;
+}
 function renderShop(){
   const u = G.me;
   $('#shopT').textContent = `Loja · antes da rodada ${G.round + 1}`;
   $('#shopGold').textContent = `🪙 ${u.gold}`;
   $('#shopSk').innerHTML = u.sk.map((s, i) => { const d = SK[s.id], p = skPrice(s), max = s.lvl >= 3;
-    return `<button class="it ${s.lvl ? 'own' : ''} ${d.ult ? 'ult' : ''}" data-sk="${s.id}" ${max || u.gold < p ? 'disabled' : ''}><span class="ic">${d.ic}</span><b>${d.n} <span class="tag">${keyName(curKeys()[i])}</span></b><span class="pr">${max ? 'máx.' : (s.lvl ? 'nv ' + (s.lvl + 1) + ' · ' : '') + p}</span><small>${d.desc}${s.lvl ? ` (nível ${s.lvl})` : ''}${d.l3 ? `<br><b style="color:var(--gold)">Nível 3: ${d.d3}.</b>` : ''}</small></button>`; }).join('');
+    return `<button class="it ${s.lvl ? 'own' : ''} ${d.ult ? 'ult' : ''}" data-sk="${s.id}" ${max || u.gold < p ? 'disabled' : ''}><span class="ic">${d.ic}</span><b>${d.n} <span class="tag">${keyName(curKeys()[i])}</span></b><span class="pr">${max ? 'máx.' : (s.lvl ? 'nv ' + (s.lvl + 1) + ' · ' : '') + p}</span><small>${d.desc}${lvlInfo(s, d)}</small></button>`; }).join('');
   $('#shopIt').innerHTML = Object.entries(ITEMS).map(([id, it]) =>
     `<button class="it ${u.items[id] ? 'own' : ''}" data-it="${id}" ${u.items[id] || u.gold < it.price ? 'disabled' : ''}><span class="ic">${it.ic}</span><b>${it.n}</b><span class="pr">${u.items[id] ? 'tem' : it.price}</span><small>${it.desc}</small></button>`).join('');
 }
@@ -788,6 +797,7 @@ function botThink(u, dt){
     else if (d.k === 'shot'){ ok = best <= d.range * .95; const tt = best / d.spd; ax = tgt.x + tgt.rvx * tt * .8; ay = tgt.y + tgt.rvy * tt * .8; }
     else if (d.k === 'cone') ok = best <= d.range;
     else if (d.k === 'nova') ok = best <= d.rad;
+    else if (d.k === 'wave') ok = best <= d.range * .85;
     else if (d.k === 'lob'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * .6; ay = tgt.y + tgt.rvy * .6; }
     else if (d.k === 'multi') ok = best <= d.range * .8;
     else if (d.k === 'orbit') ok = best <= 2.6;
@@ -847,11 +857,12 @@ function updateWorld(dt){
     if (u.faceLock > 0) u.faceLock -= dt;
     u.anim.t += dt;
     if (st.regen && G.t - (u.hurtT || -9) > 4) u.hp = Math.min(u.maxhp, u.hp + st.regen * dt);
-    if (u.b.burn > 0){ damage(u, u.b.burnD * dt, u.b.burnBy, true); if (Math.random() < .4) fx(u.x + rnd(-.2, .2), u.y - .3, 0, -1.2, .4, '#ff8a2a', 4); }
+    if (u.b.burn > 0){ damage(u, u.b.burnD * dt, u.b.burnBy, 'fire'); if (Math.random() < .4) fx(u.x + rnd(-.2, .2), u.y - .3, 0, -1.2, .4, '#ff8a2a', 4); }
     if (!u.alive) continue;
     if (!u.air && !onPlat(u.x, u.y)){ damage(u, mistDps() * st.mist * dt, null, true); if (Math.random() < .3) fx(u.x + rnd(-.3, .3), u.y, 0, -1, .5, '#9be36a', 5); }
     if (!u.alive) continue;
     if (u.acc >= 4){ txt(u.x, u.y - .9, Math.round(u.acc), '#9be36a'); u.acc = 0; }
+    if (u.accF >= 1){ txt(u.x + rnd(-.2, .2), u.y - 1.05, '🔥' + Math.round(u.accF), '#ff4d3d'); u.accF = 0; }   // fogo: vermelho, a cada 1 de dano
     if (u.air){
       u.air.t += dt; const p = Math.min(1, u.air.t / u.air.dur);
       u.x = u.air.sx + (u.air.ex - u.air.sx) * p; u.y = u.air.sy + (u.air.ey - u.air.sy) * p; u.vx = u.vy = 0;
@@ -940,13 +951,19 @@ function updateWorld(dt){
       for (let k = 0; k < 26; k++) fx(m.x, m.y, rnd(-5, 5), rnd(-5, 5), .45, pick(['#b14dff','#e07bff','#fff']), 7); }
   }
   G.marks = G.marks.filter(m => m.t > 0);
+  // Onda de Calor: parede de fogo que anda; acerta cada um uma vez
+  for (const w of G.waves){ const st = w.d.spd * dt; w.x += w.dx * st; w.y += w.dy * st; w.left -= st;
+    for (const e of foesOf(w.o)){ if (w.hit.has(e) || e.air || e.b.intang > 0) continue; const ex = e.x - w.x, ey = e.y - w.y, al = ex * w.dx + ey * w.dy, pp = Math.abs(ex * w.dy - ey * w.dx);
+      if (Math.abs(al) < .45 + POKE[e.sp].rad && pp < w.d.w / 2 + POKE[e.sp].rad){ w.hit.add(e); hit(w.o, e, w.d, w.L, w.dx, w.dy); } }
+    for (let k = 0; k < 4; k++){ const o = rnd(-w.d.w / 2, w.d.w / 2); fx(w.x - w.dy * o, w.y + w.dx * o, w.dx * 1.5 + rnd(-.5, .5), w.dy * 1.5 - 1, .35, pick(['#ff6a1a','#ffd23f','#ff3b1a']), 7); } }
+  G.waves = G.waves.filter(w => w.left > 0);
   // clones do Scyther: ficam parados, mas podem ser empurrados
   for (const c of G.decoys){ c.t -= dt; c.at += dt; c.x += c.vx * dt; c.y += c.vy * dt; const fr = Math.exp(-3.2 * dt); c.vx *= fr; c.vy *= fr;
     if (c.t <= 0 || !c.o.alive){ c.dead = true; for (let k = 0; k < 10; k++) fx(c.x, c.y, rnd(-2, 2), rnd(-2, 2), .35, '#c8f59a', 5); } }
   G.decoys = G.decoys.filter(c => !c.dead);
   G.shots = G.shots.filter(s => !s.dead);
   for (const z of G.zones){ z.t -= dt;
-    for (const e of foesOf(z.o)) if (!e.air && Math.hypot(e.x - z.x, e.y - z.y) < z.rad){ damage(e, z.d.dps * DMG * z.L.p * dt, z.o, true); if (z.d.slow){ e.b.slow = Math.max(e.b.slow || 0, .4); e.b.slowF = z.d.slow; } }
+    for (const e of foesOf(z.o)) if (!e.air && Math.hypot(e.x - z.x, e.y - z.y) < z.rad){ damage(e, z.d.dps * DMG * z.L.p * dt, z.o, z.d.zc ? true : 'fire'); if (z.d.slow){ e.b.slow = Math.max(e.b.slow || 0, .4); e.b.slowF = z.d.slow; } }
     if (Math.random() < .9) { const a = rnd(0, 6.3), r = rnd(0, z.rad); fx(z.x + Math.cos(a) * r, z.y + Math.sin(a) * r, 0, z.d.zc ? -.3 : -1.4, .45, z.d.zc ? pick(['#6e5030','#9a7a4a']) : pick(['#ff6a1a','#ffd23f']), 6); }
   }
   G.zones = G.zones.filter(z => z.t > 0);
@@ -1013,6 +1030,10 @@ function draw(){
   for (const o of G.obs) if (o.k === 'lapras' && o.charge > 0){ cx.save(); cx.translate(sx(o.x), sy(o.y)); cx.rotate(o.aim); cx.fillStyle = `rgba(191,243,255,${.15 + .15 * Math.sin(G.t * 16)})`; cx.fillRect(0, -.55 * T, 7.5 * T, 1.1 * T); cx.restore(); }
   // zonas
   for (const z of G.zones){ cx.fillStyle = z.d.zc ? z.d.zc[0] : 'rgba(255,106,26,.22)'; cx.strokeStyle = z.d.zc ? z.d.zc[1] : 'rgba(255,170,60,.8)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(z.x), sy(z.y), z.rad * T, 0, 7); cx.fill(); cx.stroke(); }
+  // Onda de Calor
+  for (const w of G.waves){ cx.save(); cx.translate(sx(w.x), sy(w.y)); cx.rotate(Math.atan2(w.dy, w.dx));
+    const h = w.d.w * T, g = cx.createLinearGradient(-T * .5, 0, T * .5, 0); g.addColorStop(0, 'rgba(255,90,20,0)'); g.addColorStop(.6, 'rgba(255,120,30,.75)'); g.addColorStop(1, 'rgba(255,230,120,.95)');
+    cx.fillStyle = g; cx.beginPath(); cx.ellipse(0, 0, T * .5, h / 2, 0, 0, 7); cx.fill(); cx.restore(); }
   // Premonição: área marcada
   for (const m of G.marks){ const k = 1 - m.t / m.d.delay; cx.fillStyle = `rgba(177,77,255,${.12 + .2 * k})`; cx.strokeStyle = 'rgba(224,123,255,.9)'; cx.lineWidth = 2;
     cx.beginPath(); cx.arc(sx(m.x), sy(m.y), m.d.rad * T, 0, 7); cx.fill(); cx.stroke();
@@ -1138,7 +1159,7 @@ function hudBar(){
       el.classList.toggle('lock', !s.lvl || !u.alive);
       el.querySelector('.lv').textContent = s.lvl > 1 ? 'nv' + s.lvl : (!s.lvl ? '🔒' : '');
       const f = s.cd > 0 ? s.cd / (d.cd * lvMul(s.lvl).cd * stat(u).cd) : 0;
-      el.querySelector('.cd').style.height = (Math.min(1, f) * 100) + '%';
+      const deg = Math.min(1, f) * 360; el.querySelector('.cd').style.background = deg > 0 ? `conic-gradient(rgba(0,0,0,.66) ${deg}deg, transparent ${deg}deg)` : 'none';   // relógio
       el.querySelector('.ct').textContent = s.cd > 0 && s.lvl ? Math.ceil(s.cd) : ''; });
   }
 }
@@ -1273,7 +1294,7 @@ $('#again').onclick = () => { if (isClient()){ banner('Esperando o anfitrião', 
 // volta para a tela inicial (no online, para a sala): dá para trocar de Pokémon, mapa, vidas
 function goMenu(){
   for (const id of ['endOv','shopOv','cfgOv']) $('#' + id).hidden = true;
-  $('#menu').hidden = false; G.phase = 'menu'; G.paused = false; G.units = []; G.me = null; G.shots = []; G.zones = []; G.marks = []; G.decoys = []; G.obs = []; G.ice = []; G.fx = []; G.txt = [];
+  $('#menu').hidden = false; G.phase = 'menu'; G.paused = false; G.units = []; G.me = null; G.shots = []; G.zones = []; G.marks = []; G.waves = []; G.decoys = []; G.obs = []; G.ice = []; G.fx = []; G.txt = [];
   for (const id of ['top','gold','plist','emo','bar']) $('#' + id).hidden = true; $('#banner').innerHTML = '';
   renderMenu();
 }
@@ -1373,6 +1394,7 @@ function netBroadcast(){
     s:G.shots.filter(x => !x.dead).map(x => [skId(x.d), r2(x.x), r2(x.y), r2(x.vx), r2(x.vy), x.lob ? [r2(x.tx), r2(x.ty), r2(x.left), r2(x.tot)] : 0]),
     z:G.zones.map(z => [skId(z.d), r2(z.x), r2(z.y), z.rad]),
     m:G.marks.map(m => [skId(m.d), r2(m.x), r2(m.y), r2(m.t)]),
+    wv:G.waves.map(w => [r2(w.x), r2(w.y), r2(w.dx), r2(w.dy)]),
     d:G.decoys.map(c => [G.units.indexOf(c.o), r2(c.x), r2(c.y), r2(c.face)]),
     mp:G.map, R:G.R, ob:G.obs.map(o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0, o.chg || 0, r2(o.boom || 0), r2(o.down || 0), o.frenzy || 0, o.r, o.dr || 0]),
     ic:G.ice.map(p => [r2(p.x), r2(p.y), p.r, r2(Math.min(p.t, 99))]),
@@ -1444,6 +1466,7 @@ function applySnap(S){
   G.shots = S.s.map(a => { const d = SK[a[0]]; const o = { d, x:a[1], y:a[2], vx:a[3], vy:a[4] }; if (a[5]){ Object.assign(o, { lob:1, tx:a[5][0], ty:a[5][1], left:a[5][2], tot:a[5][3] }); } return o; });
   G.zones = S.z.map(a => ({ d:SK[a[0]], x:a[1], y:a[2], rad:a[3] }));
   G.marks = S.m.map(a => ({ d:SK[a[0]], x:a[1], y:a[2], t:a[3] }));
+  G.waves = (S.wv || []).map(a => ({ d:SK.explosao, x:a[0], y:a[1], dx:a[2], dy:a[3] }));
   G.decoys = S.d.map(a => { const o = G.units[a[0]] || G.me; return { o, sp:o.sp, x:a[1], y:a[2], face:a[3], at:G.t }; });
   for (const e of S.ev){
     if (e[0] === 't') G.txt.push({ x:e[1], y:e[2], s:e[3], col:e[4], t:0 });
@@ -1477,6 +1500,7 @@ function clientUpdate(dt){
   for (const s of G.shots){ if (!s.lob){ s.x += s.vx * dt; s.y += s.vy * dt; if (Math.random() < .8) fx(s.x, s.y, rnd(-.6, .6), rnd(-.6, .6), .3, s.d.col, s.d.r * T * .5); } else { const sp = Math.hypot(s.vx, s.vy); s.x += s.vx * dt; s.y += s.vy * dt; s.left = Math.max(0, s.left - sp * dt); } }
   for (const z of G.zones) if (Math.random() < .6){ const a = rnd(0, 6.3), r = rnd(0, z.rad); fx(z.x + Math.cos(a) * r, z.y + Math.sin(a) * r, 0, z.d.zc ? -.3 : -1.4, .45, z.d.zc ? pick(['#6e5030','#9a7a4a']) : pick(['#ff6a1a','#ffd23f']), 6); }
   for (const m of G.marks) m.t = Math.max(0, m.t - dt);
+  for (const w of G.waves){ w.x += w.dx * w.d.spd * dt; w.y += w.dy * w.d.spd * dt; for (let k = 0; k < 3; k++){ const o = rnd(-w.d.w / 2, w.d.w / 2); fx(w.x - w.dy * o, w.y + w.dx * o, w.dx * 1.5, w.dy * 1.5 - 1, .35, pick(['#ff6a1a','#ffd23f','#ff3b1a']), 7); } }
   for (const c of G.decoys) c.at += dt;
   // meus comandos de andar
   const me = G.me; if (!me) return;
