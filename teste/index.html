@@ -90,6 +90,10 @@ h2{font-family:var(--font-d);font-weight:400;font-size:24px;margin:0;color:var(-
 .chip.soon{opacity:.45;cursor:not-allowed;border-style:dashed}
 #spec{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:6;background:rgba(14,10,24,.86);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:8px 12px;font-size:12px;max-width:calc(100vw - 24px);overflow-x:auto;pointer-events:none}
 #spec table{border-collapse:collapse;margin-top:4px}#spec th,#spec td{padding:2px 8px;text-align:right;white-space:nowrap}#spec th:first-child,#spec td:first-child{text-align:left}#spec th{color:#a99bc4;font-weight:600}#spec small{color:#a99bc4}#spec tr.dd td{opacity:.55}
+.acc{max-width:400px;gap:12px}.acc label{display:flex;flex-direction:column;gap:5px;font-weight:700;color:var(--dim);font-size:13px}.acc input{width:100%!important;padding:11px 12px!important;font-size:15px}
+.tabs{display:flex;background:#1a1323;border-radius:12px;padding:4px;gap:4px}.tabs button{flex:1;border:0;border-radius:9px;padding:9px;background:transparent;color:var(--dim);font-weight:800}.tabs button.on{background:var(--panel);color:var(--fg);box-shadow:0 1px 0 var(--line)}
+.amsg{background:#1a1323;border-radius:10px;padding:9px 12px;font-size:13px;line-height:1.4}.amsg.err{color:#ff8a8a}.amsg.ok{color:#9be36a}
+button.link{background:none;border:0;color:var(--dim);text-decoration:underline;padding:4px;font-size:13px}button.link:hover{color:var(--fg)}
 #accBox input{width:150px}#accBox small{color:var(--dim)}#rivT{border-collapse:collapse;margin-top:8px;font-size:13px}#rivT th,#rivT td{padding:4px 9px;text-align:center;white-space:nowrap}#rivT th{color:var(--dim);font-weight:600}#rivT td:first-child,#rivT th:first-child{text-align:left}#rivT b.w{color:#7fe05a}#rivT b.l{color:#ff7a7a}
 #feed{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));top:calc(52px + env(safe-area-inset-top,0px));z-index:5;display:flex;flex-direction:column;gap:4px;align-items:flex-end;pointer-events:none}
 #feed div{background:rgba(21,15,28,.85);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:800}
@@ -136,7 +140,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v24 · 10/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v25 · 10/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -162,6 +166,19 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
   </div>
 </div>
 
+<div class="ov" id="accOv" hidden>
+  <div class="box acc">
+    <h1 style="margin:0;text-align:center">Poke Impact</h1>
+    <div class="tabs"><button id="atIn" class="on">Entrar</button><button id="atNew">Criar conta</button></div>
+    <p class="sub" id="aSub" style="text-align:center;margin:0 auto">Com conta você entra nas partidas ranqueadas, acompanha as rixas com os amigos e junta moedas para a loja.</p>
+    <label id="aNickL" hidden>Nome no jogo<input id="aNick" maxlength="12" placeholder="Como os outros vão te ver"></label>
+    <label id="aEmL">E-mail<input id="aEm" type="email" autocomplete="email" placeholder="seu@email.com"></label>
+    <label id="aPwL">Senha<input id="aPw" type="password" autocomplete="current-password" placeholder="mínimo 6 caracteres"></label>
+    <div id="aMsg" class="amsg" hidden></div>
+    <button class="go" id="aGo">Entrar</button>
+    <div class="row" style="justify-content:space-between"><button class="link" id="aForgot">Esqueci a senha</button><button class="link" id="aSkip">Jogar sem conta →</button></div>
+  </div>
+</div>
 <div class="ov" id="rivOv" hidden>
   <div class="box">
     <h2>📊 Rixas</h2>
@@ -1646,34 +1663,67 @@ async function initAuth(){
     if ((location.protocol !== 'https:' && location.hostname !== 'localhost') || /claude/i.test(location.hostname)) return;   // no link do Claude a conta não funciona
     await loadSB(); AUTH.sb = supabase.createClient(SB_URL, SB_KEY); AUTH.ok = true;
     const { data } = await AUTH.sb.auth.getSession(); AUTH.user = data.session ? data.session.user : null;
-    AUTH.sb.auth.onAuthStateChange((ev, ses) => { AUTH.user = ses ? ses.user : null; loadProfile(); });
+    AUTH.sb.auth.onAuthStateChange((ev, ses) => { AUTH.user = ses ? ses.user : null; if (ev === 'PASSWORD_RECOVERY') accScreen('reset'); loadProfile(); });
     await loadProfile();
+    if (!AUTH.user && !store.get('nt-skipacc') && !$('#menu').hidden) accScreen('in');   // primeira visita: oferece criar conta
   } catch(e){ AUTH.ok = false; }
   renderAcc();
 }
 async function loadProfile(){
   if (!AUTH.user){ AUTH.prof = null; renderAcc(); return; }
   let { data } = await AUTH.sb.from('pi_profiles').select('nick,coins').eq('id', AUTH.user.id).maybeSingle();
-  if (!data){ const nick = cleanNick($('#nick').value) || cleanNick((AUTH.user.email || 'jogador').split('@')[0]) || 'Jogador';
+  if (!data){ const nick = cleanNick(store.get('nt-pendnick')) || cleanNick($('#nick').value) || cleanNick((AUTH.user.email || 'jogador').split('@')[0]) || 'Jogador';
     await AUTH.sb.from('pi_profiles').insert({ id:AUTH.user.id, nick }); data = { nick, coins:0 }; }
-  AUTH.prof = data; if (!$('#nick').value) $('#nick').value = data.nick; renderAcc();
+  AUTH.prof = data; $('#nick').value = data.nick; store.set('nt-nick', data.nick); renderAcc();
 }
 const authErr = m => /Invalid login/i.test(m) ? 'E-mail ou senha errados.' : /not confirmed/i.test(m) ? 'Confirme o e-mail antes (veja a caixa de entrada e o spam).' : /already registered/i.test(m) ? 'Esse e-mail já tem conta: use Entrar.' : /rate|limit|security purposes/i.test(m) ? 'Muitas tentativas: espere um pouco.' : /Password/i.test(m) ? 'A senha precisa de pelo menos 6 caracteres.' : 'Erro: ' + m;
 function renderAcc(){
   const row = $('#accRow'); if (!row) return; row.hidden = !AUTH.ok; if (!AUTH.ok) return;
   $('#accBox').innerHTML = AUTH.user
-    ? `<b>${(AUTH.prof && AUTH.prof.nick) || '…'}</b><small>🪙 ${AUTH.prof ? AUTH.prof.coins : 0} moedas da conta</small><button class="ghost" id="accRiv">📊 Rixas</button><button class="ghost" id="accOut">Sair</button>`
-    : `<input id="accEm" type="email" placeholder="E-mail" autocomplete="email"><input id="accPw" type="password" placeholder="Senha" autocomplete="current-password"><button class="ghost" id="accIn">Entrar</button><button class="ghost" id="accNew">Criar conta</button>${AUTH.msg ? `<small>${AUTH.msg}</small>` : '<small>Para partidas ranqueadas e rixas.</small>'}`;
+    ? `<b>👤 ${(AUTH.prof && AUTH.prof.nick) || '…'}</b><small>🪙 ${AUTH.prof ? AUTH.prof.coins : 0} moedas da conta</small><button class="ghost" id="accRiv">📊 Rixas</button><button class="ghost" id="accOut">Sair</button>`
+    : `<button class="ghost" id="accOpen">👤 Entrar ou criar conta</button><small>para partidas ranqueadas e rixas</small>`;
 }
+// tela de conta: entrar / criar / esqueci a senha / nova senha
+let accMode = 'in';
+function accScreen(mode, msg, kind){
+  accMode = mode; $('#accOv').hidden = false;
+  $('#atIn').classList.toggle('on', mode === 'in'); $('#atNew').classList.toggle('on', mode === 'new');
+  $('#aNickL').hidden = mode !== 'new'; $('#aEmL').hidden = mode === 'reset'; $('#aPwL').hidden = mode === 'forgot';
+  $('#aGo').textContent = { in:'Entrar', new:'Criar conta', forgot:'Mandar link para o e-mail', reset:'Salvar nova senha' }[mode];
+  $('#aPw').autocomplete = mode === 'in' ? 'current-password' : 'new-password'; $('#aPwL').firstChild.textContent = mode === 'reset' ? 'Nova senha' : 'Senha';
+  $('#aSub').textContent = mode === 'forgot' ? 'Digite seu e-mail: vamos mandar um link para você criar uma senha nova.' : mode === 'reset' ? 'Escolha a sua senha nova.' : 'Com conta você entra nas partidas ranqueadas, acompanha as rixas com os amigos e junta moedas para a loja.';
+  if (mode === 'new' && !$('#aNick').value) $('#aNick').value = cleanNick($('#nick').value);
+  const m = $('#aMsg'); m.hidden = !msg; m.textContent = msg || ''; m.className = 'amsg ' + (kind || '');
+  $('#aForgot').hidden = mode !== 'in';
+}
+$('#atIn').onclick = () => accScreen('in'); $('#atNew').onclick = () => accScreen('new');
+$('#aForgot').onclick = () => accScreen('forgot');
+$('#aSkip').onclick = () => { $('#accOv').hidden = true; store.set('nt-skipacc', 1); };
+$('#accOv').addEventListener('keydown', e => { if (e.key === 'Enter') $('#aGo').click(); });
+$('#aGo').onclick = async () => {
+  const email = ($('#aEm').value || '').trim(), password = $('#aPw').value || '', nick = cleanNick($('#aNick').value);
+  if (accMode !== 'reset' && !email) return accScreen(accMode, 'Digite o seu e-mail.', 'err');
+  if (accMode !== 'forgot' && password.length < 6) return accScreen(accMode, 'A senha precisa de pelo menos 6 caracteres.', 'err');
+  if (accMode === 'new' && !nick) return accScreen(accMode, 'Escolha um nome para aparecer no jogo.', 'err');
+  $('#aGo').disabled = true; accScreen(accMode, 'Aguarde…');
+  let r;
+  try {
+    if (accMode === 'in') r = await AUTH.sb.auth.signInWithPassword({ email, password });
+    else if (accMode === 'new'){ store.set('nt-pendnick', nick); r = await AUTH.sb.auth.signUp({ email, password, options:{ emailRedirectTo:location.origin + location.pathname } }); }
+    else if (accMode === 'forgot') r = await AUTH.sb.auth.resetPasswordForEmail(email, { redirectTo:location.origin + location.pathname });
+    else r = await AUTH.sb.auth.updateUser({ password });
+  } catch(e){ r = { error:{ message:String(e.message || e) } }; }
+  $('#aGo').disabled = false;
+  if (r.error) return accScreen(accMode, authErr(r.error.message), 'err');
+  if (accMode === 'new' && !(r.data && r.data.session)) return accScreen('in', 'Conta criada! Abra o link que mandamos para o seu e-mail (veja o spam também) e depois entre aqui.', 'ok');
+  if (accMode === 'forgot') return accScreen('in', 'Pronto: se esse e-mail tem conta, o link para trocar a senha já foi enviado.', 'ok');
+  $('#accOv').hidden = true; $('#aPw').value = ''; if (accMode === 'reset') feed('Senha trocada!', '#7fe05a');
+};
 $('#accBox').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b || !AUTH.ok) return; e.stopPropagation();
   if (b.id === 'accOut'){ await AUTH.sb.auth.signOut(); AUTH.msg = ''; return; }
   if (b.id === 'accRiv') return openRivals();
-  const email = ($('#accEm').value || '').trim(), password = $('#accPw').value || ''; if (!email || !password){ AUTH.msg = 'Preencha e-mail e senha.'; return renderAcc(); }
-  AUTH.msg = 'Aguarde…'; renderAcc(); $('#accEm').value = email; $('#accPw').value = password;
-  const r = b.id === 'accIn' ? await AUTH.sb.auth.signInWithPassword({ email, password }) : await AUTH.sb.auth.signUp({ email, password, options:{ emailRedirectTo:location.origin + location.pathname } });
-  if (r.error){ AUTH.msg = authErr(r.error.message); renderAcc(); return; }
-  AUTH.msg = b.id === 'accNew' && !r.data.session ? 'Conta criada! Confirme pelo link no seu e-mail e depois clique em Entrar.' : ''; renderAcc();
+  if (b.id === 'accOpen') return accScreen('in');
 });
 async function openRivals(){
   $('#rivOv').hidden = false; $('#rivT').innerHTML = '<tr><td>Carregando…</td></tr>';
