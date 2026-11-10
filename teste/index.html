@@ -143,7 +143,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v26 · 10/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v27 · 10/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -241,7 +241,7 @@ const SK = {
   hipnose:  { n:'Hipnose', ic:'💤', k:'wave', cd:11, price:10, spd:4.2, range:7.5, w:1.3, dmg:0, push:0, sleep:1.3, col:'#6a3fb5', parts:['#7c3aed','#c4b5fd','#312e81'], l3:{ w:1.7 }, d3:'onda mais larga', desc:'Uma onda estreita que atravessa obstáculos e faz dormir 1,3 s. Um golpe acorda; se for um golpe de Medo do Gengar, o susto empurra 50% mais.' },
   lambida:  { n:'Lambida', ic:'👅', k:'shot', cd:8, price:10, spd:13, range:3.2, r:.3, dmg:3, push:7, pull:1, col:'#ff7bc0', l3:{ range:4.2 }, d3:'língua mais comprida', desc:'A língua sai rápido e puxa o primeiro inimigo que pegar até o Gengar.' },
   correntes:{ n:'Correntes das Trevas', ic:'⛓️', k:'chains', cd:10, price:10, range:7, rad:1.6, windup:.8, dur:2, teth:2, col:'#3b0764', l3:{ rad:2.1 }, d3:'círculo maior', desc:'Marca um círculo escuro. 0,8 s depois, quem estiver dentro fica acorrentado ao chão por 2 s: só anda até 2 casas da corrente. Qualquer golpe quebra a corrente.' },
-  lingua:   { n:'Chicotada de Língua', ic:'👅', k:'shot', cd:16, price:16, ult:1, spd:15, range:6.5, r:.32, dmg:4, push:0, whip:1, col:'#ff7bc0', l3:{ range:8 }, d3:'língua bem mais comprida', desc:'A língua pega o primeiro inimigo e o arremessa por cima de você, caindo atrás. Ande enquanto puxa para mudar para onde ele vai: ótimo na beira da névoa.' },
+  lingua:   { n:'Chicotada de Língua', ic:'👅', k:'shot', cd:16, price:16, ult:1, spd:15, range:6.5, r:.32, dmg:4, push:0, whip:1, col:'#ff7bc0', l3:{ range:8 }, d3:'língua bem mais comprida', desc:'A língua gruda no primeiro inimigo e vai puxando cada vez mais rápido, como no gelo: ele tenta fugir, mas não escapa. Quando chega em você, passa direto escorregando. Ande enquanto puxa para jogar ele para o lado, como um chicote.' },
   splash:   { n:'Splash', ic:'💦', k:'leap', cd:2, price:0, range:3, dur:.6, desc:'Pula. Só isso. No ar nada te acerta.' },
   portal:   { n:'Portal Sombrio', ic:'🌌', k:'portal', cd:18, price:16, ult:1, range:7.5, dur:4.5, col:'#8b5cf6', l3:{ dur:6.5 }, d3:'os portais duram 6,5 s', desc:'Abre um portal na sua frente e outro onde você mirar, por 4,5 s. Golpes e Pokémon que entram em um saem no outro. Ponha a saída na beira da névoa…' },
   brasa:    { n:'Brasa', ic:'🔥', k:'shot', cd:2.5, price:0, spd:5.5, range:9, r:.3, dmg:6, push:7.5, burn:[3,2.2], col:'#ff7a1a', l3:{ splash:1.2 }, d3:'explode ao acertar e empurra quem estiver perto', desc:'Bola de fogo de longo alcance. Empurra e queima.' },
@@ -615,7 +615,7 @@ function roundWinnerTeam(){
   if (isZona()){ const ts = allTeams().map(t => [t, zoneScore(t)]).sort((a, b) => b[1] - a[1]); return ts.length && ts[0][1] > 0 && (!ts[1] || ts[0][1] - ts[1][1] > .01) ? ts[0][0] : null; }
   const al = new Set(G.units.filter(u => u.alive).map(u => u.team)); return al.size === 1 ? [...al][0] : null;
 }
-const canAct = u => u.alive && !u.air && !u.whip && !u.dash && !u.wind && !(u.b.shell > 0) && !(u.b.sleep > 0) && !(u.b.fear > 0) && G.phase === 'play' && !G.paused;
+const canAct = u => u.alive && !u.air && !u.dash && !u.wind && !(u.b.shell > 0) && !(u.b.sleep > 0) && !(u.b.fear > 0) && G.phase === 'play' && !G.paused;
 
 const SHELL_DASH = { n:'Concha', dmg:0, push:5, col:'#9fd8ff' };
 function cast(u, i, ax, ay){
@@ -707,7 +707,7 @@ function swap(u, e){
   txt(e.x, e.y - .9, 'trocou!', '#ffb3ff');
 }
 function hit(o, e, d, L, dx, dy, scale = 1){
-  if (!e.alive || e.air || e.whip || e.b.intang > 0) return;
+  if (!e.alive || e.air || e.b.intang > 0) return;
   const sd = o.b.sd > 0, crit = !!(o.items && o.items.mira && d.dmg && Math.random() < .2);
   if (e.b.shell > 0){ txt(e.x, e.y - .8, 'bloqueou', '#9fd8ff'); return; }
   if (e.b.chain > 0){ e.b.chain = 0; txt(e.x, e.y - 1.6, 'soltou!', '#c4b5fd'); }   // golpe quebra a corrente
@@ -740,7 +740,20 @@ function damage(e, a, by, quiet){
 }
 // susto ao morrer (zoeira temporária: para tirar, troque para false)
 const SUSTO_ON = true;
-function scare(){ if (!SUSTO_ON) return; const el = $('#susto'); el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
+let AC = null;
+function ughh(){   // voz robótica: um "ughh" curto com um golpe seco na frente
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume();
+    const t = AC.currentTime, out = AC.createGain(); out.gain.value = .55; out.connect(AC.destination);
+    const nb = AC.createBuffer(1, AC.sampleRate * .08, AC.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nd.length);
+    const ns = AC.createBufferSource(), nf = AC.createBiquadFilter(), ng = AC.createGain(); ns.buffer = nb; nf.type = 'bandpass'; nf.frequency.value = 1800; ng.gain.value = .9; ns.connect(nf).connect(ng).connect(out); ns.start(t);   // facada
+    const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(175, t + .04); o.frequency.exponentialRampToValueAtTime(95, t + .55);
+    g.gain.setValueAtTime(0, t + .04); g.gain.linearRampToValueAtTime(1, t + .09); g.gain.setValueAtTime(1, t + .3); g.gain.exponentialRampToValueAtTime(.001, t + .6);
+    for (const [f, q, v] of [[650, 6, 1], [1100, 8, .55], [2400, 10, .25]]){ const bp = AC.createBiquadFilter(), bg = AC.createGain(); bp.type = 'bandpass'; bp.frequency.setValueAtTime(f, t); bp.frequency.linearRampToValueAtTime(f * .8, t + .55); bp.Q.value = q; bg.gain.value = v; g.connect(bp).connect(bg).connect(out); }   // formantes de "u"
+    const vib = AC.createOscillator(), vg = AC.createGain(); vib.frequency.value = 28; vg.gain.value = 9; vib.connect(vg).connect(o.frequency); vib.start(t); vib.stop(t + .65);
+    o.connect(g); o.start(t + .04); o.stop(t + .65);
+  } catch(e){}
+}
+function scare(){ if (!SUSTO_ON) return; ughh(); const el = $('#susto'); el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
 function die(e){
   e.alive = false; e.hp = 0; if (respawns()) e.resp = 3; else e.lives--;
   if (e === G.me) scare(); e.b = {}; e.air = e.dash = e.wind = e.orbs = null;
@@ -1068,7 +1081,7 @@ function updateWorld(dt){
   for (const u of G.units){
     if (!u.alive) continue;
     const st = stat(u), ox = u.x, oy = u.y;
-    for (const k of ['slow','inv','intang','shell','sd','burn','refl','conf','sleep','fear','pcd','chain']) if (u.b[k] > 0) u.b[k] -= dt;
+    for (const k of ['slow','inv','intang','shell','sd','burn','refl','conf','sleep','fear','pcd','chain','slide','nocol']) if (u.b[k] > 0) u.b[k] -= dt;
     for (const s of u.sk) if (s.cd > 0) s.cd -= dt;
     if (u.faceLock > 0) u.faceLock -= dt;
     u.anim.t += dt;
@@ -1076,12 +1089,12 @@ function updateWorld(dt){
     if (st.regen && G.t - (u.hurtT || -9) > 4) u.hp = Math.min(u.maxhp, u.hp + st.regen * dt);
     if (u.b.burn > 0){ damage(u, u.b.burnD * dt, u.b.burnBy, 'fire'); if (Math.random() < .4) fx(u.x + rnd(-.2, .2), u.y - .3, 0, -1.2, .4, '#ff8a2a', 4); }
     if (!u.alive) continue;
-    if (!u.air && !u.whip && !onPlat(u.x, u.y)){ damage(u, mistDps() * st.mist * dt, null, true); if (Math.random() < .3) fx(u.x + rnd(-.3, .3), u.y, 0, -1, .5, '#9be36a', 5); }
+    if (!u.air && !onPlat(u.x, u.y)){ damage(u, mistDps() * st.mist * dt, null, true); if (Math.random() < .3) fx(u.x + rnd(-.3, .3), u.y, 0, -1, .5, '#9be36a', 5); }
     if (!u.alive) continue;
     if (u.acc >= 4){ txt(u.x, u.y - .9, Math.round(u.acc), '#9be36a'); u.acc = 0; }
     if (u.accF >= 1){ txt(u.x + rnd(-.2, .2), u.y - 1.05, '🔥' + Math.round(u.accF), '#ff4d3d'); u.accF = 0; }   // fogo: vermelho, a cada 1 de dano
-    if (u.whip){ whipStep(u, dt); }
-    else if (u.air){
+    if (u.whip) whipPull(u, dt);
+    if (u.air){
       u.air.t += dt; const p = Math.min(1, u.air.t / u.air.dur);
       u.x = u.air.sx + (u.air.ex - u.air.sx) * p; u.y = u.air.sy + (u.air.ey - u.air.sy) * p; u.vx = u.vy = 0;
       if (p >= 1){ const A = u.air; u.air = null; if (A.sink) emerge(u, A); }
@@ -1109,7 +1122,8 @@ function updateWorld(dt){
       u.x += (u.slx + u.vx) * dt; u.y += (u.sly + u.vy) * dt;
       if (u.faceLock <= 0 && (mvx || mvy)) u.face = Math.atan2(mvy, mvx);
     }
-    const fr = Math.exp(-(onIce(u.x, u.y) ? .75 : 3.2) * dt); u.vx *= fr; u.vy *= fr;
+    const fr = Math.exp(-(onIce(u.x, u.y) || u.whip || u.b.slide > 0 ? .75 : 3.2) * dt); u.vx *= fr; u.vy *= fr;   // língua e estilingue: escorrega como no gelo
+    whipLimit(u);
     if (u.b.chain > 0){ const cx0 = u.x - u.b.ax, cy0 = u.y - u.b.ay, cd = Math.hypot(cx0, cy0);   // acorrentado: não passa de 2 casas
       if (cd > u.b.teth){ const nx = cx0 / cd, ny = cy0 / cd; u.x = u.b.ax + nx * u.b.teth; u.y = u.b.ay + ny * u.b.teth; const vn = u.vx * nx + u.vy * ny; if (vn > 0){ u.vx -= vn * nx; u.vy -= vn * ny; } } }
     u.x = clamp(u.x, -3, SIZE + 3); u.y = clamp(u.y, -3, SIZE + 3);
@@ -1117,7 +1131,7 @@ function updateWorld(dt){
   }
   obstacleStep(dt); obstacleUnits();
   // separação entre Pokémon
-  const al = G.units.filter(u => u.alive && !u.air && !u.whip);
+  const al = G.units.filter(u => u.alive && !u.air && !u.whip && !(u.b.nocol > 0));
   for (let i = 0; i < al.length; i++) for (let j = i + 1; j < al.length; j++){
     const a = al[i], b = al[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), rr = POKE[a.sp].rad + POKE[b.sp].rad;
     if (d < rr && d > 0){ const o = (rr - d) / 2, nx = dx / d, ny = dy / d; const ka = a.b.shell > 0 ? 0 : 1, kb = b.b.shell > 0 ? 0 : 1; a.x -= nx * o * ka; a.y -= ny * o * ka; b.x += nx * o * kb; b.y += ny * o * kb; }
@@ -1228,16 +1242,22 @@ function chainStep(dt){
   G.chains = G.chains.filter(C => C.t > 0);
 }
 // Chicotada: a língua leva o inimigo por cima do Gengar; andar muda para onde ele cai
-function startWhip(o, e, L){ e.whip = { o, t:0, dur:.6, sx:e.x, sy:e.y, L, p:0 }; e.vx = e.vy = 0; e.mt = null; e.last = { by:o, t:G.t }; txt(e.x, e.y - 1.2, 'chicotada!', '#ff7bc0'); }
-function whipStep(u, dt){
-  const W = u.whip, g = W.o; W.t += dt; const p = Math.min(1, W.t / W.dur); W.p = p;
-  if (!g.alive){ u.whip = null; return; }
-  let bx = g.x - W.sx, by = g.y - W.sy; const bl = Math.hypot(bx, by) || 1; bx /= bl; by /= bl;
-  const mx = g.rvx || 0, my = g.rvy || 0, ml = Math.hypot(mx, my), sxm = ml > .3 ? mx / ml : 0, sym = ml > .3 ? my / ml : 0;
-  const ex = g.x + bx * 1.8 + sxm * 1.4, ey = g.y + by * 1.8 + sym * 1.4, k = p * p * (3 - 2 * p);
-  u.x = W.sx + (ex - W.sx) * k; u.y = W.sy + (ey - W.sy) * k; u.vx = u.vy = 0;
-  if (p >= 1){ u.whip = null; const tx = ex - g.x, ty = ey - g.y, tl = Math.hypot(tx, ty) || 1; push(u, tx / tl, ty / tl, 9 * W.L.p); }
+function startWhip(o, e, L){ e.whip = { o, t:0, L, len:Math.hypot(e.x - o.x, e.y - o.y) + .05 }; e.mt = null; e.last = { by:o, t:G.t }; txt(e.x, e.y - 1.2, 'pegou!', '#ff7bc0'); }
+// a língua vai puxando cada vez mais forte; o preso escorrega como no gelo e não consegue se afastar.
+// Quando chega no Gengar, ele passa direto (estilingue) e ainda leva o embalo de para onde o Gengar está andando.
+function whipPull(u, dt){
+  const W = u.whip, g = W.o; W.t += dt;
+  if (!g.alive || !u.alive || W.t > 2.6){ u.whip = null; return; }
+  const dx = g.x - u.x, dy = g.y - u.y, d = Math.hypot(dx, dy) || .01, nx = dx / d, ny = dy / d;
+  const a = (4 + 13 * W.t) * W.L.p * dt; u.vx += nx * a; u.vy += ny * a;
+  W.len = Math.min(W.len, d + .05);   // a língua só encurta: não dá para fugir
+  if (d < .7){ u.whip = null;   // soltou: passa por cima do Gengar escorregando
+    let sp = Math.hypot(u.vx, u.vy); if (sp > 7){ u.vx *= 7 / sp; u.vy *= 7 / sp; }
+    u.vx += (g.rvx || 0) * .9; u.vy += (g.rvy || 0) * .9; u.b.slide = 1.1; u.b.nocol = .35;
+    txt(u.x, u.y - 1.2, 'chicotada!', '#ff7bc0'); G.fx.push({ ring:1, x:g.x, y:g.y, r:.8, t:0, life:.35, col:'#ff7bc0' }); }
 }
+function whipLimit(u){ const W = u.whip; if (!W) return; const g = W.o, dx = u.x - g.x, dy = u.y - g.y, d = Math.hypot(dx, dy);
+  if (d > W.len){ const nx = dx / d, ny = dy / d; u.x = g.x + nx * W.len; u.y = g.y + ny * W.len; const vn = u.vx * nx + u.vy * ny; if (vn > 0){ u.vx -= vn * nx; u.vy -= vn * ny; } } }
 function portalStep(dt){
   for (const P of G.portals){ P.t -= dt; const tr = [[P.ax, P.ay, P.bx, P.by], [P.bx, P.by, P.ax, P.ay]];
     for (const q of G.shots){ if (q.dead || q.lob) continue; if (q.pcd > 0){ q.pcd -= dt; continue; }
@@ -1363,7 +1383,7 @@ function draw(){
     let alpha = 1;
     if (u.b.inv > 0) alpha = u === G.me ? .35 : 0;
     if (alpha === 0) continue;
-    const lift = u.whip ? Math.sin((u.whip.p || 0) * Math.PI) * .9 : u.air && !u.air.sink ? Math.sin(Math.min(1, u.air.t / u.air.dur) * Math.PI) * 1.1 : 0;
+    const lift = u.air && !u.air.sink ? Math.sin(Math.min(1, u.air.t / u.air.dur) * Math.PI) * 1.1 : 0;
     if (u.gshade && !u.air){ const g = cx.createRadialGradient(sx(u.x), sy(u.y) + T * .12, 0, sx(u.x), sy(u.y) + T * .12, T * .85); g.addColorStop(0, 'rgba(20,0,40,.85)'); g.addColorStop(1, 'rgba(20,0,40,0)'); cx.fillStyle = g; cx.beginPath(); cx.ellipse(sx(u.x), sy(u.y) + T * .12, T * (.8 + .06 * Math.sin(G.t * 3)), T * .34, 0, 0, 7); cx.fill(); }   // sombra do Gengar: o próximo susto dá Medo
     cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(sx(u.x), sy(u.y) + T * .12, T * POKE[u.sp].rad * .9 * (1 - lift * .3), T * .13, 0, 0, 7); cx.fill();
     cx.beginPath(); cx.strokeStyle = u.col; cx.lineWidth = 2; cx.ellipse(sx(u.x), sy(u.y) + T * .12, T * POKE[u.sp].rad, T * POKE[u.sp].rad * .42, 0, 0, 7); cx.stroke();
@@ -1405,7 +1425,7 @@ function draw(){
   for (const u of G.units) if (u.alive && u.b.chain > 0 && u.b.ax != null){ const ax = sx(u.b.ax), ay = sy(u.b.ay) + T * .1, ux = sx(u.x), uy = sy(u.y) - T * .1, n = 7;   // corrente presa no chão
     cx.strokeStyle = '#b8b0c8'; cx.lineWidth = 2; for (let q = 0; q < n; q++){ const t0 = q / n; cx.beginPath(); cx.ellipse(ax + (ux - ax) * (t0 + .5 / n), ay + (uy - ay) * (t0 + .5 / n), T * .07, T * .045, Math.atan2(uy - ay, ux - ax) + (q % 2 ? 1.57 : 0), 0, 7); cx.stroke(); }
     cx.fillStyle = '#3b0764'; cx.beginPath(); cx.arc(ax, ay, T * .12, 0, 7); cx.fill(); }
-  for (const u of G.units) if (u.whip && u.whip.o){ const g = u.whip.o, lp = Math.sin((u.whip.p || 0) * Math.PI) * .9; cx.strokeStyle = '#ff7bc0'; cx.lineWidth = T * .12; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(sx(g.x), sy(g.y) - T * .3); cx.lineTo(sx(u.x), sy(u.y - lp) - T * .3); cx.stroke(); cx.lineCap = 'butt'; }
+  for (const u of G.units) if (u.whip && u.whip.o){ const g = u.whip.o, lp = 0; cx.strokeStyle = '#ff7bc0'; cx.lineWidth = T * .12; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(sx(g.x), sy(g.y) - T * .3); cx.lineTo(sx(u.x), sy(u.y - lp) - T * .3); cx.stroke(); cx.lineCap = 'butt'; }
   for (const s of G.shots) if ((s.d.pull || s.d.whip) && s.o){ cx.strokeStyle = '#ff7bc0'; cx.lineWidth = T * .12; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(sx(s.o.x), sy(s.o.y) - T * .3); cx.lineTo(sx(s.x), sy(s.y)); cx.stroke(); cx.lineCap = 'butt'; }   // língua
   for (const P of G.portals || []){ const k = Math.min(1, P.t), a = G.t * 4;
     for (const [x, y] of [[P.ax, P.ay], [P.bx, P.by]]){ const X = sx(x), Y = sy(y), r = P.r * T;
@@ -1831,7 +1851,7 @@ function netBroadcast(){
     u:G.units.map(u => { const b = u.b, fl = (b.inv > 0 ? 1 : 0) | (b.shell > 0 ? 2 : 0) | (b.refl > 0 ? 4 : 0) | (b.sd > 0 ? 8 : 0) | (b.slow > 0 ? 16 : 0) | (b.burn > 0 ? 32 : 0) | (Math.hypot(u.rvx, u.rvy) > .3 ? 64 : 0) | (b.conf > 0 ? 128 : 0) | (b.sleep > 0 ? 256 : 0) | (b.fear > 0 ? 512 : 0) | (u.gshade ? 1024 : 0);
       return [r2(u.x), r2(u.y), r2(u.face), Math.round(u.hp * 10) / 10, u.maxhp, u.alive ? 1 : 0, u.out ? 1 : 0, u.lives, ANIMS.indexOf(u.anim.n), r2(u.anim.t), fl,
         u.air ? r2(Math.min(1, u.air.t / u.air.dur)) : -1, u.emo ? u.emo.e : '', u.wins, u.kills, Math.round(u.dmg), u.place,
-        u.wind ? (u.wind.nova ? [0, 0, 0, 0, u.wind.d.rad, r2(u.wind.t), u.wind.d.windup] : [r2(u.wind.dx), r2(u.wind.dy), u.wind.d.len, u.wind.d.w]) : 0, u.human ? 1 : 0, u.fired || 0, u.hits || 0, u.rounds || 0, Math.round(u.rdmg || 0), u.air && u.air.sink ? 1 : 0, r2(u.gshT || 0), u.whip ? [r2(u.whip.p || 0), G.units.indexOf(u.whip.o)] : 0, u.b.chain > 0 ? [r2(u.b.ax), r2(u.b.ay)] : 0]; }),
+        u.wind ? (u.wind.nova ? [0, 0, 0, 0, u.wind.d.rad, r2(u.wind.t), u.wind.d.windup] : [r2(u.wind.dx), r2(u.wind.dy), u.wind.d.len, u.wind.d.w]) : 0, u.human ? 1 : 0, u.fired || 0, u.hits || 0, u.rounds || 0, Math.round(u.rdmg || 0), u.air && u.air.sink ? 1 : 0, r2(u.gshT || 0), u.whip ? [r2(u.whip.t), G.units.indexOf(u.whip.o)] : 0, u.b.chain > 0 ? [r2(u.b.ax), r2(u.b.ay)] : 0]; }),
     s:G.shots.filter(x => !x.dead).map(x => [skId(x.d), r2(x.x), r2(x.y), r2(x.vx), r2(x.vy), x.lob ? [r2(x.tx), r2(x.ty), r2(x.left), r2(x.tot)] : 0, x.d.fade ? r2(x.left) : null, G.units.indexOf(x.o)]),
     z:G.zones.map(z => [skId(z.d), r2(z.x), r2(z.y), z.rad]),
     m:G.marks.map(m => [skId(m.d), r2(m.x), r2(m.y), r2(m.t), m.d.core || .35]),
@@ -1908,7 +1928,7 @@ function applySnap(S){
     const fl = a[10]; u.b = { inv:fl & 1 ? 1 : 0, shell:fl & 2 ? 1 : 0, refl:fl & 4 ? 1 : 0, sd:fl & 8 ? 1 : 0, slow:fl & 16 ? 1 : 0, burn:fl & 32 ? 1 : 0, conf:fl & 128 ? 1 : 0, sleep:fl & 256 ? 1 : 0, fear:fl & 512 ? 1 : 0 }; u.gshade = !!(fl & 1024);
     u.rvx = fl & 64 ? 1 : 0; u.rvy = 0;
     u.air = a[11] >= 0 ? { t:a[11], dur:1, sink:a[23] ? 1 : 0 } : null;
-    u.gshT = a[24] || 0; u.whip = a[25] ? { p:a[25][0], o:G.units[a[25][1]] } : null; if (a[26]){ u.b.chain = 1; u.b.ax = a[26][0]; u.b.ay = a[26][1]; }
+    u.gshT = a[24] || 0; u.whip = a[25] ? { t:a[25][0], o:G.units[a[25][1]] } : null; if (a[26]){ u.b.chain = 1; u.b.ax = a[26][0]; u.b.ay = a[26][1]; }
     if (a[12]){ if (!u.emo || u.emo.e !== a[12]) u.emo = { e:a[12], t:2.6 }; } else u.emo = null;
     u.wins = a[13]; u.kills = a[14]; u.dmg = a[15]; u.place = a[16];
     u.wind = !a[17] ? null : a[17][4] ? { nova:1, t:a[17][5], d:{ rad:a[17][4], windup:a[17][6] } } : { dx:a[17][0], dy:a[17][1], d:{ len:a[17][2], w:a[17][3] } }; u.human = !!a[18]; u.fired = a[19]; u.hits = a[20]; u.rounds = a[21]; u.rdmg = a[22]; });
