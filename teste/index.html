@@ -90,7 +90,10 @@ h2{font-family:var(--font-d);font-weight:400;font-size:24px;margin:0;color:var(-
 .chip.soon{opacity:.45;cursor:not-allowed;border-style:dashed}
 #spec{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom,0px));z-index:6;background:rgba(14,10,24,.86);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:8px 12px;font-size:12px;max-width:calc(100vw - 24px);overflow-x:auto;pointer-events:none}
 #spec table{border-collapse:collapse;margin-top:4px}#spec th,#spec td{padding:2px 8px;text-align:right;white-space:nowrap}#spec th:first-child,#spec td:first-child{text-align:left}#spec th{color:#a99bc4;font-weight:600}#spec small{color:#a99bc4}#spec tr.dd td{opacity:.55}
-.acc{max-width:400px;gap:12px}.acc label{display:flex;flex-direction:column;gap:5px;font-weight:700;color:var(--dim);font-size:13px}.acc input{width:100%!important;padding:11px 12px!important;font-size:15px}
+.acc{max-width:420px;gap:12px}.acapa{width:100%;max-height:40vh;aspect-ratio:1;object-fit:cover;border-radius:12px;display:block}
+#susto{position:fixed;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;background:rgba(0,0,0,.55)}#susto img{width:min(80vw,80vh);height:auto}
+#susto.go{animation:susto 1.7s ease-out forwards}#susto.go img{animation:sustoz 1.7s ease-out forwards}
+@keyframes susto{0%{opacity:1}25%{opacity:1}100%{opacity:0}}@keyframes sustoz{0%{transform:scale(1.35) rotate(-6deg)}12%{transform:scale(1) rotate(3deg)}100%{transform:scale(.9) rotate(0)}}.acc label{display:flex;flex-direction:column;gap:5px;font-weight:700;color:var(--dim);font-size:13px}.acc input{width:100%!important;padding:11px 12px!important;font-size:15px}
 .tabs{display:flex;background:#1a1323;border-radius:12px;padding:4px;gap:4px}.tabs button{flex:1;border:0;border-radius:9px;padding:9px;background:transparent;color:var(--dim);font-weight:800}.tabs button.on{background:var(--panel);color:var(--fg);box-shadow:0 1px 0 var(--line)}
 .amsg{background:#1a1323;border-radius:10px;padding:9px 12px;font-size:13px;line-height:1.4}.amsg.err{color:#ff8a8a}.amsg.ok{color:#9be36a}
 button.link{background:none;border:0;color:var(--dim);text-decoration:underline;padding:4px;font-size:13px}button.link:hover{color:var(--fg)}
@@ -140,7 +143,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v25 · 10/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v26 · 10/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -168,7 +171,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="accOv" hidden>
   <div class="box acc">
-    <h1 style="margin:0;text-align:center">Poke Impact</h1>
+    <img class="acapa" src="img/capa.webp" alt="Poke Impact">
     <div class="tabs"><button id="atIn" class="on">Entrar</button><button id="atNew">Criar conta</button></div>
     <p class="sub" id="aSub" style="text-align:center;margin:0 auto">Com conta você entra nas partidas ranqueadas, acompanha as rixas com os amigos e junta moedas para a loja.</p>
     <label id="aNickL" hidden>Nome no jogo<input id="aNick" maxlength="12" placeholder="Como os outros vão te ver"></label>
@@ -199,6 +202,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 </div>
 
 <div id="spec" hidden></div>
+<div id="susto"><img src="img/susto.webp" alt=""></div>
 <div class="ov" id="endOv" hidden>
   <div class="box">
     <h2 id="endT">Fim de jogo</h2>
@@ -734,8 +738,12 @@ function damage(e, a, by, quiet){
     else die(e);
   }
 }
+// susto ao morrer (zoeira temporária: para tirar, troque para false)
+const SUSTO_ON = true;
+function scare(){ if (!SUSTO_ON) return; const el = $('#susto'); el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
 function die(e){
-  e.alive = false; e.hp = 0; if (respawns()) e.resp = 3; else e.lives--; e.b = {}; e.air = e.dash = e.wind = e.orbs = null;
+  e.alive = false; e.hp = 0; if (respawns()) e.resp = 3; else e.lives--;
+  if (e === G.me) scare(); e.b = {}; e.air = e.dash = e.wind = e.orbs = null;
   for (let k = 0; k < 22; k++) fx(e.x, e.y, rnd(-3, 3), rnd(-3, 3), rnd(.5, .9), pick(['#9be36a','#7d5aa6','#c9b8e0']), rnd(5, 10));
   const k = e.last && e.last.by !== e ? e.last.by : null;   // quem bateu por último leva a derrubada, mesmo se a névoa terminou o serviço
   if (k && G.kv){ const key = G.units.indexOf(k) + '>' + G.units.indexOf(e); G.kv[key] = (G.kv[key] || 0) + 1; }
@@ -1881,6 +1889,7 @@ function netClientRecv(m){
 }
 function applySnap(S){
   if (!G.me) return;   // voltou para a sala: ignora estados atrasados
+  const meWas = G.me.alive;
   const nw = performance.now(); if (!(nw - (NET.hb || 0) < 1000)){ NET.hb = nw; netSend({ t:'hb' }); }
   const prev = G.phase;
   if (S.SZ !== SIZE){ SIZE = S.SZ; camera(true); }
@@ -1921,6 +1930,7 @@ function applySnap(S){
   const me = G.me;
   if (S.me && me){ me.gold = S.me.g; S.me.sk.forEach((k, i) => { if (me.sk[i]){ me.sk[i].lvl = k[0]; me.sk[i].cd = k[1]; } }); me.items = {}; for (const k of S.me.it) me.items[k] = 1; me.ready = !!S.me.rdy; me.gshT = S.me.gs || 0; }
   // telas
+  if (meWas && me && !me.alive && G.phase === 'play') scare();
   if (G.phase === 'shop' && prev !== 'shop' && me && !me.out){ $('#shopOv').hidden = false; }
   if (G.phase === 'shop' && !$('#shopOv').hidden){ const sig = JSON.stringify(S.me); if (sig !== applySnap.sig){ applySnap.sig = sig; renderShop(); } $('#shopTime').textContent = `⏱ ${Math.ceil(G.timer)} s`; }
   if (G.phase !== 'shop') $('#shopOv').hidden = true;
