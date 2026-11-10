@@ -135,7 +135,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v23 · 10/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v23b · 10/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -807,7 +807,7 @@ const accTxt = u => u.fired ? `${u.hits || 0}/${u.fired} · ${Math.round((u.hits
 function specPanel(){
   const el = $('#spec'), show = G.me && !G.me.alive && !respawns() && (G.phase === 'play' || G.phase === 'roundEnd');
   if (!show){ if (!el.hidden) el.hidden = true; return; }
-  el.hidden = false; if (G.t - (specPanel.t || -9) < .5) return; specPanel.t = G.t;
+  el.hidden = false; const now = performance.now(); if (now - (specPanel.t || 0) < 500) return; specPanel.t = now;   // relógio real: o G.t zera a cada partida
   const rows = G.units.slice().sort((a, b) => b.dmg - a.dmg);
   el.innerHTML = `<b>Assistindo · rodada ${G.round}</b><table><tr><th>Jogador</th><th>Dano</th><th>Rodada</th><th>Derrub.</th><th>Acertos</th></tr>` +
     rows.map(u => `<tr class="${u.alive ? '' : 'dd'}"><td style="color:${u.col}">${u.alive ? '' : '💀 '}${u.name}<small> ${POKE[u.sp].n}</small></td><td>${Math.round(u.dmg)}</td><td>${Math.round(u.rdmg || 0)}</td><td>${u.kills}</td><td>${accTxt(u)}</td></tr>`).join('') + '</table>';
