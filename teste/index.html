@@ -74,6 +74,8 @@ h2{font-family:var(--font-d);font-weight:400;font-size:24px;margin:0;color:var(-
 .pc .em{position:absolute;right:-30px;top:2px;font-size:22px;animation:pop .25s}
 @keyframes pop{from{transform:scale(.2)}to{transform:scale(1)}}
 #bar{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:5;display:flex;gap:6px;align-items:flex-end}
+.ps{width:40px;height:40px;border-radius:50%;background:#1a1323;border:2px solid var(--line);position:relative;display:flex;align-items:center;justify-content:center;font-size:18px;opacity:.55;align-self:center}
+.ps.on{opacity:1;border-color:#c4b5fd;box-shadow:0 0 12px #8b5cf6}.ps .ct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;text-shadow:0 0 4px #000}
 .sl{width:58px;height:58px;border-radius:10px;background:#1a1323;border:2px solid var(--line);position:relative;display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden}
 .sl.ult{border-color:var(--gold)}
 .sl .k{position:absolute;left:3px;top:1px;font-size:11px;font-weight:800;color:var(--fg);text-shadow:0 1px 2px #000}
@@ -133,8 +135,8 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v22 · 10/11 · TESTE</small></h1>
-    <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol (futebol).</p>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v23 · 10/11 · TESTE</small></h1>
+    <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
     <div class="row"><span class="lbl">Formato</span><span class="row" id="nfmt"></span></div>
@@ -192,7 +194,8 @@ const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catc
 /* ---------- dados ---------- */
 let SIZE = 16; const SHRINK = 15, WARN = 3, PUSH = .85, DMG = .4;   // golpe tira pouca vida: quem mata é a névoa
 const POKE = {
-  94:  { n:'Gengar',    hp:95,  spd:2.2, kb:1.05, rad:.32, sc:1,   desc:'Fantasma: faz dormir, puxa, some no chão e abre portais. A cada 10 s ganha uma sombra: o próximo golpe de susto dá Medo. Leva menos dano da névoa.', kit:['sombra','mergulho','hipnose','lambida','portal'] },
+  94:  { n:'Gengar',    hp:95,  spd:2.2, kb:1.05, rad:.32, sc:1,   desc:'Fantasma: faz dormir, acorrenta, some no chão e arremessa com a língua. A cada 10 s ganha uma sombra: o próximo golpe de susto dá Medo. Leva menos dano da névoa.', kit:['sombra','mergulho','hipnose','correntes','lingua'] },
+  129: { n:'Luquitarp', hp:100, spd:2.0, kb:1, rad:.3, sc:1,      desc:'Não ataca e não empurra ninguém: só pula, a cada 2 s, desviando de tudo. O Pokémon mais forte do mundo (só que não).', kit:['splash'] },
   6:   { n:'Charizard', hp:100, spd:2.1, kb:1, rad:.36, sc:1,    desc:'Alcance longo e queimaduras. Voa por cima dos golpes e ruge para afastar.', kit:['brasa','voo','rugido','turbilhao','explosao'] },
   9:   { n:'Blastoise', hp:120, spd:1.8, kb:.9, rad:.4, sc:1.05,  desc:'Pesado e lento. Deixa todo mundo lento com lama e joga para fora com a Hidro Bomba.', kit:['jato','concha','hidro','lama','surf'] },
   123: { n:'Scyther',   hp:90,  spd:2.5, kb:1.15, rad:.27, sc:.85, desc:'Rápido, leve e quem mais dá dano. Fica invisível, deixa clones e corta cada vez mais forte.', kit:['lamina','agilidade','giroL','furia','danca'] },
@@ -200,12 +203,15 @@ const POKE = {
 };
 // k: shot · leap · cone · zone · nova · beam · dash · self
 const SK = {
-  sombra:   { n:'Bola Sombria', ic:'🟣', k:'shot', cd:2.5, price:0, spd:6, range:6, r:.28, dmg:5, push:6.5, split:1, col:'#7d3cff', l3:{ splitN:3 }, d3:'se divide em 3 (um segue reto)', desc:'Tiro reto que, no alcance máximo, se divide em 2 tiros fantasmas para os lados. Os fantasmas atravessam obstáculos. Com a sombra carregada eles ficam brancos e dão Medo.' },
+  sombra:   { n:'Bola Sombria', ic:'🟣', k:'shot', cd:2.5, price:0, spd:6, range:6, r:.28, dmg:5, push:6.5, split:1, ghost:1, col:'#7d3cff', l3:{ splitN:3 }, d3:'se divide em 3 (um segue reto)', desc:'Tiro fantasma (atravessa obstáculos). Aperte Q de novo para ele se dividir em 2 tiros para os lados; se não apertar, ele se divide sozinho no alcance máximo. Com a sombra carregada os tiros dos lados ficam brancos e dão Medo.' },
   sombra2:  { n:'Sombra Fantasma', ic:'🟣', k:'shot', spd:6, range:3.5, r:.22, dmg:3, push:4.5, ghost:1, col:'#9b6bff' },
   sombra2f: { n:'Sombra Assustadora', ic:'⚪', k:'shot', spd:6, range:3.5, r:.24, dmg:3, push:4.5, ghost:1, fear:.9, col:'#efe6ff' },
   mergulho: { n:'Mergulho na Sombra', ic:'🕳️', k:'sink', cd:9, price:10, range:6, delay:1.2, rad:1.4, dmg:3, push:6, col:'#5b2a86', l3:{ delay:.9 }, d3:'sai do chão em 0,9 s', desc:'Afunda no chão na hora (nada o acerta) e uma sombrinha anda até o ponto escolhido. Sai 1,2 s depois empurrando quem está perto. Com a sombra carregada, quem está perto foge de Medo.' },
-  hipnose:  { n:'Hipnose', ic:'💤', k:'wave', cd:11, price:10, spd:3.2, range:6.5, w:2.6, dmg:0, push:0, sleep:1.3, col:'#6a3fb5', parts:['#7c3aed','#c4b5fd','#312e81'], l3:{ w:3.4 }, d3:'onda mais larga', desc:'Uma onda lenta e larga que atravessa obstáculos e faz dormir 1,3 s. Um golpe acorda; se for um golpe de Medo do Gengar, o susto empurra 50% mais.' },
+  hipnose:  { n:'Hipnose', ic:'💤', k:'wave', cd:11, price:10, spd:4.2, range:7.5, w:1.3, dmg:0, push:0, sleep:1.3, col:'#6a3fb5', parts:['#7c3aed','#c4b5fd','#312e81'], l3:{ w:1.7 }, d3:'onda mais larga', desc:'Uma onda estreita que atravessa obstáculos e faz dormir 1,3 s. Um golpe acorda; se for um golpe de Medo do Gengar, o susto empurra 50% mais.' },
   lambida:  { n:'Lambida', ic:'👅', k:'shot', cd:8, price:10, spd:13, range:3.2, r:.3, dmg:3, push:7, pull:1, col:'#ff7bc0', l3:{ range:4.2 }, d3:'língua mais comprida', desc:'A língua sai rápido e puxa o primeiro inimigo que pegar até o Gengar.' },
+  correntes:{ n:'Correntes das Trevas', ic:'⛓️', k:'chains', cd:10, price:10, range:7, rad:1.6, windup:.8, dur:2, teth:2, col:'#3b0764', l3:{ rad:2.1 }, d3:'círculo maior', desc:'Marca um círculo escuro. 0,8 s depois, quem estiver dentro fica acorrentado ao chão por 2 s: só anda até 2 casas da corrente. Qualquer golpe quebra a corrente.' },
+  lingua:   { n:'Chicotada de Língua', ic:'👅', k:'shot', cd:16, price:16, ult:1, spd:15, range:6.5, r:.32, dmg:4, push:0, whip:1, col:'#ff7bc0', l3:{ range:8 }, d3:'língua bem mais comprida', desc:'A língua pega o primeiro inimigo e o arremessa por cima de você, caindo atrás. Ande enquanto puxa para mudar para onde ele vai: ótimo na beira da névoa.' },
+  splash:   { n:'Splash', ic:'💦', k:'leap', cd:2, price:0, range:3, dur:.6, desc:'Pula. Só isso. No ar nada te acerta.' },
   portal:   { n:'Portal Sombrio', ic:'🌌', k:'portal', cd:18, price:16, ult:1, range:7.5, dur:4.5, col:'#8b5cf6', l3:{ dur:6.5 }, d3:'os portais duram 6,5 s', desc:'Abre um portal na sua frente e outro onde você mirar, por 4,5 s. Golpes e Pokémon que entram em um saem no outro. Ponha a saída na beira da névoa…' },
   brasa:    { n:'Brasa', ic:'🔥', k:'shot', cd:2.5, price:0, spd:5.5, range:9, r:.3, dmg:6, push:7.5, burn:[3,2.2], col:'#ff7a1a', l3:{ splash:1.2 }, d3:'explode ao acertar e empurra quem estiver perto', desc:'Bola de fogo de longo alcance. Empurra e queima.' },
   voo:      { n:'Voo', ic:'🪽', k:'leap', cd:9, price:10, range:4.5, dur:.7, desc:'Salta voando até o cursor. No ar não leva dano nem é empurrado.' },
@@ -219,7 +225,7 @@ const SK = {
   lama:     { n:'Bomba de Lama', ic:'🟤', k:'lob', cd:11, price:10, spd:6, range:7, rad:1.5, dur:2.5, dps:1.5, slow:.4, dmg:3, col:'#8a6a3e', zc:['rgba(110,80,40,.38)','rgba(160,120,70,.85)'], desc:'Arremessa uma bola de lama por cima de todos. Onde cai, faz uma poça que deixa lento quem pisar.' },
   surf:     { n:'Surfe', ic:'🏄', k:'nova', cd:16, price:16, ult:1, rad:3.5, dmg:10, push:12, col:'#4dabff', desc:'Onda gigante ao seu redor que empurra todo mundo para fora.' },
   lamina:   { n:'Lâmina de Ar', ic:'🍃', k:'shot', cd:2.5, price:0, spd:8, range:6.5, r:.28, dmg:5, push:6, col:'#c8f59a', l3:{ spdMul:1.45, range:7.5 }, d3:'fica muito mais rápida e vai mais longe', desc:'Corte de vento rápido e de curto alcance.' },
-  agilidade:{ n:'Agilidade', ic:'👻', k:'self', cd:20, price:10, dur:2.5, l3:{ clone:1 }, d3:'deixa um clone parado no lugar; aperte de novo para voltar até ele', desc:'Some por 2,5 s e corre mais. No começo os golpes atravessam você.' },
+  agilidade:{ n:'Agilidade', ic:'👻', k:'self', cd:20, price:10, dur:2.5, l3:{ dur:3.2 }, d3:'fica 3,2 s invisível', desc:'Some por 2,5 s e corre mais. No começo os golpes atravessam você. A partir do nível 2 deixa um clone parado (aperte de novo para voltar até ele), e o clone gira junto no Giro de Lâminas.' },
   giroL:    { n:'Giro de Lâminas', ic:'⚔️', k:'nova', cd:7, price:10, l3:{ rad:2.6 }, d3:'área bem maior', rad:1.9, dmg:8, push:11, col:'#d8ffb0', desc:'Gira as lâminas e joga longe quem estiver perto.' },
   xtesoura: { n:'Tesoura X', ic:'✂️', k:'dash', cd:6, price:10, dist:3.5, spd:10, dmg:12, push:5, col:'#b8f57a', desc:'Investida cortante: muito dano em quem você atravessar.' },
   confusao: { n:'Confusão', ic:'🌀', k:'shot', cd:2.5, price:0, spd:5, range:8, r:.26, dmg:5, push:7.5, zig:.6, col:'#e07bff', l3:{ twin:1 }, d3:'solta duas ondas cruzadas', desc:'Onda psíquica em zigue-zague: difícil de prever, empurra pouco.' },
@@ -267,7 +273,7 @@ const CFG = Object.assign({ sp:6, bots:5, lives:5, map:'rand' }, store.get('nt-c
 const keyName = c => !c ? '—' : c === 'M0' ? 'Clique esq.' : c === 'M2' ? 'Clique dir.' : c === 'M1' ? 'Rodinha' : c === 'Space' ? 'Espaço' : c.replace(/^Key|^Digit/, '').replace(/Left$|Right$/, '');
 
 /* ---------- estado ---------- */
-const G = { phase:'menu', t:0, round:0, units:[], shots:[], zones:[], marks:[], waves:[], decoys:[], portals:[], caps:[], teamWins:{}, mode:'cl', fmt:0, obs:[], ice:[], map:'sq', R:8, fx:[], txt:[], falling:[], P:{x0:0,y0:0,x1:SIZE,y1:SIZE}, shrinkIn:SHRINK, step:0, paused:false, timer:0, me:null };
+const G = { phase:'menu', t:0, round:0, units:[], shots:[], zones:[], marks:[], waves:[], decoys:[], portals:[], chains:[], caps:[], teamWins:{}, mode:'cl', fmt:0, obs:[], ice:[], map:'sq', R:8, fx:[], txt:[], falling:[], P:{x0:0,y0:0,x1:SIZE,y1:SIZE}, shrinkIn:SHRINK, step:0, paused:false, timer:0, me:null };
 const NET = { on:false, host:false, peer:null, conn:null, peers:[], code:'', nick:'', ev:[], sendT:0, inT:0 };
 const isClient = () => NET.on && !NET.host;
 const mouse = { x:0, y:0, wx:5, wy:5, rdown:false };
@@ -578,7 +584,7 @@ function roundWinnerTeam(){
   if (isZona()){ const ts = allTeams().map(t => [t, zoneScore(t)]).sort((a, b) => b[1] - a[1]); return ts.length && ts[0][1] > 0 && (!ts[1] || ts[0][1] - ts[1][1] > .01) ? ts[0][0] : null; }
   const al = new Set(G.units.filter(u => u.alive).map(u => u.team)); return al.size === 1 ? [...al][0] : null;
 }
-const canAct = u => u.alive && !u.air && !u.dash && !u.wind && !(u.b.shell > 0) && !(u.b.sleep > 0) && !(u.b.fear > 0) && G.phase === 'play' && !G.paused;
+const canAct = u => u.alive && !u.air && !u.whip && !u.dash && !u.wind && !(u.b.shell > 0) && !(u.b.sleep > 0) && !(u.b.fear > 0) && G.phase === 'play' && !G.paused;
 
 const SHELL_DASH = { n:'Concha', dmg:0, push:5, col:'#9fd8ff' };
 function cast(u, i, ax, ay){
@@ -588,6 +594,7 @@ function cast(u, i, ax, ay){
     u.b.shell = 0; u.b.refl = 0; u.dash = { vx:dx * 9, vy:dy * 9, left:1.6, d:SHELL_DASH, L:lvMul(1), hit:new Set() }; u.anim = { n:'Rotate', t:0 }; u.face = Math.atan2(dy, dx);
     return true; }
   const s = u.sk[i]; if (!s || !s.lvl || !canAct(u)) return false;
+  if (s.id === 'sombra'){ const sh = G.shots.find(x => x.o === u && x.d.split && !x.dead); if (sh){ shadowSplit(sh); sh.dead = true; return true; } }
   if (s.id === 'teleporte'){ const sh = G.shots.find(x => x.o === u && x.d.tele && !x.dead); if (sh){ teleTo(u, sh.x, sh.y); sh.dead = true; return true; } }
   if (s.id === 'agilidade'){ const c = G.decoys.find(x => x.o === u); if (c){ teleTo(u, c.x, c.y); c.dead = true; G.decoys = G.decoys.filter(x => !x.dead); return true; } }
   if (s.cd > 0) return false;
@@ -614,6 +621,7 @@ function cast(u, i, ax, ay){
     case 'sink': { const r = Math.min(dl, d.range), f = !!u.gshade; if (f){ u.gshade = false; u.gshT = 0; }
       u.air = { t:0, dur:d.delay, sx:u.x, sy:u.y, ex:u.x + dx * r, ey:u.y + dy * r, sink:1, fear:f, d, L }; u.mt = null; u.vx = u.vy = 0; u.anim = { n:'Sink', t:0 };
       for (let k = 0; k < 12; k++) fx(u.x, u.y, rnd(-2, 2), rnd(-2, 2), .35, '#2e1065', 6); break; }
+    case 'chains': { const r = Math.min(dl, d.range); G.chains.push({ o:u, x:u.x + dx * r, y:u.y + dy * r, t:d.windup, d, L }); break; }
     case 'portal': { const r = Math.max(2.6, Math.min(dl, d.range)); G.portals.push({ o:u, ax:u.x + dx * 1.1, ay:u.y + dy * 1.1, bx:u.x + dx * r, by:u.y + dy * r, t:d.dur, dur:d.dur, r:.6 }); break; }
     case 'wave': G.waves.push({ o:u, x:u.x + dx * .5, y:u.y + dy * .5, dx, dy, left:d.range, d, L, hit:new Set() }); break;
     case 'delay': { const r = Math.min(dl, d.range); G.marks.push({ o:u, x:u.x + dx * r, y:u.y + dy * r, t:d.delay, d, L }); break; }
@@ -635,7 +643,7 @@ function cast(u, i, ax, ay){
     case 'dash': u.dash = { vx:dx * d.spd, vy:dy * d.spd, left:d.dist, d, L, hit:new Set() }; u.anim = { n:'Rotate', t:0 }; break;
     case 'self':
       if (s.id === 'concha'){ u.b.shell = d.dur; u.b.refl = d.refl ? 1 : 0; u.vx = u.vy = 0; u.mt = null; }
-      if (s.id === 'agilidade'){ u.b.inv = d.dur; u.b.intang = .6; if (d.clone) G.decoys.push({ o:u, sp:u.sp, x:u.x, y:u.y, vx:0, vy:0, face:u.face, t:8, at:u.at, b:{}, rvx:0, rvy:0, hp:u.hp, maxhp:u.maxhp }); }
+      if (s.id === 'agilidade'){ u.b.inv = d.dur; u.b.intang = .6; if (d.clone || s.lvl >= 2) G.decoys.push({ o:u, sp:u.sp, x:u.x, y:u.y, vx:0, vy:0, face:u.face, t:8, at:u.at, b:{}, rvx:0, rvy:0, hp:u.hp, maxhp:u.maxhp }); }
       if (s.id === 'reflexo'){ u.b.refl = d.dur; G.fx.push({ ring:1, x:u.x, y:u.y, r:.9, t:0, life:.35, col:'#ffb3ff' }); }
       if (s.id === 'danca'){ u.b.sd = d.dur; G.fx.push({ ring:1, x:u.x, y:u.y, r:1.2, t:0, life:.5, col:'#ff5d5d' }); }
       break;
@@ -643,6 +651,9 @@ function cast(u, i, ax, ay){
   return true;
 }
 function doNova(u, d, L, id){
+  if (id === 'giroL') for (const c of G.decoys) if (c.o === u){   // o clone do Scyther gira junto, com a mesma força
+    for (const e of foesOf(u)){ const ex = e.x - c.x, ey = e.y - c.y, el = Math.hypot(ex, ey); if (el <= d.rad + .3) hit(u, e, d, L, ex / (el || 1), ey / (el || 1)); }
+    G.fx.push({ ring:1, x:c.x, y:c.y, r:d.rad, t:0, life:.45, col:d.col }); }
   ballArea(u.x, u.y, d.rad + .3, d.push * L.p);
   for (const e of foesOf(u)){ const ex = e.x - u.x, ey = e.y - u.y, el = Math.hypot(ex, ey); if (el <= d.rad + .3) hit(u, e, d, L, ex / (el || 1), ey / (el || 1)); }
   G.fx.push({ ring:1, x:u.x, y:u.y, r:d.rad, t:0, life:.45, col:d.col });
@@ -665,9 +676,10 @@ function swap(u, e){
   txt(e.x, e.y - .9, 'trocou!', '#ffb3ff');
 }
 function hit(o, e, d, L, dx, dy, scale = 1){
-  if (!e.alive || e.air || e.b.intang > 0) return;
+  if (!e.alive || e.air || e.whip || e.b.intang > 0) return;
   const sd = o.b.sd > 0, crit = !!(o.items && o.items.mira && d.dmg && Math.random() < .2);
   if (e.b.shell > 0){ txt(e.x, e.y - .8, 'bloqueou', '#9fd8ff'); return; }
+  if (e.b.chain > 0){ e.b.chain = 0; txt(e.x, e.y - 1.6, 'soltou!', '#c4b5fd'); }   // golpe quebra a corrente
   if (e.b.sleep > 0){ e.b.sleep = 0; if (d.fear){ scale *= 1.5; txt(e.x, e.y - 1.45, 'SUSTO!', '#efe6ff'); } }   // acordar; susto do Gengar empurra 50% mais
   if (crit) txt(e.x, e.y - 1.35, 'crítico!', '#ffcf4a');
   if (L && L.cast && !L.hitDone){ L.hitDone = 1; o.hits = (o.hits || 0) + 1; }
@@ -723,7 +735,7 @@ function newMatch(){
   G.units = []; $('#spec').hidden = true; G.mode = 'cl'; G.fmt = CFG.fmt || 0; G.teamWins = {}; G.caps = [];
   G.me = makeUnit(CFG.sp, NET.on ? NET.nick : 'Você', true, 0); G.units.push(G.me);
   if (NET.on) for (const c of NET.peers){ const u = makeUnit(c.sp, c.nick, true, G.units.length); u.remote = c; c.u = u; G.units.push(u); }
-  const ids = Object.keys(POKE).map(Number);
+  const ids = Object.keys(POKE).map(Number).filter(n => n !== 129);
   if (G.fmt){   // times: primeiro quem escolheu, depois os "automático" no time menor, e os bots completam
     G.me.pref = NET.on ? (NET.tm ?? -1) : -1; for (const c of NET.peers) if (c.u) c.u.pref = c.tm ?? -1;
     const n = [0, 0]; for (const u of G.units) if (u.pref === 0 || u.pref === 1){ u.team = u.pref; n[u.team]++; }
@@ -747,7 +759,7 @@ function newMatch(){
 function startRound(){
   G.round++; G.map = G.matchMap || 'sq'; SIZE = sizeFor(G.units.filter(u => !u.out).length) + (isRd() ? 2 : 0); G.P = { x0:0, y0:0, x1:SIZE, y1:SIZE }; G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
   G.R = SIZE / 2 + .45; makeObstacles();
-  G.shots = []; G.zones = []; G.marks = []; G.waves = []; G.decoys = []; G.portals = []; G.falling = []; G.fx = []; G.txt = [];
+  G.shots = []; G.zones = []; G.marks = []; G.waves = []; G.decoys = []; G.portals = []; G.chains = []; G.falling = []; G.fx = []; G.txt = [];
   const live = G.units.filter(u => !u.out), n = live.length, off = Math.random() * Math.PI * 2;
   for (const u of live) u.rounds = (u.rounds || 0) + 1;
   G.spawnOff = off; makeCaps(); G.ball = null;
@@ -957,6 +969,7 @@ function botThink(u, dt){
     else if (d.k === 'nova') ok = best <= d.rad;
     else if (d.k === 'wave') ok = best <= d.range * .85;
     else if (d.k === 'fan') ok = best <= d.range * .6;
+    else if (d.k === 'chains'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * .6; ay = tgt.y + tgt.rvy * .6; }
     else if (d.k === 'portal'){ ok = best <= d.range * .8 && tgtEdge < 3; const ex = tgt.x - C.x, ey = tgt.y - C.y, el = Math.hypot(ex, ey) || 1; ax = tgt.x + ex / el * 1.5; ay = tgt.y + ey / el * 1.5; }
     else if (d.k === 'lob'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * .6; ay = tgt.y + tgt.rvy * .6; }
     else if (d.k === 'multi') ok = best <= d.range * .8;
@@ -1016,7 +1029,7 @@ function updateWorld(dt){
   for (const u of G.units){
     if (!u.alive) continue;
     const st = stat(u), ox = u.x, oy = u.y;
-    for (const k of ['slow','inv','intang','shell','sd','burn','refl','conf','sleep','fear','pcd']) if (u.b[k] > 0) u.b[k] -= dt;
+    for (const k of ['slow','inv','intang','shell','sd','burn','refl','conf','sleep','fear','pcd','chain']) if (u.b[k] > 0) u.b[k] -= dt;
     for (const s of u.sk) if (s.cd > 0) s.cd -= dt;
     if (u.faceLock > 0) u.faceLock -= dt;
     u.anim.t += dt;
@@ -1024,11 +1037,12 @@ function updateWorld(dt){
     if (st.regen && G.t - (u.hurtT || -9) > 4) u.hp = Math.min(u.maxhp, u.hp + st.regen * dt);
     if (u.b.burn > 0){ damage(u, u.b.burnD * dt, u.b.burnBy, 'fire'); if (Math.random() < .4) fx(u.x + rnd(-.2, .2), u.y - .3, 0, -1.2, .4, '#ff8a2a', 4); }
     if (!u.alive) continue;
-    if (!u.air && !onPlat(u.x, u.y)){ damage(u, mistDps() * st.mist * dt, null, true); if (Math.random() < .3) fx(u.x + rnd(-.3, .3), u.y, 0, -1, .5, '#9be36a', 5); }
+    if (!u.air && !u.whip && !onPlat(u.x, u.y)){ damage(u, mistDps() * st.mist * dt, null, true); if (Math.random() < .3) fx(u.x + rnd(-.3, .3), u.y, 0, -1, .5, '#9be36a', 5); }
     if (!u.alive) continue;
     if (u.acc >= 4){ txt(u.x, u.y - .9, Math.round(u.acc), '#9be36a'); u.acc = 0; }
     if (u.accF >= 1){ txt(u.x + rnd(-.2, .2), u.y - 1.05, '🔥' + Math.round(u.accF), '#ff4d3d'); u.accF = 0; }   // fogo: vermelho, a cada 1 de dano
-    if (u.air){
+    if (u.whip){ whipStep(u, dt); }
+    else if (u.air){
       u.air.t += dt; const p = Math.min(1, u.air.t / u.air.dur);
       u.x = u.air.sx + (u.air.ex - u.air.sx) * p; u.y = u.air.sy + (u.air.ey - u.air.sy) * p; u.vx = u.vy = 0;
       if (p >= 1){ const A = u.air; u.air = null; if (A.sink) emerge(u, A); }
@@ -1057,12 +1071,14 @@ function updateWorld(dt){
       if (u.faceLock <= 0 && (mvx || mvy)) u.face = Math.atan2(mvy, mvx);
     }
     const fr = Math.exp(-(onIce(u.x, u.y) ? .75 : 3.2) * dt); u.vx *= fr; u.vy *= fr;
+    if (u.b.chain > 0){ const cx0 = u.x - u.b.ax, cy0 = u.y - u.b.ay, cd = Math.hypot(cx0, cy0);   // acorrentado: não passa de 2 casas
+      if (cd > u.b.teth){ const nx = cx0 / cd, ny = cy0 / cd; u.x = u.b.ax + nx * u.b.teth; u.y = u.b.ay + ny * u.b.teth; const vn = u.vx * nx + u.vy * ny; if (vn > 0){ u.vx -= vn * nx; u.vy -= vn * ny; } } }
     u.x = clamp(u.x, -3, SIZE + 3); u.y = clamp(u.y, -3, SIZE + 3);
     u.rvx = (u.x - ox) / dt; u.rvy = (u.y - oy) / dt;
   }
   obstacleStep(dt); obstacleUnits();
   // separação entre Pokémon
-  const al = G.units.filter(u => u.alive && !u.air);
+  const al = G.units.filter(u => u.alive && !u.air && !u.whip);
   for (let i = 0; i < al.length; i++) for (let j = i + 1; j < al.length; j++){
     const a = al[i], b = al[j], dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), rr = POKE[a.sp].rad + POKE[b.sp].rad;
     if (d < rr && d > 0){ const o = (rr - d) / 2, nx = dx / d, ny = dy / d; const ka = a.b.shell > 0 ? 0 : 1, kb = b.b.shell > 0 ? 0 : 1; a.x -= nx * o * ka; a.y -= ny * o * ka; b.x += nx * o * kb; b.y += ny * o * kb; }
@@ -1145,7 +1161,7 @@ function updateWorld(dt){
     if (Math.random() < .9) { const a = rnd(0, 6.3), r = rnd(0, z.rad); fx(z.x + Math.cos(a) * r, z.y + Math.sin(a) * r, 0, z.d.zc ? -.3 : -1.4, .45, z.d.zc ? pick(['#6e5030','#9a7a4a']) : pick(['#ff6a1a','#ffd23f']), 6); }
   }
   G.zones = G.zones.filter(z => z.t > 0);
-  portalStep(dt);
+  portalStep(dt); chainStep(dt);
 
   if (!respawns() && (teamOn() ? new Set(G.units.filter(u => u.alive).map(u => u.team)).size <= 1 : G.units.filter(u => u.alive).length <= 1)) endRound();
 }
@@ -1165,6 +1181,24 @@ function emerge(u, A){
   u.anim = { n:'Shoot', t:0 };
 }
 // Portal: golpes e Pokémon que entram em um saem no outro
+function chainStep(dt){
+  for (const C of G.chains){ C.t -= dt; if (C.t > 0) continue;
+    for (const e of foesOf(C.o)){ if (e.air || e.whip || e.b.shell > 0 || e.b.intang > 0) continue;
+      if (Math.hypot(e.x - C.x, e.y - C.y) <= C.d.rad + POKE[e.sp].rad * .5){ e.b.chain = C.d.dur; e.b.ax = e.x; e.b.ay = e.y; e.b.teth = C.d.teth; e.last = { by:C.o, t:G.t }; txt(e.x, e.y - 1.2, 'acorrentado!', '#c4b5fd'); } }
+    G.fx.push({ ring:1, x:C.x, y:C.y, r:C.d.rad, t:0, life:.4, col:'#a78bfa' }); for (let k = 0; k < 16; k++) fx(C.x, C.y, rnd(-3, 3), rnd(-3, 3), .4, pick(['#3b0764','#6d28d9','#a78bfa']), 6); }
+  G.chains = G.chains.filter(C => C.t > 0);
+}
+// Chicotada: a língua leva o inimigo por cima do Gengar; andar muda para onde ele cai
+function startWhip(o, e, L){ e.whip = { o, t:0, dur:.6, sx:e.x, sy:e.y, L, p:0 }; e.vx = e.vy = 0; e.mt = null; e.last = { by:o, t:G.t }; txt(e.x, e.y - 1.2, 'chicotada!', '#ff7bc0'); }
+function whipStep(u, dt){
+  const W = u.whip, g = W.o; W.t += dt; const p = Math.min(1, W.t / W.dur); W.p = p;
+  if (!g.alive){ u.whip = null; return; }
+  let bx = g.x - W.sx, by = g.y - W.sy; const bl = Math.hypot(bx, by) || 1; bx /= bl; by /= bl;
+  const mx = g.rvx || 0, my = g.rvy || 0, ml = Math.hypot(mx, my), sxm = ml > .3 ? mx / ml : 0, sym = ml > .3 ? my / ml : 0;
+  const ex = g.x + bx * 1.8 + sxm * 1.4, ey = g.y + by * 1.8 + sym * 1.4, k = p * p * (3 - 2 * p);
+  u.x = W.sx + (ex - W.sx) * k; u.y = W.sy + (ey - W.sy) * k; u.vx = u.vy = 0;
+  if (p >= 1){ u.whip = null; const tx = ex - g.x, ty = ey - g.y, tl = Math.hypot(tx, ty) || 1; push(u, tx / tl, ty / tl, 9 * W.L.p); }
+}
 function portalStep(dt){
   for (const P of G.portals){ P.t -= dt; const tr = [[P.ax, P.ay, P.bx, P.by], [P.bx, P.by, P.ax, P.ay]];
     for (const q of G.shots){ if (q.dead || q.lob) continue; if (q.pcd > 0){ q.pcd -= dt; continue; }
@@ -1175,6 +1209,7 @@ function portalStep(dt){
 }
 function shotHit(s, e, sp){
   const d = s.d;
+  if (d.whip){ if (e.b.shell > 0){ txt(e.x, e.y - .8, 'bloqueou', '#9fd8ff'); return; } hit(s.o, e, d, s.L, 0, 0); if (e.alive) startWhip(s.o, e, s.L); return; }
   if (d.tele){ swap(s.o, e); return; }
   if (d.aoe){ explode(s); return; }
   const dir = d.pull ? -1 : 1;   // Lambida: puxa para o Gengar
@@ -1289,7 +1324,7 @@ function draw(){
     let alpha = 1;
     if (u.b.inv > 0) alpha = u === G.me ? .35 : 0;
     if (alpha === 0) continue;
-    const lift = u.air && !u.air.sink ? Math.sin(Math.min(1, u.air.t / u.air.dur) * Math.PI) * 1.1 : 0;
+    const lift = u.whip ? Math.sin((u.whip.p || 0) * Math.PI) * .9 : u.air && !u.air.sink ? Math.sin(Math.min(1, u.air.t / u.air.dur) * Math.PI) * 1.1 : 0;
     if (u.gshade && !u.air){ const g = cx.createRadialGradient(sx(u.x), sy(u.y) + T * .12, 0, sx(u.x), sy(u.y) + T * .12, T * .85); g.addColorStop(0, 'rgba(20,0,40,.85)'); g.addColorStop(1, 'rgba(20,0,40,0)'); cx.fillStyle = g; cx.beginPath(); cx.ellipse(sx(u.x), sy(u.y) + T * .12, T * (.8 + .06 * Math.sin(G.t * 3)), T * .34, 0, 0, 7); cx.fill(); }   // sombra do Gengar: o próximo susto dá Medo
     cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(sx(u.x), sy(u.y) + T * .12, T * POKE[u.sp].rad * .9 * (1 - lift * .3), T * .13, 0, 0, 7); cx.fill();
     cx.beginPath(); cx.strokeStyle = u.col; cx.lineWidth = 2; cx.ellipse(sx(u.x), sy(u.y) + T * .12, T * POKE[u.sp].rad, T * POKE[u.sp].rad * .42, 0, 0, 7); cx.stroke();
@@ -1297,7 +1332,7 @@ function draw(){
     if (u.anim.n === 'Shoot' && u.anim.t < .4) an = 'Shoot';
     else if (u.anim.n === 'Hurt' && u.anim.t < .3) an = 'Hurt';
     else if (u.anim.n === 'Hop' && u.air) an = 'Hop';
-    else if (u.b.sleep > 0) an = 'Hurt';
+    else if (u.b.sleep > 0 || u.whip) an = 'Hurt';
     else if ((u.anim.n === 'Rotate' && u.anim.t < .5) || u.b.shell > 0 || u.dash) an = 'Rotate';
     else if (Math.hypot(u.rvx, u.rvy) > .3) an = 'Walk';
     if (u.air && u.air.sink){ const p = Math.min(1, u.air.t / u.air.dur);   // mergulho: afunda, vira uma sombrinha andando e sai do chão
@@ -1316,6 +1351,7 @@ function draw(){
     const bw = T * .9, by = sy(u.y - lift) - T * 1.25;
     cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(sx(u.x) - bw / 2 - 1, by - 1, bw + 2, 6);
     const hpp = Math.max(0, u.hp / u.maxhp); cx.fillStyle = hpp > .5 ? '#7fe05a' : hpp > .25 ? '#ffcf4a' : '#ff5d5d'; cx.fillRect(sx(u.x) - bw / 2, by, bw * hpp, 4);
+    if (u.sp === 94){ cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(sx(u.x) - bw / 2 - 1, by + 5, bw + 2, 4); cx.fillStyle = u.gshade ? '#ffffff' : 'rgba(220,210,255,.6)'; cx.fillRect(sx(u.x) - bw / 2, by + 6, bw * (u.gshade ? 1 : Math.min(1, (u.gshT || 0) / 10)), 2); }   // sombra do Gengar carregando
     cx.font = `800 ${Math.max(10, T * .26)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = u.col; cx.fillText(u.name, sx(u.x), by - 4);
     if (u.b.conf > 0){ for (let k = 0; k < 3; k++){ const a = G.t * 5 + k * 2.1; cx.fillText('✦', sx(u.x) + Math.cos(a) * T * .3, by - T * .35 + Math.sin(a) * T * .1); } }   // confuso: estrelinhas girando
     if (u.emo){ cx.font = `${T * .6}px system-ui`; cx.fillText(u.emo.e, sx(u.x) + T * .6, by - 2); }
@@ -1325,7 +1361,13 @@ function draw(){
     cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(sx(s.x), sy(s.y), T * .25, T * .1, 0, 0, 7); cx.fill();
     cx.strokeStyle = 'rgba(160,120,70,.6)'; cx.setLineDash([4, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(s.tx), sy(s.ty), s.d.rad * T, 0, 7); cx.stroke(); cx.setLineDash([]);
     cx.fillStyle = '#7a5a32'; cx.strokeStyle = '#3e2a14'; cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(s.x), sy(s.y - h), T * .28, 0, 7); cx.fill(); cx.stroke(); }
-  for (const s of G.shots) if (s.d.pull && s.o){ cx.strokeStyle = '#ff7bc0'; cx.lineWidth = T * .12; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(sx(s.o.x), sy(s.o.y) - T * .3); cx.lineTo(sx(s.x), sy(s.y)); cx.stroke(); cx.lineCap = 'butt'; }   // língua
+  for (const C of G.chains || []){ const k = 1 - Math.max(0, C.t) / (C.wu || C.d.windup), X = sx(C.x), Y = sy(C.y), r = (C.rad || C.d.rad) * T;   // aviso das correntes
+    cx.fillStyle = `rgba(30,0,50,${.25 + .3 * k})`; cx.strokeStyle = 'rgba(167,139,250,.9)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, r, 0, 7); cx.fill(); cx.stroke(); cx.beginPath(); cx.arc(X, Y, r * k, 0, 7); cx.stroke(); }
+  for (const u of G.units) if (u.alive && u.b.chain > 0 && u.b.ax != null){ const ax = sx(u.b.ax), ay = sy(u.b.ay) + T * .1, ux = sx(u.x), uy = sy(u.y) - T * .1, n = 7;   // corrente presa no chão
+    cx.strokeStyle = '#b8b0c8'; cx.lineWidth = 2; for (let q = 0; q < n; q++){ const t0 = q / n; cx.beginPath(); cx.ellipse(ax + (ux - ax) * (t0 + .5 / n), ay + (uy - ay) * (t0 + .5 / n), T * .07, T * .045, Math.atan2(uy - ay, ux - ax) + (q % 2 ? 1.57 : 0), 0, 7); cx.stroke(); }
+    cx.fillStyle = '#3b0764'; cx.beginPath(); cx.arc(ax, ay, T * .12, 0, 7); cx.fill(); }
+  for (const u of G.units) if (u.whip && u.whip.o){ const g = u.whip.o, lp = Math.sin((u.whip.p || 0) * Math.PI) * .9; cx.strokeStyle = '#ff7bc0'; cx.lineWidth = T * .12; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(sx(g.x), sy(g.y) - T * .3); cx.lineTo(sx(u.x), sy(u.y - lp) - T * .3); cx.stroke(); cx.lineCap = 'butt'; }
+  for (const s of G.shots) if ((s.d.pull || s.d.whip) && s.o){ cx.strokeStyle = '#ff7bc0'; cx.lineWidth = T * .12; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(sx(s.o.x), sy(s.o.y) - T * .3); cx.lineTo(sx(s.x), sy(s.y)); cx.stroke(); cx.lineCap = 'butt'; }   // língua
   for (const P of G.portals || []){ const k = Math.min(1, P.t), a = G.t * 4;
     for (const [x, y] of [[P.ax, P.ay], [P.bx, P.by]]){ const X = sx(x), Y = sy(y), r = P.r * T;
       const g = cx.createRadialGradient(X, Y, 0, X, Y, r * 1.3); g.addColorStop(0, `rgba(10,0,25,${.95 * k})`); g.addColorStop(.6, `rgba(91,42,134,${.8 * k})`); g.addColorStop(1, 'rgba(139,92,246,0)'); cx.fillStyle = g; cx.beginPath(); cx.ellipse(X, Y, r * 1.3, r * .9, 0, 0, 7); cx.fill();
@@ -1385,11 +1427,12 @@ function drawSprite(sp, an, t, face, x, y, sc, alpha){
 const curKeys = () => KEYS[KEYS.mode];
 function buildBar(){
   const u = G.me; if (!u) return;
-  $('#bar').innerHTML = u.sk.map((s, i) => { const d = SK[s.id]; return `<div class="sl ${d.ult ? 'ult' : ''}" title="${d.n}: ${d.desc}"><span>${d.ic}</span><span class="k">${keyName(curKeys()[i])}</span><span class="lv"></span><div class="cd"></div><div class="ct"></div></div>`; }).join('');
+  $('#bar').innerHTML = (u.sp === 94 ? `<div class="ps" id="psv" title="Sombra: a cada 10 s o próximo golpe de susto dá Medo"><span>👻</span><div class="ct"></div></div>` : '') + u.sk.map((s, i) => { const d = SK[s.id]; return `<div class="sl ${d.ult ? 'ult' : ''}" title="${d.n}: ${d.desc}"><span>${d.ic}</span><span class="k">${keyName(curKeys()[i])}</span><span class="lv"></span><div class="cd"></div><div class="ct"></div></div>`; }).join('');
   $('#tsk').innerHTML = u.sk.map((s, i) => { const d = SK[s.id], pos = [[130,130],[70,136],[136,70],[14,140],[140,14]][i]; return `<div class="sl ${d.ult ? 'ult' : ''}" data-i="${i}" style="left:${pos[0]}px;top:${pos[1]}px"><span>${d.ic}</span><span class="lv"></span><div class="cd"></div><div class="ct"></div></div>`; }).join('');
 }
 function hudBar(){
   const u = G.me; if (!u) return;
+  const ps = $('#psv'); if (ps){ ps.classList.toggle('on', !!u.gshade); ps.querySelector('.ct').textContent = u.gshade ? '' : Math.max(1, Math.ceil(10 - (u.gshT || 0))); }
   for (const root of [$('#bar'), $('#tsk')]){
     root.querySelectorAll('.sl').forEach((el, i) => { const s = u.sk[i], d = SK[s.id];
       el.classList.toggle('lock', !s.lvl || !u.alive);
@@ -1453,10 +1496,11 @@ addEventListener('keydown', e => {
   if (e.code === 'Minus' || e.code === 'NumpadSubtract') return setZoom((CFG.zoom || 1) / 1.15);
   const m = /^Digit([1-5])$/.exec(e.code); if (m && G.me && G.phase !== 'menu') myEmote(EMOTES[+m[1] - 1]);
   if (e.code === 'Escape' && G.phase !== 'menu') openCfg();
-  if ((e.code === 'KeyP' || (e.code === 'KeyS' && KEYS.mode === 'mouse')) && !NET.on && G.phase !== 'menu' && G.phase !== 'over') togglePause();
+  if (e.code === 'KeyS' && KEYS.mode === 'mouse' && G.me){ G.me.mt = null; G.me.mvx = G.me.mvy = 0; mouse.rdown = false; }   // S = parar
+  if (e.code === 'KeyP' && !NET.on && G.phase !== 'menu' && G.phase !== 'over') togglePause();
 });
 // pausa só contra bots (no online atrapalharia os outros)
-function togglePause(){ G.paused = !G.paused; if (G.paused){ $('#banner').innerHTML = 'Pausado<small>Aperte S ou P para continuar</small>'; bannerT = 0; } else $('#banner').innerHTML = ''; }
+function togglePause(){ G.paused = !G.paused; if (G.paused){ $('#banner').innerHTML = 'Pausado<small>Aperte P para continuar</small>'; bannerT = 0; } else $('#banner').innerHTML = ''; }
 addEventListener('keyup', e => { held[e.code] = false; });
 addEventListener('blur', () => { for (const k in held) held[k] = false; mouse.rdown = false; });
 
@@ -1523,7 +1567,7 @@ function renderMenu(){
   $('#picks').innerHTML = Object.entries(POKE).map(([sp, p]) => `<button class="pk" data-sp="${sp}" aria-pressed="${+sp === CFG.sp}"><img src="${IMG[sp] ? IMG[sp].por : ''}" alt=""><span><b>${p.n}</b><small>${p.desc}</small><small style="color:var(--fg);margin-top:4px">Começa com ${SK[p.kit[0]].ic} ${SK[p.kit[0]].n}</small></span></button>`).join('');
   $('#nbots').innerHTML = (NET.on ? [0,1,2,3,5,7] : [1,2,3,5,7]).map(n => `<button class="chip" data-nb="${n}" aria-pressed="${n === CFG.bots}">${n}</button>`).join('');
   CFG.mode = 'cl';   // Zona e Pokébol ainda em desenvolvimento
-  $('#nmode').innerHTML = [['cl','Clássico'],['zn','Zona Estratégica'],['pb','Pokébol (futebol)']].map(([k, n]) => k === 'cl' ? `<button class="chip" data-mo="${k}" aria-pressed="true">${n}</button>` : `<button class="chip soon" disabled title="Novo modo em desenvolvimento">${n} · em breve</button>`).join('');
+  $('#nmode').innerHTML = [['cl','Clássico'],['zn','Zona Estratégica'],['pb','Pokébol']].map(([k, n]) => k === 'cl' ? `<button class="chip" data-mo="${k}" aria-pressed="true">${n}</button>` : `<button class="chip soon" disabled title="Novo modo em desenvolvimento">${n} · em breve</button>`).join('');
   $('#nfmt').innerHTML = [[0,'Todos contra todos'],[2,'2v2'],[3,'3v3'],[4,'4v4']].map(([k, n]) => `<button class="chip" data-fm="${k}" aria-pressed="${k === (CFG.fmt || 0)}">${n}</button>`).join('');
   $('#botsRow').hidden = !!CFG.fmt || CFG.mode === 'pb'; $('#livesRow').hidden = CFG.mode === 'zn' || CFG.mode === 'pb';
   $('#nlives').innerHTML = [1,3,5].map(n => `<button class="chip" data-nl="${n}" aria-pressed="${n === CFG.lives}">${n}</button>`).join('');
@@ -1645,11 +1689,12 @@ function netBroadcast(){
     u:G.units.map(u => { const b = u.b, fl = (b.inv > 0 ? 1 : 0) | (b.shell > 0 ? 2 : 0) | (b.refl > 0 ? 4 : 0) | (b.sd > 0 ? 8 : 0) | (b.slow > 0 ? 16 : 0) | (b.burn > 0 ? 32 : 0) | (Math.hypot(u.rvx, u.rvy) > .3 ? 64 : 0) | (b.conf > 0 ? 128 : 0) | (b.sleep > 0 ? 256 : 0) | (b.fear > 0 ? 512 : 0) | (u.gshade ? 1024 : 0);
       return [r2(u.x), r2(u.y), r2(u.face), Math.round(u.hp * 10) / 10, u.maxhp, u.alive ? 1 : 0, u.out ? 1 : 0, u.lives, ANIMS.indexOf(u.anim.n), r2(u.anim.t), fl,
         u.air ? r2(Math.min(1, u.air.t / u.air.dur)) : -1, u.emo ? u.emo.e : '', u.wins, u.kills, Math.round(u.dmg), u.place,
-        u.wind ? (u.wind.nova ? [0, 0, 0, 0, u.wind.d.rad, r2(u.wind.t), u.wind.d.windup] : [r2(u.wind.dx), r2(u.wind.dy), u.wind.d.len, u.wind.d.w]) : 0, u.human ? 1 : 0, u.fired || 0, u.hits || 0, u.rounds || 0, Math.round(u.rdmg || 0), u.air && u.air.sink ? 1 : 0]; }),
+        u.wind ? (u.wind.nova ? [0, 0, 0, 0, u.wind.d.rad, r2(u.wind.t), u.wind.d.windup] : [r2(u.wind.dx), r2(u.wind.dy), u.wind.d.len, u.wind.d.w]) : 0, u.human ? 1 : 0, u.fired || 0, u.hits || 0, u.rounds || 0, Math.round(u.rdmg || 0), u.air && u.air.sink ? 1 : 0, r2(u.gshT || 0), u.whip ? [r2(u.whip.p || 0), G.units.indexOf(u.whip.o)] : 0, u.b.chain > 0 ? [r2(u.b.ax), r2(u.b.ay)] : 0]; }),
     s:G.shots.filter(x => !x.dead).map(x => [skId(x.d), r2(x.x), r2(x.y), r2(x.vx), r2(x.vy), x.lob ? [r2(x.tx), r2(x.ty), r2(x.left), r2(x.tot)] : 0, x.d.fade ? r2(x.left) : null, G.units.indexOf(x.o)]),
     z:G.zones.map(z => [skId(z.d), r2(z.x), r2(z.y), z.rad]),
     m:G.marks.map(m => [skId(m.d), r2(m.x), r2(m.y), r2(m.t), m.d.core || .35]),
     wv:G.waves.map(w => [r2(w.x), r2(w.y), r2(w.dx), r2(w.dy), skId(w.d)]),
+    cn:G.chains.map(C => [r2(C.x), r2(C.y), C.d.rad, r2(C.t), C.d.windup]),
     pr:G.portals.map(P => [r2(P.ax), r2(P.ay), r2(P.bx), r2(P.by), r2(P.t), P.r]),
     d:G.decoys.map(c => [G.units.indexOf(c.o), r2(c.x), r2(c.y), r2(c.face)]),
     mo:G.mode, fm:G.fmt, tw:G.teamWins, bl:G.ball ? [r2(G.ball.x), r2(G.ball.y), r2(G.ball.vx), r2(G.ball.vy)] : 0, gl:G.goals || [0, 0], pt:r2(G.pbT || 0), cp:G.caps.map(z => [r2(z.x), r2(z.y), z.r, z.cap, Object.entries(z.acc).map(([k, v]) => [+k, r2(v)]), z.full ? 1 : 0]),
@@ -1661,7 +1706,7 @@ function netBroadcast(){
   const now = performance.now();
   for (const c of NET.peers.slice()) if (c.u && c.seen && now - c.seen > 8000){ try { c.close(); } catch(e){} netDrop(c); }
   for (const c of NET.peers){ if (!c.open || !c.u) continue; const u = c.u;
-    S.me = { g:u.gold, sk:u.sk.map(k => [k.lvl, r2(k.cd)]), it:Object.keys(u.items), rdy:u.ready ? 1 : 0 };
+    S.me = { g:u.gold, sk:u.sk.map(k => [k.lvl, r2(k.cd)]), it:Object.keys(u.items), rdy:u.ready ? 1 : 0, gs:r2(u.gshT || 0) };
     c.send(S); }
 }
 const skId = d => { for (const k in SK) if (SK[k].n === d.n) return k; return 'brasa'; };
@@ -1720,6 +1765,7 @@ function applySnap(S){
     const fl = a[10]; u.b = { inv:fl & 1 ? 1 : 0, shell:fl & 2 ? 1 : 0, refl:fl & 4 ? 1 : 0, sd:fl & 8 ? 1 : 0, slow:fl & 16 ? 1 : 0, burn:fl & 32 ? 1 : 0, conf:fl & 128 ? 1 : 0, sleep:fl & 256 ? 1 : 0, fear:fl & 512 ? 1 : 0 }; u.gshade = !!(fl & 1024);
     u.rvx = fl & 64 ? 1 : 0; u.rvy = 0;
     u.air = a[11] >= 0 ? { t:a[11], dur:1, sink:a[23] ? 1 : 0 } : null;
+    u.gshT = a[24] || 0; u.whip = a[25] ? { p:a[25][0], o:G.units[a[25][1]] } : null; if (a[26]){ u.b.chain = 1; u.b.ax = a[26][0]; u.b.ay = a[26][1]; }
     if (a[12]){ if (!u.emo || u.emo.e !== a[12]) u.emo = { e:a[12], t:2.6 }; } else u.emo = null;
     u.wins = a[13]; u.kills = a[14]; u.dmg = a[15]; u.place = a[16];
     u.wind = !a[17] ? null : a[17][4] ? { nova:1, t:a[17][5], d:{ rad:a[17][4], windup:a[17][6] } } : { dx:a[17][0], dy:a[17][1], d:{ len:a[17][2], w:a[17][3] } }; u.human = !!a[18]; u.fired = a[19]; u.hits = a[20]; u.rounds = a[21]; u.rdmg = a[22]; });
@@ -1727,6 +1773,7 @@ function applySnap(S){
   G.zones = S.z.map(a => ({ d:SK[a[0]], x:a[1], y:a[2], rad:a[3] }));
   G.marks = S.m.map(a => ({ d:SK[a[0]], x:a[1], y:a[2], t:a[3], co:a[4] }));
   G.waves = (S.wv || []).map(a => ({ d:SK[a[4]] || SK.explosao, x:a[0], y:a[1], dx:a[2], dy:a[3] }));
+  G.chains = (S.cn || []).map(a => ({ x:a[0], y:a[1], rad:a[2], t:a[3], wu:a[4], d:SK.correntes }));
   G.portals = (S.pr || []).map(a => ({ ax:a[0], ay:a[1], bx:a[2], by:a[3], t:a[4], r:a[5] }));
   G.decoys = S.d.map(a => { const o = G.units[a[0]] || G.me; return { o, sp:o.sp, x:a[1], y:a[2], face:a[3], at:G.t }; });
   for (const e of S.ev){
@@ -1738,7 +1785,7 @@ function applySnap(S){
   }
   // os meus dados (ouro, golpes, itens)
   const me = G.me;
-  if (S.me && me){ me.gold = S.me.g; S.me.sk.forEach((k, i) => { if (me.sk[i]){ me.sk[i].lvl = k[0]; me.sk[i].cd = k[1]; } }); me.items = {}; for (const k of S.me.it) me.items[k] = 1; me.ready = !!S.me.rdy; }
+  if (S.me && me){ me.gold = S.me.g; S.me.sk.forEach((k, i) => { if (me.sk[i]){ me.sk[i].lvl = k[0]; me.sk[i].cd = k[1]; } }); me.items = {}; for (const k of S.me.it) me.items[k] = 1; me.ready = !!S.me.rdy; me.gshT = S.me.gs || 0; }
   // telas
   if (G.phase === 'shop' && prev !== 'shop' && me && !me.out){ $('#shopOv').hidden = false; }
   if (G.phase === 'shop' && !$('#shopOv').hidden){ const sig = JSON.stringify(S.me); if (sig !== applySnap.sig){ applySnap.sig = sig; renderShop(); } $('#shopTime').textContent = `⏱ ${Math.ceil(G.timer)} s`; }
