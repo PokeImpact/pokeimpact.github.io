@@ -143,7 +143,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v28 · 17/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v29 · 17/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -402,10 +402,7 @@ function doShrink(){
   if (isRd()) G.R -= 1; else G.P = nextP();
   addFalling(before, platCells());
   G.step++; G.shrinkIn = SHRINK;
-  for (const o of G.obs) if (!o.gone && (!onPlat(o.x, o.y) || (o.k === 'lapras' && G.R < 2.2))){ o.gone = true;
-    feed(o.k === 'lapras' ? 'O Lapras mergulhou na névoa!' : o.k === 'volt' ? 'O Voltorb caiu na névoa' : 'Uma árvore caiu na névoa', '#9fd8ff');
-    for (let k = 0; k < 18; k++) fx(o.x, o.y, rnd(-3, 3), rnd(-3, 3), .5, o.k === 'tree' ? '#3f8a3a' : '#9fd8ff', 7); }
-  G.obs = G.obs.filter(o => !o.gone); G.ice = G.ice.filter(p => !p.o || !p.o.gone);
+  // os objetos (Voltorbs, árvores, pedras, Lapras) ficam no lugar mesmo quando o chão some embaixo deles
   feed(platGone() ? 'A plataforma sumiu! Só resta a névoa.' : 'A plataforma encolheu', '#9be36a');
 }
 function addFalling(before, after){ for (const [k, m] of before) if (after.get(k) !== m){ const [i, j] = k.split(',').map(Number); G.falling.push({ i, j, t:0, m }); } }
