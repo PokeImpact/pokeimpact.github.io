@@ -143,12 +143,13 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v27 · 10/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v28 · 17/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
     <div class="row"><span class="lbl">Formato</span><span class="row" id="nfmt"></span></div>
     <div class="row" id="botsRow"><span class="lbl">Oponentes (bots)</span><span class="row" id="nbots"></span></div>
+    <div class="row" id="difRow"><span class="lbl">Dificuldade dos bots</span><span class="row" id="ndif"></span></div>
     <div class="row" id="livesRow"><span class="lbl">Vidas</span><span class="row" id="nlives"></span></div>
     <div class="row"><span class="lbl">Mapa</span><span class="row" id="nmap"></span></div>
     <div class="row" id="accRow" hidden><span class="lbl">Conta</span><span id="accBox" class="row" style="gap:6px;flex-wrap:wrap;align-items:center"></span></div>
@@ -797,7 +798,7 @@ function newMatch(){
     G.units.forEach((u, i) => u.team = i);
   }
   if (NET.on) netStartMsg();
-  G.round = 0; G.t = 0; G.kv = {}; G.rv = {}; G.ranked = NET.on && CFG.ranked !== false;
+  G.round = 0; G.t = 0; G.kv = {}; G.rv = {}; G.diff = CFG.diff || 'normal'; G.ranked = NET.on && CFG.ranked !== false;
   G.me.uid = AUTH.user ? AUTH.user.id : null; if (NET.on) for (const c of NET.peers) if (c.u) c.u.uid = c.uid || null;
   const pm = CFG.map === 'rand' ? pick(['sq','rd','vt','fl']) : CFG.map;
   G.matchMap = G.mode === 'pb' ? 'sq' : pm === 'fl' ? pick(['fl','flr']) : pm;   // floresta: quadrada ou redonda   // o mesmo mapa a partida inteira
@@ -811,7 +812,7 @@ function startRound(){
   G.R = SIZE / 2 + .45; makeObstacles();
   G.shots = []; G.zones = []; G.marks = []; G.waves = []; G.decoys = []; G.portals = []; G.chains = []; G.falling = []; G.fx = []; G.txt = [];
   const live = G.units.filter(u => !u.out), n = live.length, off = Math.random() * Math.PI * 2;
-  for (const u of live){ u.rounds = (u.rounds || 0) + 1; u._w0 = u.wins; } G.inRound = live.slice();
+  for (const u of live){ u.rounds = (u.rounds || 0) + 1; u._w0 = u.wins; } G.inRound = live.slice(); G.playT = 0;
   G.spawnOff = off; makeCaps(); G.ball = null;
   if (isPb()){ G.obs = []; G.ice = []; G.goals = [0, 0]; G.pbT = PBTIME; G.ball = { x:SIZE / 2, y:SIZE / 2, vx:0, vy:0, r:.42, rot:0 }; }
   live.forEach((u, k) => {
@@ -819,6 +820,7 @@ function startRound(){
     Object.assign(u, { x:px, y:py, resp:0, vx:0, vy:0, hp:u.maxhp, alive:true, b:{}, air:null, dash:null, wind:null, orbs:null, sash:false, mt:null, last:null, roundKills:0, rdmg:0, acc:0, ready:false, gshade:false, gshT:5, pcd:0 });
     u.face = Math.atan2(SIZE / 2 - u.y, SIZE / 2 - u.x);
     for (const s of u.sk) s.cd = 0;
+    if (u.ai){ u.ai.home = [px, py]; u.ai.open = rnd(1.5, 3.5); u.ai.tgt = null; }   // começo da rodada: cada bot fica um pouco no seu canto
   });
   for (const u of G.units) if (u.out) u.alive = false;
   G.phase = 'count'; G.timer = 3;
@@ -951,8 +953,9 @@ $('#ready').onclick = () => {
 function botShop(u){
   for (let n = 0; n < 6; n++){
     const opts = [];
-    for (const s of u.sk){ if (s.lvl === 0) opts.push(['sk', s.id, 5]); else if (s.lvl < 3) opts.push(['sk', s.id, 1]); }
-    for (const id in ITEMS) if (!u.items[id]) opts.push(['it', id, 1.5]);
+    const hard = G.diff === 'hard';
+    for (const s of u.sk){ const d = SK[s.id]; if (s.lvl === 0) opts.push(['sk', s.id, hard ? 8 : 5]); else if (s.lvl < 3) opts.push(['sk', s.id, hard && (s.id === u.sk[0].id || d.ult) ? 3 : 1]); }
+    for (const id in ITEMS) if (!u.items[id]) opts.push(['it', id, hard ? (id === 'ferro' || id === 'balao' ? 3 : .8) : 1.5]);
     const ok = opts.filter(o => (o[0] === 'sk' ? skPrice(u.sk.find(s => s.id === o[1])) : ITEMS[o[1]].price) <= u.gold);
     if (!ok.length) break;
     let tot = ok.reduce((a, o) => a + o[2], 0), r = Math.random() * tot, c = ok[0];
@@ -962,18 +965,46 @@ function botShop(u){
 }
 
 /* ---------- bots ---------- */
+// dificuldade: reação, mira, previsão do movimento, desvio, ritmo de ataque, fuga da beirada e uso esperto do kit
+const DIF = {
+  easy:   { think:[.3, .45], err:.65, lead:0,  dodge:.08, cdr:[1.8, 3],   escape:.3, smart:.2,  holdUlt:0 },
+  normal: { think:[.12, .2], err:.2,  lead:.8, dodge:.35, cdr:[.7, 1.3],  escape:.6, smart:.6,  holdUlt:.5 },
+  hard:   { think:[.06, .1], err:.05, lead:1,  dodge:.8,  cdr:[.25, .55],  escape:.9, smart:.95, holdUlt:.9 },
+};
+const dif = () => DIF[G.diff] || DIF.normal;
+// personalidade: que distância gosta de manter e em quem mira
+const PERS = { agro:[1.6, 2.4], snipe:[5, 6.5], hunter:[2.6, 3.6], calm:[3.6, 4.6] };
+function botInit(u){ u.ai.pers = pick(Object.keys(PERS)); u.ai.want = rnd(...PERS[u.ai.pers]); }
+// tem obstáculo no caminho do tiro? (evita ficar acertando Voltorb e árvore sem querer)
+function shotBlocked(u, ax, ay, dist){
+  const dx = ax - u.x, dy = ay - u.y, l = Math.hypot(dx, dy) || 1, nx = dx / l, ny = dy / l;
+  return G.obs.some(o => { if (o.down > 0) return false; const ox = o.x - u.x, oy = o.y - u.y, t = ox * nx + oy * ny; return t > 0 && t < Math.min(dist, l) && Math.abs(ox * ny - oy * nx) < o.r + .25; });
+}
 function botThink(u, dt){
+  const D = dif();
   u.ai.cdr -= dt; u.ai.t -= dt;
   if (u.ai.t > 0) return;
-  u.ai.t = rnd(.1, .2);
-  const C = platCenter(), w = platWidth();
-  const foes = foesOf(u).filter(e => !(e.b.inv > 0)).concat(G.decoys.filter(c => c.o !== u));   // bots não sabem quem é o clone
-  let tgt = null, best = 1e9;
-  for (const e of foes){ const d = Math.hypot(e.x - u.x, e.y - u.y); if (d < best){ best = d; tgt = e; } }
-  // onde quero ficar: do lado do centro em relação ao alvo, a uma certa distância
+  u.ai.t = rnd(...D.think);
+  if (!u.ai.pers) botInit(u);
+  const P = u.ai.pers, C = platCenter(), w = platWidth(), myEdge = edgeDist(u.x, u.y), lowHp = u.hp < u.maxhp * .35;
+  const foes = foesOf(u).filter(e => !(e.b.inv > 0)).concat(G.decoys.filter(c => c.o !== u && !(teamOn() && c.o.team === u.team)));   // bots não sabem quem é o clone
+  // escolher o alvo: perto, fraco (agressivo), perto da névoa (caçador); evita todo mundo no mesmo alvo
+  let tgt = null, best = 1e9, bestSc = 1e9;
+  for (const e of foes){ const d = Math.hypot(e.x - u.x, e.y - u.y), eg = edgeDist(e.x, e.y);
+    const crowd = G.units.filter(b => b !== u && !b.human && b.alive && b.ai && b.ai.tgt === e).length;
+    let sc = d + crowd * 1.8;
+    if (P === 'agro') sc -= (1 - (e.hp || 1) / (e.maxhp || 1)) * 3;
+    if (P === 'hunter') sc -= Math.max(0, 3 - eg) * 2;
+    if (P === 'snipe') sc = Math.abs(d - u.ai.want) + crowd * 1.8;
+    if (sc < bestSc){ bestSc = sc; tgt = e; best = d; } }
+  u.ai.tgt = tgt;
+  // onde quero ficar: do lado do centro em relação ao alvo, na distância da minha personalidade
   let gx = C.x, gy = C.y;
-  if (tgt && w > 2){ let ax = C.x - tgt.x, ay = C.y - tgt.y; const al = Math.hypot(ax, ay) || 1; gx = tgt.x + ax / al * u.ai.want; gy = tgt.y + ay / al * u.ai.want;
+  const want = u.ai.want + (lowHp ? 1.5 : 0);
+  if (tgt && w > 2){ let ax = C.x - tgt.x, ay = C.y - tgt.y; const al = Math.hypot(ax, ay) || 1; gx = tgt.x + ax / al * want; gy = tgt.y + ay / al * want;
     const px = -(tgt.y - u.y) / (best || 1), py = (tgt.x - u.x) / (best || 1); gx += px * u.ai.side * 1.2; gy += py * u.ai.side * 1.2; }
+  // começo da rodada: cada um fica no seu canto um pouco, em vez de todo mundo correr para o meio
+  if (G.playT < (u.ai.open || 0) && u.ai.home){ const [hx, hy] = u.ai.home; gx = hx + (C.x - hx) * .2 + u.ai.side * .6; gy = hy + (C.y - hy) * .2; }
   if (isZona() && G.caps.some(z => !z.full)){
     if (!u.ai.z || u.ai.z.full || (u.ai.zt = (u.ai.zt || 0) - .15) <= 0){ u.ai.zt = rnd(4, 9);
       const sc = z => Math.hypot(z.x - u.x, z.y - u.y) - (allTeams().reduce((m, t) => t !== u.team ? Math.max(m, capShare(z, t)) : m, 0) - capShare(z, u.team)) * 6 + rnd(0, 3);
@@ -983,22 +1014,28 @@ function botThink(u, dt){
     const mates = G.units.filter(e => e.alive && e.team === u.team), ch = mates.sort((a, b) => Math.hypot(a.x - B.x, a.y - B.y) - Math.hypot(b.x - B.x, b.y - B.y))[0];
     if (ch === u){ const bx = B.x - vx / vl * .8, by = B.y - vy / vl * .8; if (Math.hypot(bx - u.x, by - u.y) < .5){ gx = B.x + vx / vl; gy = B.y + vy / vl; } else { gx = bx; gy = by; } }
     else { const og = u.team ? SIZE : 0, k = mates.indexOf(u) > 1 ? .7 : .4; gx = og + (B.x - og) * k; gy = SIZE / 2 + (B.y - SIZE / 2) * .5; } }
-  [gx, gy] = clampSafe(gx, gy, w > 3 ? 1.1 : .5);
+  // não ficar se esfregando: se afasta de quem está colado (menos do alvo, se for agressivo)
+  for (const o of G.units){ if (o === u || !o.alive || (P === 'agro' && o === tgt)) continue; const dx = gx - o.x, dy = gy - o.y, d = Math.hypot(dx, dy); if (d < 1.4 && d > .01){ gx += dx / d * (1.4 - d); gy += dy / d * (1.4 - d); } }
+  // perto da beirada (ou com pouca vida): puxa o alvo para o centro
+  const margin = (lowHp ? 2 : 1.1) * (w > 3 ? 1 : .5);
+  if (myEdge < margin && Math.random() < D.escape + .3){ gx = gx * .4 + C.x * .6; gy = gy * .4 + C.y * .6; }
+  [gx, gy] = clampSafe(gx, gy, w > 3 ? margin : .5);
   for (const o of G.obs){ const dx = gx - o.x, dy = gy - o.y, d = Math.hypot(dx, dy) || .01, keep = o.boom > 0 ? 3.4 : o.r + .8; if (d < keep){ gx = o.x + dx / d * keep; gy = o.y + dy / d * keep; } }
   if (Math.random() < .03) u.ai.side *= -1;
-  // desviar de projéteis
+  // desviar de projéteis (a dificuldade decide quantas vezes ele percebe)
   let dodge = null;
-  for (const s of G.shots){ if (s.o === u) continue; const rx = u.x - s.x, ry = u.y - s.y, v2 = s.vx * s.vx + s.vy * s.vy, tc = (rx * s.vx + ry * s.vy) / v2;
-    if (tc < 0 || tc > .65) continue; const cxp = s.x + s.vx * tc - u.x, cyp = s.y + s.vy * tc - u.y;
-    if (Math.hypot(cxp, cyp) < .8){ const vl = Math.sqrt(v2); let px = -s.vy / vl, py = s.vx / vl; if ((C.x - u.x) * px + (C.y - u.y) * py < 0){ px = -px; py = -py; } dodge = [px, py]; break; } }
+  for (const s of G.shots){ if (s.o === u || (teamOn() && s.o && s.o.team === u.team)) continue; const rx = u.x - s.x, ry = u.y - s.y, v2 = s.vx * s.vx + s.vy * s.vy, tc = (rx * s.vx + ry * s.vy) / v2;
+    if (tc < 0 || tc > .7) continue; const cxp = s.x + s.vx * tc - u.x, cyp = s.y + s.vy * tc - u.y;
+    if (Math.hypot(cxp, cyp) < .85){ const vl = Math.sqrt(v2); let px = -s.vy / vl, py = s.vx / vl; if ((C.x - u.x) * px + (C.y - u.y) * py < 0){ px = -px; py = -py; } dodge = [px, py]; break; } }
+  if (dodge && Math.random() > D.dodge) dodge = null;
   const inMist = !onPlat(u.x, u.y);
-  if (inMist && u.b.shell > 0){ const ci = u.sk.findIndex(k => k.id === 'concha'); if (ci >= 0) cast(u, ci, C.x, C.y); }   // sai rolando para o centro
-  if ((dodge && Math.random() < .3) || (inMist && Math.random() < .5) || (u.hp < u.maxhp * .35 && tgt && best < 2.5 && Math.random() < .3)){
+  if ((inMist || (myEdge < 1 && u.b.shell > 0)) && u.b.shell > 0){ const ci = u.sk.findIndex(k => k.id === 'concha'); if (ci >= 0) cast(u, ci, C.x, C.y); }   // sai rolando para o centro
+  if ((dodge && Math.random() < .5) || (inMist && Math.random() < D.escape) || (myEdge < .8 && Math.random() < D.escape * .5) || (lowHp && tgt && best < 2.5 && Math.random() < .3)){
     for (let i = 0; i < u.sk.length; i++){ const s = u.sk[i]; if (!s.lvl || s.cd > 0) continue;
       if (s.id === 'voo' || s.id === 'mergulho'){ cast(u, i, C.x, C.y); break; }
-      if (s.id === 'teleporte' && inMist){ cast(u, i, C.x, C.y); break; }
-      if (s.id === 'concha' && inMist){ cast(u, i, u.x, u.y); break; }
-      if (!inMist && (s.id === 'concha' || s.id === 'agilidade' || (s.id === 'reflexo' && dodge))){ cast(u, i, u.x, u.y); break; } }
+      if (s.id === 'teleporte' && (inMist || myEdge < .8)){ cast(u, i, C.x, C.y); break; }
+      if (s.id === 'concha' && (inMist || myEdge < .8)){ cast(u, i, u.x, u.y); break; }
+      if (!inMist && dodge && (s.id === 'concha' || s.id === 'agilidade' || s.id === 'reflexo' || s.id === 'splash')){ cast(u, i, u.x + dodge[0] * 2, u.y + dodge[1] * 2); break; } }
   }
   let mx = gx - u.x, my = gy - u.y; const ml = Math.hypot(mx, my);
   if (dodge){ mx = dodge[0]; my = dodge[1]; } else if (ml < .25){ mx = my = 0; } else { mx /= ml; my /= ml; }
@@ -1007,33 +1044,43 @@ function botThink(u, dt){
   // Pokébol: chuta a bola com o golpe Q quando ela está entre o bot e o gol do outro time
   if (isPb() && G.ball && u.ai.cdr <= 0 && canAct(u) && u.sk[0].lvl && u.sk[0].cd <= 0){ const B = G.ball, gT = u.team ? 0 : SIZE, ax = B.x - u.x, ay = B.y - u.y, bd = Math.hypot(ax, ay), gx2 = gT - B.x, gy2 = SIZE / 2 - B.y;
     if (bd < 5 && (ax * gx2 + ay * gy2) / ((bd || 1) * (Math.hypot(gx2, gy2) || 1)) > .6 && Math.random() < .6){ cast(u, 0, B.x, B.y); u.ai.cdr = rnd(.5, 1); return; } }
+  // Gengar: divide a Bola Sombria quando ela passa do lado de alguém
+  const myBall = G.shots.find(x => x.o === u && x.d.split && !x.dead);
+  if (myBall && Math.random() < D.smart && foes.some(e => Math.hypot(e.x - myBall.x, e.y - myBall.y) < 1.6)){ cast(u, 0, u.x, u.y); return; }
   // atacar
   if (!tgt || u.ai.cdr > 0 || !canAct(u)) return;
-  const order = u.sk.map((s, i) => i).sort(() => Math.random() - .5);
+  const tgtEdge = edgeDist(tgt.x, tgt.y), stuck = tgt.b && (tgt.b.sleep > 0 || tgt.b.chain > 0 || tgt.b.fear > 0 || tgt.b.slow > 0);
+  const smart = Math.random() < D.smart;
+  // ordem: esperto prefere o golpe que mais empurra quando o alvo está perto da névoa ou preso
+  const order = u.sk.map((s, i) => i).sort((a, b) => { if (!smart) return Math.random() - .5;
+    const sc = i => { const d = SK[u.sk[i].id]; return (d.push || 0) * (tgtEdge < 2.5 || stuck ? 1.6 : 1) + (d.ult && (tgtEdge < 3 || stuck) ? 8 : 0) + (d.sleep || d.k === 'chains' ? 6 : 0) + rnd(0, 4); };
+    return sc(b) - sc(a); });
   for (const i of order){
     const s = u.sk[i]; if (!s.lvl || s.cd > 0) continue; const d = SK[s.id];
     let ok = false, ax = tgt.x, ay = tgt.y;
     if (tgt.sp && !tgt.sk && d.k !== 'shot') continue;   // clone: só leva projétil
-    const tgtEdge = edgeDist(tgt.x, tgt.y);
-    if (d.tele){ const myEdge = edgeDist(u.x, u.y); ok = best <= d.range * .9 && myEdge < 1.8 && tgtEdge > myEdge + 1.5; }
-    else if (d.k === 'shot'){ ok = best <= d.range * .95; const tt = best / d.spd; ax = tgt.x + tgt.rvx * tt * .8; ay = tgt.y + tgt.rvy * tt * .8; }
+    if (d.ult && smart && Math.random() < D.holdUlt && tgtEdge > 3 && !stuck && !lowHp) continue;   // guarda a ult para quando valer a pena
+    if (d.tele){ ok = best <= d.range * .9 && myEdge < 1.8 && tgtEdge > myEdge + 1.5; }
+    else if (d.whip){ ok = best <= d.range * .95 && (stuck || myEdge < 2.5 || !smart); }   // Língua: melhor com o Gengar perto da beirada ou alvo preso
+    else if (d.k === 'shot'){ ok = best <= d.range * .95; const tt = best / d.spd; ax = tgt.x + tgt.rvx * tt * D.lead; ay = tgt.y + tgt.rvy * tt * D.lead;
+      if (ok && !d.ghost && smart && shotBlocked(u, ax, ay, best)) ok = false; }
     else if (d.k === 'cone') ok = best <= d.range;
     else if (d.k === 'nova') ok = best <= d.rad;
     else if (d.k === 'wave') ok = best <= d.range * .85;
     else if (d.k === 'fan') ok = best <= d.range * .6;
-    else if (d.k === 'chains'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * .6; ay = tgt.y + tgt.rvy * .6; }
+    else if (d.k === 'chains'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * .6 * D.lead; ay = tgt.y + tgt.rvy * .6 * D.lead; }
     else if (d.k === 'portal'){ ok = best <= d.range * .8 && tgtEdge < 3; const ex = tgt.x - C.x, ey = tgt.y - C.y, el = Math.hypot(ex, ey) || 1; ax = tgt.x + ex / el * 1.5; ay = tgt.y + ey / el * 1.5; }
-    else if (d.k === 'lob'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * .6; ay = tgt.y + tgt.rvy * .6; }
+    else if (d.k === 'lob'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * .6 * D.lead; ay = tgt.y + tgt.rvy * .6 * D.lead; }
     else if (d.k === 'multi') ok = best <= d.range * .8;
     else if (d.k === 'orbit') ok = best <= 2.6;
-    else if (d.k === 'delay'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * d.delay * .5; ay = tgt.y + tgt.rvy * d.delay * .5; }
-    else if (d.k === 'zone'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * .5; ay = tgt.y + tgt.rvy * .5; }
+    else if (d.k === 'delay'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * d.delay * .5 * D.lead; ay = tgt.y + tgt.rvy * d.delay * .5 * D.lead; }
+    else if (d.k === 'zone'){ ok = best <= d.range; ax = tgt.x + tgt.rvx * .5 * D.lead; ay = tgt.y + tgt.rvy * .5 * D.lead; }
     else if (d.k === 'beam') ok = best <= d.len * .85;
-    else if (d.k === 'dash') ok = best <= d.dist + .3 && best > 1 && (tgtEdge < 2.5 || Math.random() < .3);
+    else if (d.k === 'dash') ok = best <= d.dist + .3 && best > 1 && (tgtEdge < 2.5 || Math.random() < .3) && myEdge > 1.5;
     else if (s.id === 'danca') ok = best < 5;
     if (!ok) continue;
-    const err = rnd(-.2, .2), a = Math.atan2(ay - u.y, ax - u.x) + err, dl = Math.hypot(ax - u.x, ay - u.y);
-    if (cast(u, i, u.x + Math.cos(a) * dl, u.y + Math.sin(a) * dl)){ u.ai.cdr = rnd(.7, 1.4); break; }
+    const err = rnd(-D.err, D.err), a = Math.atan2(ay - u.y, ax - u.x) + err, dl = Math.hypot(ax - u.x, ay - u.y);
+    if (cast(u, i, u.x + Math.cos(a) * dl, u.y + Math.sin(a) * dl)){ u.ai.cdr = rnd(...D.cdr) * (P === 'calm' ? 1.3 : P === 'agro' ? .85 : 1); break; }
   }
 }
 
@@ -1049,10 +1096,11 @@ function update(dt){
   for (const u of G.units) if (u.emo && (u.emo.t -= dt) <= 0){ u.emo = null; hudList(true); }
   specPanel();
 
-  if (G.phase === 'count'){ G.timer -= dt; const n = Math.ceil(G.timer); banner(n > 0 ? String(n) : 'Já!', n > 0 ? countSub() : '', .5); if (G.timer <= 0){ G.phase = 'play'; banner('Já!', '', .6); if (isZona()) G.timer = ZTIME; } return; }
+  if (G.phase === 'count'){ G.timer -= dt; const n = Math.ceil(G.timer); banner(n > 0 ? String(n) : 'Já!', n > 0 ? countSub() : '', .5); if (G.timer <= 0){ G.phase = 'play'; G.playT = 0; banner('Já!', '', .6); if (isZona()) G.timer = ZTIME; } return; }
   if (G.phase === 'roundEnd'){ G.timer -= dt; if (G.timer <= 0) afterRound(); return; }
   if (G.phase === 'shop'){ G.timer -= dt; $('#shopTime').textContent = `⏱ ${Math.ceil(G.timer)} s`; if (G.timer <= 0) closeShop(); return; }
   if (G.phase !== 'play') return;
+  G.playT = (G.playT || 0) + dt;
 
   if (isZona()){ G.timer -= dt; capStep(dt); respawnStep(dt); if (G.timer <= 0 || (G.caps.length && G.caps.every(z => z.full))){ endRound(); return; } }
   else if (isPb()){ G.pbT -= dt; respawnStep(dt); if (G.pbT <= 0){ endRound(); return; } }   // Zona: sem encolher, quem cai volta
@@ -1629,6 +1677,7 @@ function renderMenu(){
   $('#nmode').innerHTML = [['cl','Clássico'],['zn','Zona Estratégica'],['pb','Pokébol']].map(([k, n]) => k === 'cl' ? `<button class="chip" data-mo="${k}" aria-pressed="true">${n}</button>` : `<button class="chip soon" disabled title="Novo modo em desenvolvimento">${n} · em breve</button>`).join('');
   $('#nfmt').innerHTML = [[0,'Todos contra todos'],[2,'2v2'],[3,'3v3'],[4,'4v4']].map(([k, n]) => `<button class="chip" data-fm="${k}" aria-pressed="${k === (CFG.fmt || 0)}">${n}</button>`).join('');
   $('#botsRow').hidden = !!CFG.fmt || CFG.mode === 'pb'; $('#livesRow').hidden = CFG.mode === 'zn' || CFG.mode === 'pb';
+  $('#ndif').innerHTML = [['easy','Fácil'],['normal','Normal'],['hard','Difícil']].map(([k, n]) => `<button class="chip" data-df="${k}" aria-pressed="${k === (CFG.diff || 'normal')}">${n}</button>`).join('');
   $('#nlives').innerHTML = [1,3,5].map(n => `<button class="chip" data-nl="${n}" aria-pressed="${n === CFG.lives}">${n}</button>`).join('');
   $('#nmap').innerHTML = [['rand','Sorteado'],['sq','Quadrado'],['rd','Redondo'],['vt','Voltorbs'],['fl','Floresta']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
 }
@@ -1638,6 +1687,7 @@ $('#menu').addEventListener('click', e => {
   if (b.dataset.nb) CFG.bots = +b.dataset.nb;
   if (b.dataset.nl) CFG.lives = +b.dataset.nl;
   if (b.dataset.mp) CFG.map = b.dataset.mp;
+  if (b.dataset.df) CFG.diff = b.dataset.df;
   if (b.dataset.tm != null){ NET.tm = +b.dataset.tm; if (isClient()){ netSend({ t:'tm', tm:NET.tm }); b.parentNode.querySelectorAll('[data-tm]').forEach(x => x.setAttribute('aria-pressed', x === b)); } else if (NET.on) netLobby(); return; }
   if (b.dataset.rk){ CFG.ranked = CFG.ranked === false; store.set('nt-cfg', CFG); netLobby(); return; }
   if (b.dataset.mo) CFG.mode = b.dataset.mo;
