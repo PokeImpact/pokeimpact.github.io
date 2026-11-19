@@ -153,7 +153,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v31 · 19/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v32 · 19/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -279,7 +279,7 @@ const SK = {
   lama:     { n:'Bomba de Lama', ic:'🟤', k:'lob', cd:11, price:10, spd:6, range:7, rad:1.5, dur:2.5, dps:1.5, slow:.4, dmg:3, col:'#8a6a3e', zc:['rgba(110,80,40,.38)','rgba(160,120,70,.85)'], desc:'Arremessa uma bola de lama por cima de todos. Onde cai, faz uma poça que deixa lento quem pisar.' },
   pedra:    { n:'Lançar Pedra', ic:'🪨', k:'lob', cd:2.5, price:0, spd:10, range:6.5, rad:.9, dmg:6, push:7, rock:1, col:'#9aa3ad', l3:{ frag:1 }, d3:'a pedra quebra em 3 pedaços que rolam para fora', desc:'Arremessa uma pedra por cima de tudo (passa por cima de árvores e não é anulada). Onde cai, empurra quem estiver em volta.' },
   pedra2:   { n:'Pedaço de Pedra', ic:'🪨', k:'shot', spd:6, range:2.4, r:.2, dmg:2, push:4.5, col:'#9aa3ad' },
-  rolagem:  { n:'Rolagem', ic:'🔘', k:'roll', cd:9, price:10, dur:2.5, v0:3, v1:7.5, acc:2.6, turn:2.2, push0:4, pushV:1.2, dmg:5, push:9, col:'#9aa3ad', l3:{ v1:9, acc:3.4 }, d3:'rola mais rápido (até 9 casas/s)', desc:'Vira bola e rola por até 2,5 s, cada vez mais rápido; vira devagar para onde você mandar andar. Quanto mais rápido, mais forte o atropelo. Acertou alguém, continua rolando (boliche). Bateu em árvore ou Voltorb, para tonto. Aperte de novo para frear. Cuidado: golpes desviam a bola.' },
+  rolagem:  { n:'Rolagem', ic:'🔘', k:'roll', cd:9, price:10, dur:1.2, v0:3, v1:6, acc:4, turn:2.2, push0:4, pushV:1.2, dmg:5, push:9, col:'#9aa3ad', l3:{ v1:7.2, acc:5 }, d3:'rola mais rápido e atropela mais forte', desc:'Vira bola e rola uns 6 a 7 casas, cada vez mais rápido. Curva devagar seguindo o mouse; quando passa do mouse, segue reto. Quanto mais rápido, mais forte o atropelo. Acertou alguém, continua rolando (boliche: cada um uma vez). Bateu em árvore ou Voltorb, para tonto. Aperte de novo para frear. Cuidado: golpes desviam a bola.' },
   magnitude:{ n:'Magnitude', ic:'🌋', k:'nova', cd:9, price:10, mag:1, windup:.5, rad:2.4, dmg:5, push:8.4, col:'#c9b28a', l3:{ magMin:6 }, d3:'nunca sai menos que 6', desc:'Faz o chão tremer em volta. A força é sorteada de 4 a 10 e aparece para todos no começo da carga (meio segundo para fugir). Quanto maior o número, maior o tremor e o empurrão.' },
   encolher: { n:'Defesa Encolhida', ic:'🛡️', k:'self', cd:10, price:10, dur:1.5, win:3, col:'#9aa3ad', l3:{ dur:2.2 }, d3:'fica encolhido 2,2 s', desc:'Encolhe por 1,5 s: recebe 70% menos empurrão, mas anda a metade. Se usar a Rolagem nos 3 s seguintes, ela já sai na velocidade máxima.' },
   boom:     { n:'Explosão', ic:'💥', k:'fuse', cd:18, price:16, ult:1, fuse:1.5, rad:3.2, dmg:14, push:15, pushMin:8, self:.35, col:'#ffb03a', l3:{ rad:3.8 }, d3:'raio da explosão bem maior', desc:'Acende o pavio: pisca 1,5 s e explode, com o maior empurrão do jogo (mais forte perto). Custa 35% da sua vida e deixa você tonto meio segundo. Durante o pavio dá para andar devagar ou rolar: a bomba rolando.' },
@@ -790,7 +790,7 @@ function cast(u, i, ax, ay){
     let dx = ax - u.x, dy = ay - u.y; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
     u.b.shell = 0; u.b.refl = 0; u.dash = { vx:dx * 9, vy:dy * 9, left:1.6, d:SHELL_DASH, L:lvMul(1), hit:new Set() }; u.anim = { n:'Rotate', t:0 }; u.face = Math.atan2(dy, dx);
     return true; }
-  if (s0 && u.roll){ if (s0.id === 'rolagem'){ endRoll(u); return true; } if (s0.id !== 'boom') return false; }   // rolando: só freia ou acende a Explosão
+  if (s0 && u.roll){ if (s0.id === 'rolagem'){ u.roll.brake = 1; return true; } if (s0.id !== 'boom') return false; }   // rolando: só freia ou acende a Explosão
   if (s0 && u.fuse && s0.id !== 'rolagem') return false;   // pavio aceso: só dá para rolar
   const s = u.sk[i]; if (!s || !s.lvl || !canAct(u)) return false;
   if (s.id === 'sombra'){ const sh = G.shots.find(x => x.o === u && x.d.split && !x.dead); if (sh){ shadowSplit(sh); sh.dead = true; return true; } }
@@ -1229,8 +1229,8 @@ function botThink(u, dt){
   if (myBall && Math.random() < D.smart && foes.some(e => Math.hypot(e.x - myBall.x, e.y - myBall.y) < 1.6)){ cast(u, 0, u.x, u.y); return; }
   // Golem rolando: mira no alvo, foge da névoa e acende a Explosão no meio da galera
   if (u.roll){ const R = u.roll; let mx2 = (tgt ? tgt.x : C.x) - u.x, my2 = (tgt ? tgt.y : C.y) - u.y;
-    if (!onPlat(u.x + R.dx * 1.8, u.y + R.dy * 1.8) && Math.random() < D.escape + .2){ if (myEdge < 1 && Math.random() < D.smart){ const wi = u.sk.findIndex(k => k.id === 'rolagem'); cast(u, wi, u.x, u.y); return; } mx2 = C.x - u.x; my2 = C.y - u.y; }
-    const l2 = Math.hypot(mx2, my2) || 1; u.mvx = mx2 / l2; u.mvy = my2 / l2;
+    if (!onPlat(u.x + R.dx * 1.8, u.y + R.dy * 1.8) && Math.random() < D.escape + .2){ if (myEdge < 1 && Math.random() < D.smart){ R.brake = 1; return; } mx2 = C.x - u.x; my2 = C.y - u.y; }
+    const l2 = Math.hypot(mx2, my2) || 1; u.mvx = mx2 / l2; u.mvy = my2 / l2; u.aim = [u.x + mx2, u.y + my2];
     const bi = u.sk.findIndex(k => k.id === 'boom'), bs = u.sk[bi];
     if (bs && bs.lvl && bs.cd <= 0 && !u.fuse && Math.random() < D.smart && foes.filter(e => Math.hypot(e.x - u.x, e.y - u.y) < 4).length >= 2) cast(u, bi, u.x, u.y);
     return; }
@@ -1302,6 +1302,7 @@ function update(dt){
 }
 function localMove(){
   const me = G.me;
+  if (me) me.aim = KEYS.mode === 'mouse' && !touch.on ? [mouse.wx, mouse.wy] : null;   // a Rolagem do Golem segue o cursor
   if (me && me.alive && canAct(me)){
     if (KEYS.mode === 'wasd' || touch.on){
       let mx = touch.on ? touch.jx : (held.KeyD || held.ArrowRight ? 1 : 0) - (held.KeyA || held.ArrowLeft ? 1 : 0);
@@ -1545,17 +1546,27 @@ function rockLand(s){
   for (let k = 0; k < 16; k++) fx(s.tx, s.ty, rnd(-3, 3), rnd(-3, 3), .4, pick(['#8d96a0','#5e646c','#c9b28a']), 6);
 }
 // Rolagem: acelera, vira devagar para onde manda andar, atropela (boliche) e para tonto em obstáculo
+// Rolagem: acelera, curva devagar e atropela (boliche: cada um só uma vez por rolagem).
+// Direção: com mouse, segue o cursor; quando passa do cursor, segue reta (nunca fica rodando em volta dele).
+// Com WASD/celular, curva para onde aponta. No fim (ou W de novo) desacelera suave em vez de parar seco.
 function rollStep(u, dt){
   const R = u.roll, d = R.d; R.t += dt;
-  if (R.t >= d.dur || u.b.sleep > 0 || u.b.fear > 0 || u.b.chain > 0 || u.whip){ endRoll(u); return; }
-  R.v = Math.min(d.v1, R.v + d.acc * dt);
-  if (u.mvx || u.mvy){ const want = Math.atan2(u.mvy, u.mvx), cur = Math.atan2(R.dy, R.dx); let da = want - cur; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
-    const na = cur + clamp(da, -d.turn * dt, d.turn * dt); R.dx = Math.cos(na); R.dy = Math.sin(na); }
+  if (u.b.sleep > 0 || u.b.fear > 0 || u.b.chain > 0 || u.whip){ endRoll(u); return; }
+  if (R.t >= d.dur) R.brake = 1;
+  if (R.brake){ R.v -= ROLL_BRAKE * dt; if (R.v <= .3){ endRoll(u); return; } }
+  else {
+    R.v = Math.min(d.v1, R.v + d.acc * dt);
+    let want = null;
+    if (u.aim){ const ax = u.aim[0] - u.x, ay = u.aim[1] - u.y, al = Math.hypot(ax, ay); if (al > 1.2 && ax * R.dx + ay * R.dy > 0) want = Math.atan2(ay, ax); }
+    else if (u.mvx || u.mvy) want = Math.atan2(u.mvy, u.mvx);
+    if (want != null){ const cur = Math.atan2(R.dy, R.dx); let da = want - cur; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
+      const na = cur + clamp(da, -d.turn * dt, d.turn * dt); R.dx = Math.cos(na); R.dy = Math.sin(na); }
+  }
   u.x += (R.dx * R.v + u.vx) * dt; u.y += (R.dy * R.v + u.vy) * dt; u.face = Math.atan2(R.dy, R.dx);
   const ur = POKE[u.sp].rad;
-  for (const e of foesOf(u)){ if (e.air || e.b.intang > 0 || (R.hit.get(e) || 0) > G.t) continue;
+  if (R.v > 1.5) for (const e of foesOf(u)){ if (e.air || e.b.intang > 0 || R.hit.has(e)) continue;
     const ex = e.x - u.x, ey = e.y - u.y, el = Math.hypot(ex, ey); if (el > ur + POKE[e.sp].rad + .06) continue;
-    R.hit.set(e, G.t + .6); R.n++;
+    R.hit.set(e, 1); R.n++;
     let px = R.dx + ex / (el || 1) * .6, py = R.dy + ey / (el || 1) * .6; const pl = Math.hypot(px, py) || 1;
     hit(u, e, Object.assign({}, d, { push:d.push0 + d.pushV * R.v }), R.L, px / pl, py / pl);
     R.v *= .6; txt(u.x, u.y - 1.35, R.n >= 2 ? 'STRIKE!' : 'pow!', R.n >= 2 ? '#ffcf4a' : '#f1eaf7');
@@ -1565,9 +1576,10 @@ function rollStep(u, dt){
     endRoll(u); u.b.stun = .6; txt(u.x, u.y - 1.3, 'tonto!', '#c9b28a'); G.fx.push({ ring:1, x:u.x, y:u.y, r:.6, t:0, life:.3, col:'#fff' });
     for (let k = 0; k < 10; k++) fx(u.x, u.y, rnd(-3, 3), rnd(-3, 3), .35, pick(['#8d96a0','#c9b28a']), 6); return; } }
   if (G.ball){ const ex = G.ball.x - u.x, ey = G.ball.y - u.y, el = Math.hypot(ex, ey); if (el < ur + G.ball.r) ballPush(ex / (el || 1), ey / (el || 1), d.push0 + d.pushV * R.v); }
-  if (Math.random() < .7) fx(u.x - R.dx * .3, u.y + .2, rnd(-1, 1) - R.dx, rnd(-.5, .2), .35, pick(['#8d6e4a','#c9b28a']), 5);
+  if (Math.random() < (R.brake ? 1 : .7)) fx(u.x - R.dx * .3, u.y + .2, rnd(-1, 1) - R.dx, rnd(-.5, .2), .35, pick(['#8d6e4a','#c9b28a']), 5);
 }
-function endRoll(u){ if (!u.roll) return; const R = u.roll; u.roll = null; u.vx += R.dx * R.v * .25; u.vy += R.dy * R.v * .25; u.anim = { n:'Idle', t:0 }; }
+const ROLL_BRAKE = 25;   // desacelera de 7,5 até parar em ~0,3 s
+function endRoll(u){ if (!u.roll) return; u.roll = null; u.anim = { n:'Idle', t:0 }; }
 // golpe acertou a bola: muda a direção (e quase não perde velocidade). Quem desviou leva a derrubada se ele rolar para a névoa.
 function rollDeflect(e, dx, dy, I){
   const R = e.roll, vx = R.dx * R.v + dx * I * .8, vy = R.dy * R.v + dy * I * .8, l = Math.hypot(vx, vy) || 1;
@@ -2248,7 +2260,8 @@ function netHostRecv(c, m){
   if (m.t === 'sp' && POKE[m.sp]){ c.sp = m.sp; if (G.phase === 'menu') netLobby(); return; }
   if (m.t === 'tm'){ c.tm = [0, 1].includes(m.tm) ? m.tm : -1; if (G.phase === 'menu') netLobby(); return; }
   const u = c.u; if (!u || u.remote !== c) return;
-  if (m.t === 'in' && Array.isArray(m.mv)){ const l = Math.hypot(m.mv[0], m.mv[1]); u.mvx = l > 1 ? m.mv[0] / l : +m.mv[0] || 0; u.mvy = l > 1 ? m.mv[1] / l : +m.mv[1] || 0; }
+  if (m.t === 'in' && Array.isArray(m.mv)){ const l = Math.hypot(m.mv[0], m.mv[1]); u.mvx = l > 1 ? m.mv[0] / l : +m.mv[0] || 0; u.mvy = l > 1 ? m.mv[1] / l : +m.mv[1] || 0;
+    u.aim = Array.isArray(m.am) && isFinite(m.am[0]) && isFinite(m.am[1]) ? [+m.am[0], +m.am[1]] : null; }
   else if (m.t === 'c') cast(u, m.i | 0, +m.x, +m.y);
   else if (m.t === 'buy' && G.phase === 'shop') buy(u, m.k, m.id);
   else if (m.t === 'ready'){ u.ready = true; netCheckReady(); }
@@ -2397,7 +2410,7 @@ function clientUpdate(dt){
   const old = [me.mvx, me.mvy];
   if (G.phase === 'play' && me.alive && !me.air) localMoveClient(); else { me.mvx = me.mvy = 0; me.mt = null; }
   NET.inT -= dt;
-  if (NET.inT <= 0 || old[0] !== me.mvx || old[1] !== me.mvy){ NET.inT = .1; netSend({ t:'in', mv:[r2(me.mvx), r2(me.mvy)] }); }
+  if (NET.inT <= 0 || old[0] !== me.mvx || old[1] !== me.mvy){ NET.inT = .1; netSend({ t:'in', mv:[r2(me.mvx), r2(me.mvy)], am:me.roll && me.aim ? [r2(me.aim[0]), r2(me.aim[1])] : 0 }); }
 }
 function localMoveClient(){ localMove(); }
 // anfitrião com a aba escondida: o navegador para o requestAnimationFrame, então um relógio num Worker mantém a partida rodando
