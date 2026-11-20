@@ -174,7 +174,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v71 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v72 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -237,6 +237,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
   <div class="box">
     <h2>Controles</h2>
     <div class="row"><span class="lbl">Andar com</span><button class="chip" data-mode="mouse">Botão direito do mouse</button><button class="chip" data-mode="wasd">W A S D</button></div>
+    <div class="row"><span class="lbl">Efeitos</span><button class="chip" data-fx="auto">Automático</button><button class="chip" data-fx="full">Completos</button><button class="chip" data-fx="lite">Leves</button></div>
     <p class="sub" id="cfgHelp"></p>
     <div id="binds" style="display:flex;flex-direction:column;gap:6px"></div>
     <div class="row" style="justify-content:space-between"><button class="ghost" id="cfgReset">Voltar ao padrão</button><button class="go" id="cfgOk">Fechar</button></div>
@@ -2329,7 +2330,7 @@ function drawWhale(layer){ const w = whaleAt(); if (!w) return; const X = sx(w.x
   cx.strokeStyle = 'rgba(230,246,255,.6)'; cx.lineWidth = T * .12; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(bx, by); cx.lineTo(bx, by - hgt * .9); cx.stroke(); }
 function drawStorm(){ const g = G.gust; if (G.map !== 'pt' || !g || !(g.warn > 0 || g.t > 0)) return; const on = g.t > 0, dk = on ? .22 : .1 * (1 - Math.min(1, g.warn / 3));   // ventania vira tempestade: céu escuro, chuva torta e raios
   cx.fillStyle = `rgba(10,18,35,${dk})`; cx.fillRect(-20, -20, W + 40, H + 40);
-  const n = on ? 90 : 30, ang = Math.atan2(1, (g.dx || 0) * .8), L = T * (on ? .9 : .6); cx.strokeStyle = `rgba(200,220,255,${on ? .45 : .25})`; cx.lineWidth = 1.2; cx.beginPath();
+  const n = fxLite() ? (on ? 25 : 0) : on ? 90 : 30, ang = Math.atan2(1, (g.dx || 0) * .8), L = T * (on ? .9 : .6); cx.strokeStyle = `rgba(200,220,255,${on ? .45 : .25})`; cx.lineWidth = 1.2; cx.beginPath();
   for (let q = 0; q < n; q++){ const h = hsh(q, 91), ph = (G.t * (1.6 + h) + h * 7) % 1, x = (h * 1.37 * W + G.t * (g.dx || 0) * 60) % (W + 60) - 30, y = ph * (H + 40) - 20; cx.moveTo(x, y); cx.lineTo(x + Math.cos(ang) * L * (g.dx || 0) * 1.2, y + L); }
   cx.stroke(); if (!on) return;
   const sl = Math.floor(G.t * 1.5), hb = hsh(sl, 7), lp = G.t * 1.5 - sl; if (hb < .8 || lp > .4) return;   // raio: às vezes, para todo mundo ao mesmo tempo
@@ -2338,7 +2339,7 @@ function drawStorm(){ const g = G.gust; if (G.map !== 'pt' || !g || !(g.warn > 0
   for (let q = 1; q <= 7; q++){ x = bx + (hsh(sl, q + 20) - .5) * T * 1.4; y = by * q / 7; cx.lineTo(x, y); } cx.stroke(); glow(bx, by, T * 1.5 * fl, `rgba(255,255,230,${.6 * fl})`, 'rgba(180,200,255,.2)'); }
 const DUST = [];
 function drawDust(){ const now = performance.now() / 1000, dt = Math.min(.1, now - (DUST.at || now)); DUST.at = now;   // poeirinha dos passos (só desenho)
-  if (G.phase === 'play') for (const u of G.units){ if (!u.alive || u.air || u.b.inv > 0) continue; const v = Math.hypot(u.rvx || 0, u.rvy || 0); if (v < .8 || !onPlat(u.x, u.y)) continue;
+  if (G.phase === 'play' && !fxLite()) for (const u of G.units){ if (!u.alive || u.air || u.b.inv > 0) continue; const v = Math.hypot(u.rvx || 0, u.rvy || 0); if (v < .8 || !onPlat(u.x, u.y)) continue;
     u._dc = (u._dc || 0) - dt * v; if (u._dc > 0) continue; u._dc = 1.1; if (DUST.length < 80) DUST.push({ x:u.x - (u.rvx || 0) / v * .2 + (Math.random() - .5) * .2, y:u.y + .12, t:0, s:.6 + Math.random() * .5 }); }
   const col = G.map === 'pn' ? '110,84,50' : G.map === 'pt' ? '225,205,165' : G.map === 'rd' ? '230,245,255' : '205,190,150';
   for (let q = DUST.length - 1; q >= 0; q--){ const d = DUST[q]; d.t += dt; if (d.t > .6){ DUST.splice(q, 1); continue; } const k = d.t / .6; cx.fillStyle = `rgba(${col},${.45 * (1 - k)})`; cx.beginPath(); cx.arc(sx(d.x), sy(d.y) - k * T * .15, T * (.07 + k * .13) * d.s, 0, 7); cx.fill(); } }
@@ -2360,7 +2361,7 @@ function drawGyarados(){ if (G.map !== 'pt' || G.phase === 'menu') return; const
   cx.fillStyle = 'rgba(230,246,255,.8)'; for (let q = 0; q < 10; q++){ const a = q / 10 * 6.283, d = sc * (1 + .3 * Math.sin(G.t * 9 + q)); cx.beginPath(); cx.arc(X0 + Math.cos(a) * d * 1.3, Y0 + sc * 1.2 + Math.sin(a) * d * .35, sc * .16, 0, 7); cx.fill(); }   // espuma na base
   if (roar && lt < 1.6 && !G.paused) G.shake = Math.max(G.shake || 0, 2.5); }
 // luz por mapa (só desenho): raios de sol na Floresta, holofotes de estádio nas arenas, brilhos no gelo do Redondo
-function drawLights(){ if (G.phase === 'menu') return; const t = G.t;
+function drawLights(){ if (G.phase === 'menu' || fxLite()) return; const t = G.t;
   if (G.map === 'fl' || G.map === 'flr'){ cx.save(); cx.globalCompositeOperation = 'lighter';
     for (let q = 0; q < 5; q++){ const x = SIZE * (.1 + q * .22) + Math.sin(t * .15 + q) * 1.2, a = .05 + .035 * Math.sin(t * .5 + q * 2), X = sx(x), w = T * (1.1 + (q % 3) * .4), sk = T * 3;
       const g = cx.createLinearGradient(X, sy(-1), X + sk, sy(SIZE + 1)); g.addColorStop(0, `rgba(255,240,170,${a * 1.6})`); g.addColorStop(1, 'rgba(255,240,170,0)'); cx.fillStyle = g;
@@ -2374,8 +2375,9 @@ function drawLights(){ if (G.phase === 'menu') return; const t = G.t;
     cx.restore(); }
   if (G.map === 'rd'){ for (let q = 0; q < 18; q++){ const h = hsh(q, 77), x = 1 + h * (SIZE - 2), y = 1 + hsh(77, q) * (SIZE - 2), tw = Math.sin(t * (1.5 + h * 2) + q * 2.3); if (tw < .6 || !onPlat(x, y)) continue;   // brilhos piscando no gelo
       const a = (tw - .6) / .4, X = sx(x), Y = sy(y), r = T * .22 * a; cx.strokeStyle = `rgba(255,255,255,${.9 * a})`; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(X - r, Y); cx.lineTo(X + r, Y); cx.moveTo(X, Y - r * 1.4); cx.lineTo(X, Y + r * 1.4); cx.stroke(); glow(X, Y, r * 1.2, `rgba(255,255,255,${.7 * a})`, 'rgba(200,240,255,.2)'); } } }
+const fxLite = () => CFG.fx === 'lite' || (CFG.fx !== 'full' && W < 700);   // efeitos leves: tira os enfeites mais pesados (nuvens, luzes, bichinhos, chuva, poeira)
 const CLOUD_MAPS = new Set(['pt','ar','gb','fl','flr','pn','sn','sq','vt','rd']);
-function drawClouds(){ if (!CLOUD_MAPS.has(G.map) || G.phase === 'menu') return; const t = G.t;   // sombras de nuvens passando (só desenho)
+function drawClouds(){ if (!CLOUD_MAPS.has(G.map) || G.phase === 'menu' || fxLite()) return; const t = G.t;   // sombras de nuvens passando (só desenho)
   const vx = .6, vy = .25, span = SIZE + 16;
   for (let q = 0; q < 4; q++){ const r = SIZE * (.14 + (q * 13 % 5) * .03), x = ((q * 9.7 + t * .35 * vx * (1 + q * .15)) % span + span) % span - 8, y = ((q * 6.3 + SIZE * .2 * q + t * .35 * vy) % span + span) % span - 8;
     const X = sx(x), Y = sy(y), R = r * T; if (X < -R * 2 || X > W + R * 2 || Y < -R * 2 || Y > H + R * 2) continue;
@@ -2409,11 +2411,11 @@ function drawHideTag(){ const me = G.me; if (G.map !== 'gb' || !me || !me.alive 
   cx.beginPath(); if (seen){ cx.ellipse(X, Y, T * .12, T * .07, 0, 0, 7); cx.stroke(); cx.fillStyle = '#ff8a8a'; cx.beginPath(); cx.arc(X, Y, T * .035, 0, 7); cx.fill(); }
   else { cx.arc(X, Y - T * .04, T * .12, .35, Math.PI - .35); cx.stroke(); cx.beginPath(); for (let q = -1; q <= 1; q++){ cx.moveTo(X + q * T * .06, Y + T * .06); cx.lineTo(X + q * T * .08, Y + T * .11); } cx.stroke(); } }
 // Redondo: neve caindo (só desenho)
-function drawSnow(){ if (G.map !== 'rd' || G.phase === 'menu') return; cx.fillStyle = 'rgba(255,255,255,.8)';
+function drawSnow(){ if (G.map !== 'rd' || G.phase === 'menu' || fxLite()) return; cx.fillStyle = 'rgba(255,255,255,.8)';
   for (let q = 0; q < 70; q++){ const h = hsh(q, 13), ph = (G.t * (.05 + h * .04) + h) % 1, x = (h * 977 % 1) * (W + 40) - 20 + Math.sin(G.t * (.8 + h) + q) * 14, y = ph * (H + 20) - 10; cx.beginPath(); cx.arc(x, y, 1 + h * 2.2, 0, 7); cx.fill(); } }
 // Arquipélago: caranguejos andando de lado na areia; se escondem na areia quando alguém chega perto
 const CRABS = { key:'', L:[] };
-function drawCrabs(){ if (G.map !== 'ar' || G.phase === 'menu') return; const key = G.round + ':' + G.seed + ':' + SIZE, now = performance.now() / 1000;
+function drawCrabs(){ if (G.map !== 'ar' || G.phase === 'menu' || fxLite()) return; const key = G.round + ':' + G.seed + ':' + SIZE, now = performance.now() / 1000;
   if (CRABS.key !== key){ CRABS.key = key; CRABS.L = []; for (let q = 0; q < 9; q++) CRABS.L.push({ hx:1 + hsh(q, (G.seed | 0) + 3) * (SIZE - 2), hy:1 + hsh((G.seed | 0) + 5, q) * (SIZE - 2), hid:-9 }); }
   for (const c of CRABS.L){ const x = c.hx + Math.sin(now * .5 + c.hy) * .6; if (!onPlat(x, c.hy)) continue;
     if (G.units.some(u => u.alive && Math.hypot(u.x - x, u.y - c.hy) < 1.6)) c.hid = now; const hd = now - c.hid; const X = sx(x), Y = sy(c.hy), z = T * .12;
@@ -2424,7 +2426,7 @@ function drawCrabs(){ if (G.map !== 'ar' || G.phase === 'menu') return; const ke
     cx.fillStyle = '#fff'; for (const s2 of [-1, 1]){ cx.beginPath(); cx.arc(X + s2 * z * .3, Y - z * .55, z * .17, 0, 7); cx.fill(); } cx.fillStyle = '#111'; for (const s2 of [-1, 1]){ cx.beginPath(); cx.arc(X + s2 * z * .3, Y - z * .55, z * .08, 0, 7); cx.fill(); } } }
 // passarinhos no chão: bicam, voam quando alguém chega perto (ou passa um golpe) e voltam depois (só desenho, cada tela tem os seus)
 const BIRD_MAPS = new Set(['gb','fl','flr','sn','pn']), BIRDS = { key:'', L:[] };
-function drawBirds(){ if (!BIRD_MAPS.has(G.map) || G.phase === 'menu') return; const key = G.map + G.round + ':' + G.seed + ':' + SIZE;
+function drawBirds(){ if (!BIRD_MAPS.has(G.map) || G.phase === 'menu' || fxLite()) return; const key = G.map + G.round + ':' + G.seed + ':' + SIZE;
   if (BIRDS.key !== key){ BIRDS.key = key; BIRDS.L = []; const n = G.map === 'gb' ? 14 : 6; for (let q = 0; q < n; q++) BIRDS.L.push({ hx:1 + hsh(q, G.seed | 0) * (SIZE - 2), hy:1 + hsh(G.seed | 0, q + 50) * (SIZE - 2), fly:-1, c:q % 3 }); }
   const now = performance.now() / 1000;
   for (const b of BIRDS.L){ if (!onPlat(b.hx, b.hy) && b.fly < 0) continue; let x = b.hx, y = b.hy, up = 0, fl = false;
@@ -2953,6 +2955,7 @@ function openCfg(){ $('#cfgOv').hidden = false;
     $('#quitHelp').textContent = !NET.on ? 'Volta para a tela inicial: dá para trocar o Pokémon, o mapa e os bots.' : NET.host ? 'Acaba a partida para todos e leva todo mundo de volta à sala, onde cada um pode trocar de Pokémon.' : 'Você sai da sala e um bot assume o seu Pokémon. Para trocar de Pokémon sem sair, peça ao anfitrião para encerrar.'; } if (G.phase === 'play' && !NET.on) G.paused = true; renderBinds(); }
 function renderBinds(){
   document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === KEYS.mode));
+  document.querySelectorAll('[data-fx]').forEach(b => { b.setAttribute('aria-pressed', b.dataset.fx === (CFG.fx || 'auto')); b.onclick = () => { CFG.fx = b.dataset.fx === 'auto' ? undefined : b.dataset.fx; store.set('nt-cfg', CFG); renderBinds(); }; });
   $('#cfgHelp').textContent = KEYS.mode === 'mouse' ? 'Clique com o botão direito para andar (pode segurar). Mire com o mouse e use as teclas para soltar os golpes, como no Warcraft e no LoL. Rodinha do mouse (ou + e −): zoom.' : 'Ande com W A S D (ou setas). Mire com o mouse. O clique esquerdo também pode ser uma habilidade. Rodinha do mouse (ou + e −): zoom.';
   const kit = POKE[G.me ? G.me.sp : CFG.sp].kit;
   $('#binds').innerHTML = curKeys().map((k, i) => `<div class="row"><span class="lbl">Habilidade ${i + 1} · ${SK[kit[i]].ic} ${SK[kit[i]].n}</span><button class="keyb ${binding === i ? 'wait' : ''}" data-b="${i}">${binding === i ? 'aperte uma tecla…' : keyName(k)}</button></div>`).join('');
