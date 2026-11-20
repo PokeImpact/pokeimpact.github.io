@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v54 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v55 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -1088,7 +1088,7 @@ function cast(u, i, ax, ay){
       if (s.id === 'xtesoura') G.fx.push({ ring:1, x:u.x + dx * d.dist * .6, y:u.y + dy * d.dist * .6, r:.9, t:0, life:.45, col:d.col, st:'xs:' + Math.atan2(dy, dx).toFixed(2) }); break;
     case 'self':
       if (s.id === 'concha'){ u.b.shell = d.dur; u.b.refl = d.refl ? 1 : 0; u.vx = u.vy = 0; u.mt = null; }
-      if (s.id === 'agilidade'){ u.b.inv = d.dur; u.b.intang = .6; if (d.clone || s.lvl >= 2) G.decoys.push({ o:u, sp:u.sp, x:u.x, y:u.y, vx:0, vy:0, face:u.face, t:8, at:u.at, b:{}, rvx:0, rvy:0, hp:u.hp, maxhp:u.maxhp }); }
+      if (s.id === 'agilidade'){ u.b.inv = d.dur; u.b.intang = .6; G.fx.push({ ring:1, x:u.x, y:u.y, r:.9, t:0, life:.6, col:'#d8ffb0', st:'poof' }); if (d.clone || s.lvl >= 2) G.decoys.push({ o:u, sp:u.sp, x:u.x, y:u.y, vx:0, vy:0, face:u.face, t:8, at:u.at, b:{}, rvx:0, rvy:0, hp:u.hp, maxhp:u.maxhp }); }
       if (s.id === 'reflexo'){ u.b.refl = d.dur; G.fx.push({ ring:1, x:u.x, y:u.y, r:.9, t:0, life:.35, col:'#ffb3ff' }); }
       if (s.id === 'encolher'){ u.b.curl = d.dur; u.b.curlW = d.dur + d.win; u.mt = null; G.fx.push({ ring:1, x:u.x, y:u.y, r:.75, t:0, life:.35, col:'#c9d2dc' }); }
       if (s.id === 'danca'){ u.b.sd = d.dur; G.fx.push({ ring:1, x:u.x, y:u.y, r:1.2, t:0, life:.5, col:'#ff5d5d' }); }
@@ -1803,7 +1803,7 @@ function rockLand(s){
     hit(s.o, e, d, s.L, ex / el, ey / el, el < d.rad * .5 ? 1 : .75); }
   ballArea(s.tx, s.ty, d.rad + .3, d.push * s.L.p);
   if (d.frag){ const a0 = rnd(0, 6.283), f = SK.pedra2; for (let k = 0; k < 3; k++){ const a = a0 + k * 2.094; G.shots.push({ o:s.o, x:s.tx, y:s.ty, bx:s.tx, by:s.ty, vx:Math.cos(a) * f.spd, vy:Math.sin(a) * f.spd, left:f.range, d:f, L:s.L, age:0, q:false, ph:1 }); } }
-  G.fx.push({ ring:1, x:s.tx, y:s.ty, r:d.rad, t:0, life:.35, col:'#c9b28a' });
+  G.fx.push({ ring:1, x:s.tx, y:s.ty, r:d.rad * 1.4, t:0, life:.5, col:'#c9b28a', st:'mag' });
   for (let k = 0; k < 16; k++) fx(s.tx, s.ty, rnd(-3, 3), rnd(-3, 3), .4, pick(['#8d96a0','#5e646c','#c9b28a']), 6);
 }
 // Rolagem: acelera, vira devagar para onde manda andar, atropela (boliche) e para tonto em obstáculo
@@ -2022,6 +2022,7 @@ function drawRingFx(f){
     for (let q = 0; q < 46; q++){ const a = (q * 2.399) % 6.283, v = T * (2 + (q * 37 % 11) * .35), x = X + Math.cos(a) * v * Math.min(1, p * 3), y = Y - T * 1 + Math.sin(a) * v * .6 * Math.min(1, p * 3) - T * 2.5 * Math.sin(Math.min(1, p * 2) * Math.PI / 2) + T * 4 * p * p, rot = p * 12 + q;
       cx.save(); cx.globalAlpha = Math.min(1, k * 2); cx.translate(x, y); cx.rotate(rot); cx.fillStyle = C[q % C.length]; cx.fillRect(-T * .07, -T * .035 * Math.abs(Math.cos(rot * 2)) - 1, T * .14, T * .07 * Math.abs(Math.cos(rot * 2)) + 2); cx.restore(); }
     cx.globalAlpha = 1; if (p < .5){ glow(X, Y - T * .4, T * 1.4 * (1 - p), `rgba(255,240,150,${.5 * (1 - p * 2)})`, 'rgba(255,210,63,.15)'); } return; }
+  if (f.st === 'poof'){ for (let q = 0; q < 8; q++){ const a = q / 8 * 6.283 + f.x * 3, rr = R * (.15 + .7 * p), s2 = T * (.3 - .15 * p); cx.fillStyle = `rgba(225,232,220,${.8 * k})`; cx.beginPath(); cx.arc(X + Math.cos(a) * rr, Y - T * .3 + Math.sin(a) * rr * .7 - T * .3 * p, s2, 0, 7); cx.fill(); } return; }
   if (f.st === 'ko'){ for (let q = 0; q < 9; q++){ const a = q / 9 * 6.283 + f.x, rr = R * (.2 + .8 * p), X2 = X + Math.cos(a) * rr, Y2 = Y + Math.sin(a) * rr * .6 - T * p * .6, s = T * (.32 - .18 * p);
       cx.fillStyle = `rgba(200,205,215,${.75 * k})`; cx.beginPath(); cx.arc(X2, Y2, s, 0, 7); cx.fill(); cx.fillStyle = `rgba(255,255,255,${.5 * k})`; cx.beginPath(); cx.arc(X2 - s * .3, Y2 - s * .3, s * .45, 0, 7); cx.fill(); }
     cx.fillStyle = `rgba(255,220,90,${k})`; cx.font = `900 ${T * .4}px system-ui`; cx.textAlign = 'center'; for (let q = 0; q < 3; q++){ const a = G.t * 5 + q * 2.1; cx.fillText('★', X + Math.cos(a) * T * .45, Y - T * (.8 + p * .6) + Math.sin(a) * T * .15); } return; }
