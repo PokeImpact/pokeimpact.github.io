@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v39 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v40 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -485,7 +485,7 @@ const CFG = Object.assign({ sp:6, bots:5, lives:5, map:'rand' }, store.get('nt-c
 const keyName = c => !c ? '—' : c === 'M0' ? 'Clique esq.' : c === 'M2' ? 'Clique dir.' : c === 'M1' ? 'Rodinha' : c === 'Space' ? 'Espaço' : c.replace(/^Key|^Digit/, '').replace(/Left$|Right$/, '');
 
 /* ---------- estado ---------- */
-const G = { phase:'menu', t:0, round:0, units:[], shots:[], zones:[], marks:[], waves:[], decoys:[], portals:[], chains:[], caps:[], teamWins:{}, mode:'cl', fmt:0, obs:[], ice:[], mud:[], picks:[], dmgMul:1, gust:null, decals:[], stages:[], pat:'anel', seed:1, map:'sq', R:8, fx:[], txt:[], falling:[], shrinkIn:SHRINK, step:0, paused:false, timer:0, me:null };
+const G = { phase:'menu', t:0, round:0, units:[], shots:[], zones:[], marks:[], waves:[], decoys:[], portals:[], chains:[], caps:[], teamWins:{}, mode:'cl', fmt:0, obs:[], ice:[], mud:[], picks:[], cballs:[], dmgMul:1, gust:null, decals:[], stages:[], pat:'anel', seed:1, map:'sq', R:8, fx:[], txt:[], falling:[], shrinkIn:SHRINK, step:0, paused:false, timer:0, me:null };
 const NET = { on:false, host:false, peer:null, conn:null, peers:[], code:'', nick:'', ev:[], sendT:0, inT:0 };
 const isClient = () => NET.on && !NET.host;
 const mouse = { x:0, y:0, wx:5, wy:5, rdown:false };
@@ -656,7 +656,7 @@ const willFall = (i, j, m) => G.shrinkIn <= WARN && !!G.stages && G.step + 1 < G
 function doShrink(){
   const before = platCells();
   G.step++; addFalling(before, platCells()); G.shrinkIn = G.map === 'gb' ? 9 : SHRINK;
-  for (const o of G.obs) if (o.k === 'mast' && !onPlat(o.x, o.y)){ o.gone = true; for (let k = 0; k < 16; k++) fx(o.x, o.y, rnd(-2, 2), rnd(-3, 0), .6, pick(['#5a3a1c','#efe6cf','#cfe8ff']), 7); }
+  for (const o of G.obs) if ((o.k === 'mast' || o.k === 'cannon') && !onPlat(o.x, o.y)){ o.gone = true; for (let k = 0; k < 16; k++) fx(o.x, o.y, rnd(-2, 2), rnd(-3, 0), .6, pick(['#5a3a1c','#efe6cf','#cfe8ff']), 7); }
   G.obs = G.obs.filter(o => !o.gone);
   // os objetos (Voltorbs, árvores, pedras, Lapras, Snorlax) ficam no lugar mesmo quando o chão some embaixo deles
   feed(platGone() ? 'A plataforma sumiu! Só resta a névoa.' : G.pat === 'ilha' ? 'Uma ilha afundou' : 'A plataforma encolheu', '#9be36a');
@@ -668,7 +668,7 @@ const mistDps = () => (platGone() ? 12 : 4 + G.step * .7);   // fraca no começo
 
 /* ---------- obstáculos e gelo ---------- */
 // tree: Árvore de Corte (bloqueia e segura quem bate) · volt: Voltorb (rebate projéteis e Pokémon, como no Pokémon Pinball) · lapras: centro do mapa redondo
-const OBR = { tree:.28, mast:.24, barrel:.34, volt:.38, lapras:.85, rock:.38, xmas:.62, snor:1 };
+const OBR = { tree:.28, mast:.24, barrel:.34, cannon:.32, volt:.38, lapras:.85, rock:.38, xmas:.62, snor:1 };
 const VOLT_BIG = .57;   // Voltorb sozinho: 1,5× maior, mais fácil de mirar a tabela
 // ---------- Grande Batalha ----------
 const inBush = (x, y) => !!G.bush && G.bush.has(ck(Math.floor(x), Math.floor(y))) && onPlat(x, y);
@@ -689,14 +689,15 @@ function makeGB(){ const N = SIZE, rot = (x, y, r) => r === 0 ? [x, y] : r === 1
   for (const [a, b] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6]]) G.obs.push({ k:'box', x:N / 2 + a, y:N / 2 + b, r:.45, chg:4 });   // 4 caixas no meio: vale disputar
 }
 function makeObstacles(){
-  const c = SIZE / 2; G.obs = []; G.ice = []; G.mud = []; G.gust = null;
+  const c = SIZE / 2; G.obs = []; G.ice = []; G.mud = []; G.gust = null; G.cballs = [];
   if (G.map === 'ar') return;   // ilhas: o próprio chão é o obstáculo
   if (G.map === 'gb'){ makeGB(); return; }
   if (G.map === 'pt'){   // navios: mastros (seguram tiro) e ventania
     const pw = (SIZE - (SIZE >= 14 ? 4 : 2)) / 2;
     for (const x of [pw / 2, SIZE - pw / 2]){ G.obs.push({ k:'mast', x, y:SIZE * .36, r:OBR.mast, main:1 }); if (SIZE >= 12) G.obs.push({ k:'mast', x, y:SIZE * .72, r:OBR.mast, dr:.01 }); }
     for (const x of [pw / 2, SIZE - pw / 2]) for (const y of [SIZE * .2, SIZE * .55]) G.obs.push({ k:'barrel', x:x + rnd(-1, 1), y, r:OBR.barrel, vx:0, vy:0 });
-    G.gust = { cd:rnd(6, 9), warn:0, t:0, dx:1, dy:0, ship:1 }; return; }
+    G.obs.push({ k:'cannon', x:pw / 2 + 1, y:SIZE * .8, r:OBR.cannon, face:0, cd:rnd(6, 9) }, { k:'cannon', x:SIZE - pw / 2 - 1, y:SIZE * .2, r:OBR.cannon, face:Math.PI, cd:rnd(9, 12) });   // um canhão em cada navio, mirando no outro
+    G.gust = { cd:rnd(6, 9), warn:0, t:0, dx:1, dy:0, ship:1 }; G.cballs = []; return; }
   if (G.map === 'pn'){   // pântano: poças de lama (deixam lento) e ventania de tempos em tempos
     const n = 4 + Math.round(SIZE / 3);
     for (let k = 0; k < n; k++) for (let t = 0; t < 200; t++){ const x = rnd(2, SIZE - 2), y = rnd(2, SIZE - 2), r = rnd(1, 1.6);
@@ -792,11 +793,27 @@ function barrelStep(o, dt){
   if (!onPlat(o.x, o.y)){ o.gone = true; for (let k = 0; k < 14; k++) fx(o.x, o.y, rnd(-2, 2), rnd(-3, 0), .6, pick(['#cfe8ff','#ffffff','#8a5a30']), 7); txt(o.x, o.y - .6, 'tchibum!', '#cfe8ff');
     G.barrelT = (G.barrelT || 0) + 1; }
 }
+// canhão: mira em alguém do outro navio (ou num ponto dele); a bala voa 1,6 s com o lugar da queda marcado
+function cannonFire(o){ const right = o.x < SIZE / 2, foes = G.units.filter(u => u.alive && (u.x > SIZE / 2) === right && onPlat(u.x, u.y));
+  let tx, ty; if (foes.length && Math.random() < .75){ const e = pick(foes); tx = e.x + (e.rvx || 0) * .6; ty = e.y + (e.rvy || 0) * .6; }
+  else { const I = sInfo(platCells()), c = I.cells.filter(c => (c.x > SIZE / 2) === right); if (!c.length) return; const p = pick(c); tx = p.x; ty = p.y; }
+  o.face = Math.atan2(ty - o.y, tx - o.x); o.anim = .4;
+  G.cballs.push({ sx:o.x + Math.cos(o.face) * .5, sy:o.y + Math.sin(o.face) * .5, tx, ty, t:0, dur:1.6 });
+  for (let k = 0; k < 16; k++) fx(o.x + Math.cos(o.face) * .6, o.y + Math.sin(o.face) * .6, Math.cos(o.face) * rnd(1, 4) + rnd(-1, 1), Math.sin(o.face) * rnd(1, 4) + rnd(-1, 1), rnd(.5, 1), pick(['rgba(200,200,200,.8)','rgba(150,150,150,.7)','#ffcf4a']), rnd(6, 11));
+  txt(o.x, o.y - 1, 'BUM!', '#ffcf4a'); }
+function cballStep(dt){ if (!G.cballs || !G.cballs.length) return;
+  for (const b of G.cballs){ b.t += dt; if (b.t < b.dur) continue; b.done = true;
+    if (onPlat(b.tx, b.ty)){ for (const e of G.units){ if (!e.alive || e.air || e.b.intang > 0) continue; const ex = e.x - b.tx, ey = e.y - b.ty, el = Math.hypot(ex, ey); if (el > 1.4 + POKE[e.sp].rad) continue;
+        damage(e, 4 * DMG, null); push(e, ex / (el || 1), ey / (el || 1), 9 * (1 - .4 * el / 1.6)); }
+      G.fx.push({ ring:1, x:b.tx, y:b.ty, r:1.4, t:0, life:.5, col:'#ffb03a', st:'boom' }); for (let k = 0; k < 18; k++) fx(b.tx, b.ty, rnd(-4, 4), rnd(-4, 4), .5, pick(['#5a3a1c','#c9a76a','#ffcf4a','#fff']), 7); }
+    else { for (let k = 0; k < 18; k++) fx(b.tx, b.ty, rnd(-2, 2), rnd(-4, -1), .7, pick(['#cfe8ff','#ffffff','#7fb8d8']), 7); txt(b.tx, b.ty - .5, 'tchibum!', '#cfe8ff'); } }
+  G.cballs = G.cballs.filter(b => !b.done); }
 function obstacleStep(dt){
   for (const o of G.obs){
     if (o.hitT > 0) o.hitT -= dt;
     if (o.k === 'volt'){ if (o.boom > 0 && (o.boom -= dt) <= 0) voltExplode(o); if (o.down > 0 && (o.down -= dt) <= 0){ o.down = 0; G.fx.push({ ring:1, x:o.x, y:o.y, r:.8, t:0, life:.4, col:'#ffe066' }); } continue; }
     if (o.k === 'barrel'){ barrelStep(o, dt); continue; }
+    if (o.k === 'cannon'){ if (o.anim > 0) o.anim -= dt; if ((o.cd -= dt) <= 0){ o.cd = rnd(8, 12); cannonFire(o); } continue; }
     if (o.k === 'snor'){
       if (o.mv){ o.mv.t += dt / .45; const p = Math.min(1, o.mv.t); o.x = o.mv.sx + (o.mv.ex - o.mv.sx) * p; o.y = o.mv.sy + (o.mv.ey - o.mv.sy) * p; if (p >= 1) o.mv = null; }
       if (o.charge > 0){ if ((o.charge -= dt) <= 0) snorGo(o); }
@@ -1571,7 +1588,7 @@ function updateWorld(dt){
     u.x = clamp(u.x, -3, SIZE + 3); u.y = clamp(u.y, -3, SIZE + 3);
     u.rvx = (u.x - ox) / dt; u.rvy = (u.y - oy) / dt;
   }
-  obstacleStep(dt); gustStep(dt); pickStep(); obstacleUnits();
+  obstacleStep(dt); cballStep(dt); gustStep(dt); pickStep(); obstacleUnits();
   // separação entre Pokémon
   const al = G.units.filter(u => u.alive && !u.air && !u.whip && !(u.b.nocol > 0));
   for (let i = 0; i < al.length; i++) for (let j = i + 1; j < al.length; j++){
@@ -2050,7 +2067,7 @@ const FOG = (() => { const S = 512, c = document.createElement('canvas'); c.widt
 const SEA = (() => { const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'); g.fillStyle = '#0f2a3a'; g.fillRect(0, 0, S, S);
   g.strokeStyle = 'rgba(120,180,210,.22)'; g.lineWidth = 2; for (let k = 0; k < 26; k++){ const x = Math.random() * S, y = Math.random() * S, w = 14 + Math.random() * 22; for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]){ g.beginPath(); g.arc(x + ox, y + oy, w, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); } }
   return c; })();
-let fogPat = null, seaPat = null;
+let fogPat = null, seaPat = null, KARPS = [];   // Magikarps pulando no mar (só enfeite, não vai pela rede)
 function patLayer(pat, img, px, py, sc, alpha){ pat.setTransform(new DOMMatrix().translate(px, py).scale(sc)); cx.globalAlpha = alpha; cx.fillStyle = pat; cx.fillRect(0, 0, W, H); cx.globalAlpha = 1; }
 const KOFF2 = [[110, 0], [109, Math.PI]];   // só dois, passeando devagar em volta da arena
 // navios: casco desenhado pelo tamanho atual de cada barco (some junto com o convés)
@@ -2101,7 +2118,12 @@ function drawMinimap(){ if (G.map !== 'gb' || G.phase === 'menu') return; const 
 function drawMist(ms){
   if (!fogPat){ fogPat = cx.createPattern(FOG, 'repeat'); seaPat = cx.createPattern(SEA, 'repeat'); }
   const t = G.t;
-  if (G.map === 'pt'){ patLayer(seaPat, SEA, OX * .9 + t * 6, OY * .9 + Math.sin(t * .5) * 8, T / 40, 1); }   // mar embaixo dos navios
+  if (G.map === 'pt' || G.map === 'ar' || isRd()){ patLayer(seaPat, SEA, OX * .9 + t * 6, OY * .9 + Math.sin(t * .5) * 8, T / 40, 1);   // mar (navios e ilhas) ou lago gelado (redondo)
+    if (isRd()){ cx.fillStyle = 'rgba(170,215,240,.28)'; cx.fillRect(0, 0, W, H); }
+    if (!isRd() && G.phase !== 'menu'){ if (Math.random() < .012){ const a = Math.random() * 6.283, d = SIZE * (.55 + Math.random() * .2), x = SIZE / 2 + Math.cos(a) * d, y = SIZE / 2 + Math.sin(a) * d; if (!onPlat(x, y)) KARPS.push({ x, y, t:0, f:Math.random() < .5 ? 0 : Math.PI }); }
+      for (const k of KARPS){ k.t += 1 / 60; const p = k.t / 1.1, h = Math.sin(Math.min(1, p) * Math.PI) * 1.3; if (p < 1) drawSprite(129, 'Idle', k.t, k.f, k.x + (p - .5) * .8 * (k.f ? -1 : 1), k.y - h, T / 30, .95);
+        if (!k.sp && p > .02){ k.sp = 1; for (let q = 0; q < 8; q++) fx(k.x, k.y, rnd(-1.5, 1.5), rnd(-2.5, -.5), .5, '#cfe8ff', 5); } if (!k.sp2 && p >= 1){ k.sp2 = 1; for (let q = 0; q < 10; q++) fx(k.x + (k.f ? -.4 : .4), k.y, rnd(-1.5, 1.5), rnd(-2.5, -.5), .5, '#ffffff', 5); } }
+      KARPS = KARPS.filter(k => k.t < 1.3); } }
   patLayer(fogPat, FOG, OX * .3 - t * 9, OY * .3 - t * 3, T / 34, .55 + ms * .05);
   patLayer(fogPat, FOG, OX * .6 + t * 14, OY * .6 + t * 5, T / 22, .35 + ms * .04);
   const c = SIZE / 2;
@@ -2150,7 +2172,10 @@ function draw(){
     cx.fillStyle = `rgba(255,${full ? 150 : 205},80,${.14 + .12 * Math.sin(G.t * 16)})`; cx.strokeStyle = 'rgba(255,220,140,.85)'; cx.lineWidth = 2; cx.setLineDash([6, 5]);
     cx.beginPath(); cx.arc(sx(x0), sy(y0), (full ? 3 : SNOR_RAD) * T, 0, 7); cx.fill(); cx.stroke(); cx.setLineDash([]); }
   // aviso do Raio de Gelo do Lapras
-  for (const o of G.obs) if (o.k === 'lapras' && o.charge > 0){ cx.save(); cx.translate(sx(o.x), sy(o.y)); cx.rotate(o.aim); cx.fillStyle = `rgba(191,243,255,${.15 + .15 * Math.sin(G.t * 16)})`; cx.fillRect(0, -.55 * T, 7.5 * T, 1.1 * T); cx.restore(); }
+  for (const o of G.obs) if (o.k === 'lapras' && o.charge > 0){ cx.save(); cx.translate(sx(o.x), sy(o.y)); cx.rotate(o.aim); const L = 7.5 * T, w = .55 * T;
+    const g = cx.createLinearGradient(0, 0, L, 0); g.addColorStop(0, `rgba(191,243,255,${.35 + .15 * Math.sin(G.t * 16)})`); g.addColorStop(1, 'rgba(191,243,255,.05)'); cx.fillStyle = g; cx.fillRect(0, -w, L, w * 2);
+    cx.strokeStyle = 'rgba(230,250,255,.8)'; cx.setLineDash([8, 6]); cx.lineWidth = 2; cx.beginPath(); cx.moveTo(0, -w); cx.lineTo(L, -w); cx.moveTo(0, w); cx.lineTo(L, w); cx.stroke(); cx.setLineDash([]);
+    cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.lineWidth = 3; cx.beginPath(); for (let q = 0; q < 5; q++){ const x = ((G.t * 2.2 + q / 5) % 1) * L; cx.moveTo(x - w * .5, -w * .55); cx.lineTo(x, 0); cx.lineTo(x - w * .5, w * .55); } cx.stroke(); cx.restore(); }
   // zonas
   for (const z of G.zones) drawZone(z);
   drawPicks();
@@ -2276,6 +2301,11 @@ function draw(){
     if (u.emo){ cx.font = `${T * .6}px system-ui`; cx.fillText(u.emo.e, sx(u.x) + T * .6, by - 2); }
   }
   drawCanopies(); drawBushes();
+  for (const b of G.cballs || []){ const p = Math.min(1, b.t / b.dur), x = b.sx + (b.tx - b.sx) * p, y = b.sy + (b.ty - b.sy) * p, h = Math.sin(p * Math.PI) * 3;
+    cx.strokeStyle = `rgba(255,80,60,${.5 + .4 * Math.sin(G.t * 20)})`; cx.setLineDash([5, 4]); cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(b.tx), sy(b.ty), 1.4 * T, 0, 7); cx.stroke(); cx.setLineDash([]);
+    cx.fillStyle = `rgba(255,80,60,${.12 + .2 * p})`; cx.beginPath(); cx.arc(sx(b.tx), sy(b.ty), 1.4 * T * p, 0, 7); cx.fill();
+    cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(sx(x), sy(y), T * .2 * (1 - h / 6), T * .08, 0, 0, 7); cx.fill();
+    cx.fillStyle = '#1a1a1e'; cx.beginPath(); cx.arc(sx(x), sy(y - h), T * .2, 0, 7); cx.fill(); cx.fillStyle = 'rgba(255,255,255,.35)'; cx.beginPath(); cx.arc(sx(x) - T * .06, sy(y - h) - T * .06, T * .06, 0, 7); cx.fill(); }
   // projéteis
   for (const s of G.shots) if (s.lob){ const p = 1 - s.left / s.tot, h = Math.sin(p * Math.PI) * 1.6;
     cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(sx(s.x), sy(s.y), T * .25, T * .1, 0, 0, 7); cx.fill();
@@ -2336,6 +2366,10 @@ function drawObstacle(o){
   if (o.k === 'tree'){ const x = sx(o.x), y = sy(o.y), w = T * o.r * .75;   // só o tronco: a copa é desenhada por cima de todos (drawCanopies)
     cx.fillStyle = '#4a311a'; cx.beginPath(); cx.ellipse(x, y + T * .06, w * 1.5, w * .55, 0, 0, 7); cx.fill();
     cx.fillStyle = '#6b4a2a'; cx.fillRect(x - w * .6, y - T * .9, w * 1.2, T * .95); cx.fillStyle = '#8a6438'; cx.fillRect(x - w * .6, y - T * .9, w * .4, T * .95); return; }
+  if (o.k === 'cannon'){ const X = sx(o.x), Y = sy(o.y) - T * .1, rc = o.anim > 0 ? o.anim / .4 * T * .15 : 0;
+    cx.fillStyle = '#5a3a1c'; cx.fillRect(X - T * .32, Y - T * .12, T * .64, T * .3); cx.fillStyle = '#2a1a0c'; for (const s of [-1, 1]){ cx.beginPath(); cx.arc(X + s * T * .22, Y + T * .2, T * .12, 0, 7); cx.fill(); }
+    cx.save(); cx.translate(X - Math.cos(o.face) * rc, Y - T * .1 - Math.sin(o.face) * rc); cx.rotate(o.face); cx.fillStyle = '#26272c'; cx.fillRect(-T * .2, -T * .13, T * .75, T * .26); cx.fillStyle = '#4b4d55'; cx.fillRect(-T * .2, -T * .13, T * .75, T * .07);
+    cx.fillStyle = '#111'; cx.beginPath(); cx.arc(T * .55, 0, T * .1, 0, 7); cx.fill(); cx.restore(); return; }
   if (o.k === 'wall'){ const X = sx(o.x), Y = sy(o.y), s = T * .47; cx.fillStyle = '#3d3f46'; cx.fillRect(X - s, Y - s * .55, s * 2, s * 1.3); cx.fillStyle = '#80838e'; cx.fillRect(X - s, Y - s * 1.35, s * 2, s * .85);
     cx.fillStyle = '#9da1ac'; cx.fillRect(X - s, Y - s * 1.35, s * 2, s * .18); cx.strokeStyle = '#26272c'; cx.lineWidth = 1.5; cx.strokeRect(X - s, Y - s * 1.35, s * 2, s * 2.1); return; }
   if (o.k === 'box'){ const X = sx(o.x), Y = sy(o.y) - T * .12, s = T * .42, f = o.hitT > 0;
@@ -2853,7 +2887,7 @@ function netBroadcast(){
     mo:G.mode, fm:G.fmt, tw:G.teamWins, bl:G.ball ? [r2(G.ball.x), r2(G.ball.y), r2(G.ball.vx), r2(G.ball.vy)] : 0, gl:G.goals || [0, 0], pt:r2(G.pbT || 0), cp:G.caps.map(z => [r2(z.x), r2(z.y), z.r, z.cap, Object.entries(z.acc).map(([k, v]) => [+k, r2(v)]), z.full ? 1 : 0]),
     mp:G.map, R:G.R, ob:G.obs.map(o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0, o.chg || 0, r2(o.boom || 0), r2(o.down || 0), o.frenzy || 0, o.r, o.dr || 0]),
     ic:G.ice.map(p => [r2(p.x), r2(p.y), p.r, r2(Math.min(p.t, 99))]),
-    md:G.mud.map(p => [r2(p.x), r2(p.y), r2(p.r)]), pk:G.picks.map(p => [r2(p.x), r2(p.y)]), gu:G.gust ? [r2(G.gust.dx), r2(G.gust.dy), r2(G.gust.warn), r2(G.gust.t)] : 0,
+    md:G.mud.map(p => [r2(p.x), r2(p.y), r2(p.r)]), pk:G.picks.map(p => [r2(p.x), r2(p.y)]), cb:(G.cballs || []).map(b => [r2(b.sx), r2(b.sy), r2(b.tx), r2(b.ty), r2(b.t), b.dur]), gu:G.gust ? [r2(G.gust.dx), r2(G.gust.dy), r2(G.gust.warn), r2(G.gust.t)] : 0,
     ev:NET.ev.concat(fxs)
   };
   NET.ev = [];
@@ -2909,7 +2943,7 @@ function applySnap(S){
   if (S.rd !== G.round || S.mp !== G.map || !G.pa || G.pa[0] !== S.pa[0] || G.pa[1] !== S.pa[1] || G.pa[2] !== SIZE){ G.map = S.mp; G.pat = S.pa[0]; G.seed = S.pa[1]; G.pa = [S.pa[0], S.pa[1], SIZE]; G.step = S.st; buildStages(); G.decals = []; }
   else if (S.st !== G.step){ const b = platCells(); G.step = S.st; addFalling(b, platCells()); }
   Object.assign(G, { phase:S.ph, timer:S.tm, round:S.rd, shrinkIn:S.si, step:S.st, map:S.mp, R:S.R });
-  G.mud = (S.md || []).map(a => ({ x:a[0], y:a[1], r:a[2] })); G.picks = (S.pk || []).map(a => ({ x:a[0], y:a[1] })); G.gust = S.gu ? { dx:S.gu[0], dy:S.gu[1], warn:S.gu[2], t:S.gu[3] } : null;
+  G.mud = (S.md || []).map(a => ({ x:a[0], y:a[1], r:a[2] })); G.picks = (S.pk || []).map(a => ({ x:a[0], y:a[1] })); G.cballs = (S.cb || []).map(a => ({ sx:a[0], sy:a[1], tx:a[2], ty:a[3], t:a[4], dur:a[5] })); G.gust = S.gu ? { dx:S.gu[0], dy:S.gu[1], warn:S.gu[2], t:S.gu[3] } : null;
   G.obs = S.ob.map(a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0, chg:a[8], boom:a[9], down:a[10], frenzy:a[11], r:a[12] || OBR[a[0]], dr:a[13] || 0, main:a[0] === 'mast' && !a[13] ? 1 : 0 }));
   G.ice = S.ic.map(a => ({ x:a[0], y:a[1], r:a[2], t:a[3] }));
   G.mode = S.mo || 'cl'; G.fmt = S.fm || 0; G.teamWins = S.tw || {}; G.goals = S.gl; G.pbT = S.pt;
