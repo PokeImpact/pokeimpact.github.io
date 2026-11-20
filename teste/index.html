@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v49 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v50 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -661,7 +661,8 @@ function doShrink(){
   // os objetos (Voltorbs, árvores, pedras, Lapras, Snorlax) ficam no lugar mesmo quando o chão some embaixo deles
   feed(platGone() ? 'A plataforma sumiu! Só resta a névoa.' : G.pat === 'ilha' ? 'Uma ilha afundou' : 'A plataforma encolheu', '#9be36a');
 }
-function addFalling(before, after){ for (const [k, m] of before) if (after.get(k) !== m){ const [i, j] = k.split(',').map(Number), c = tileRGB(i, j, m, before);
+function addFalling(before, after){ if (G.map === 'gb') return;   // no mapa grande o chão não cai: o gás vai cobrindo
+  for (const [k, m] of before) if (after.get(k) !== m){ const [i, j] = k.split(',').map(Number), c = tileRGB(i, j, m, before);
   G.falling.push({ i, j, t:0, m, c, rot:rnd(-1.2, 1.2) });
   if (Math.random() < .6) fx(i + .5, j + .5, rnd(-1, 1), rnd(.5, 2), rnd(.4, .7), `rgb(${c[0] - 30},${c[1] - 30},${c[2] - 30})`, rnd(4, 7));
   if ((G.map === 'pt' || G.map === 'ar' || G.map === 'rd') && Math.random() < .7) for (let q = 0; q < 2; q++) fx(i + .5 + rnd(-.3, .3), j + .7, rnd(-1.2, 1.2), rnd(-3, -1.2), rnd(.4, .6), pick(['#ffffff','#cfe8ff']), rnd(4, 7)); } }
@@ -2111,6 +2112,17 @@ function drawMapDecor(){ const c = SIZE / 2, t = G.t;
     cx.fillStyle = '#6b4a2a'; for (let q = 0; q < 4; q++){ const a = h * 9 + q * 1.4, X = sx(p.x + Math.cos(a) * p.r * 1.02), Y = sy(p.y + Math.sin(a) * p.r * 1.02); cx.beginPath(); cx.ellipse(X + Math.sin(t * 1.5 + q) * T * .05, Y - T * .55, T * .05, T * .12, 0, 0, 7); cx.fill(); } }
 }
 // no ar (por cima de tudo): folhas caindo na floresta, vaga-lumes no pântano
+// gás venenoso da Grande Batalha (por cima de tudo, nas casas que já fecharam)
+function drawGas(){ if (G.map !== 'gb' || !G.stages[0]) return; const S = platCells(), L = [];
+  for (const [key] of G.stages[0]){ if (S.has(key)) continue; const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T * 2 || X > W + T * 2 || Y < -T * 2 || Y > H + T * 2) continue; L.push([i, j, X, Y]); }
+  if (!L.length) return; const t = G.t;
+  for (const [col, sp, rr, ph] of [['rgba(80,150,50,.16)', .7, .75, 0], ['rgba(130,200,80,.12)', -.5, .6, 2], ['rgba(40,90,30,.16)', .3, .5, 4]]){ cx.fillStyle = col; cx.beginPath();
+    for (const [i, j, X, Y] of L){ const ox = Math.sin(t * sp + i * .9 + j * .3 + ph) * T * .25, oy = Math.cos(t * sp * .8 + j * .7 + i * .2 + ph) * T * .2, r = T * rr * (.85 + .15 * Math.sin(t * 2 + i + j)); cx.moveTo(X + T * .5 + ox + r, Y + T * .5 + oy); cx.arc(X + T * .5 + ox, Y + T * .5 + oy, r, 0, 7); }
+    cx.fill(); }
+  cx.strokeStyle = `rgba(190,255,120,${.55 + .25 * Math.sin(t * 6)})`; cx.lineWidth = Math.max(2, T * .08); cx.beginPath();   // borda do gás
+  for (const [key] of S){ const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T || X > W + T || Y < -T || Y > H + T) continue;
+    if (!S.has(ck(i, j - 1))){ cx.moveTo(X, Y); cx.lineTo(X + T, Y); } if (!S.has(ck(i, j + 1))){ cx.moveTo(X, Y + T); cx.lineTo(X + T, Y + T); } if (!S.has(ck(i - 1, j))){ cx.moveTo(X, Y); cx.lineTo(X, Y + T); } if (!S.has(ck(i + 1, j))){ cx.moveTo(X + T, Y); cx.lineTo(X + T, Y + T); } }
+  cx.stroke(); }
 function drawAmbient(){ const t = G.t;
   if (G.map === 'fl' || G.map === 'flr') for (let q = 0; q < 14; q++){ const ph = (t * .07 + q * .0713) % 1, x = (q * 5.37) % (SIZE + 4) - 2 + ph * 4 + Math.sin(t * 1.2 + q) * .6, y = -2 + ph * (SIZE + 4), a = t * 2 + q;
     cx.save(); cx.translate(sx(x), sy(y)); cx.rotate(a); cx.fillStyle = ['#6fbf4a','#a9c94a','#d9a441','#4f9a3c'][q % 4]; cx.beginPath(); cx.ellipse(0, 0, T * .13, T * .06, 0, 0, 7); cx.fill(); cx.restore(); }
@@ -2256,7 +2268,9 @@ function draw(){
   drawMist(ms);
   // plataforma: cada mapa tem o seu chão; a beira tem paredão e contorno para dar para ler onde o chão acaba
   const S = platCells(), TH = THEME[G.map] || THEME.sq, play = G.phase === 'play', pulse = .25 + .25 * Math.sin(G.t * 14);
-  for (const [key, m] of S){ if (m !== 15) continue; const [i, j] = key.split(',').map(Number); if (S.get(ck(i, j + 1)) === 15) continue;
+  if (G.map === 'gb' && G.stages[0]) for (const [key] of G.stages[0]){ if (S.has(key)) continue; const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T || X > W + T || Y < -T || Y > H + T) continue;   // chão tomado pelo gás
+    const c = tileRGB(i, j, 15, S); cx.fillStyle = `rgb(${c[0] * .45 + 20 | 0},${c[1] * .5 + 30 | 0},${c[2] * .35 + 10 | 0})`; cx.fillRect(X, Y, T + .5, T + .5); }
+  for (const [key, m] of S){ if (m !== 15 || G.map === 'gb') continue; const [i, j] = key.split(',').map(Number); if (S.get(ck(i, j + 1)) === 15) continue;
     cx.fillStyle = TH.cliff; cx.fillRect(sx(i), sy(j + 1) - 1, T, T * .38); cx.fillStyle = 'rgba(0,0,0,.28)'; cx.fillRect(sx(i), sy(j + 1) + T * .24, T, T * .14); }
   if (G.map === 'pt') drawHulls(S);
   for (const [key, m] of S){ const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T || X > W + T || Y < -T * 2 || Y > H + T) continue; const c = tileRGB(i, j, m, S);
@@ -2440,7 +2454,7 @@ function draw(){
     if (u.b.conf > 0){ for (let k = 0; k < 3; k++){ const a = G.t * 5 + k * 2.1; cx.fillText('✦', sx(u.x) + Math.cos(a) * T * .3, by - T * .35 + Math.sin(a) * T * .1); } }   // confuso: estrelinhas girando
     if (u.emo){ cx.font = `${T * .6}px system-ui`; cx.fillText(u.emo.e, sx(u.x) + T * .6, by - 2); }
   }
-  drawCanopies(); drawTent(); drawBushes(); drawAmbient();
+  drawCanopies(); drawTent(); drawBushes(); drawGas(); drawAmbient();
   if (G.drop){ const D = G.drop, p = Math.min(1, D.t / D.dur), X = sx(D.x), Y = sy(D.y), h = (1 - p) * (1 - p) * 9, R = T * .55;   // Pokébola gigante caindo
     cx.fillStyle = `rgba(0,0,0,${.15 + .35 * p})`; cx.beginPath(); cx.ellipse(X, Y, R * (.4 + .8 * p), R * (.15 + .3 * p), 0, 0, 7); cx.fill();
     cx.strokeStyle = `rgba(255,210,63,${.5 + .4 * Math.sin(G.t * 14)})`; cx.setLineDash([6, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, T * 1.7, 0, 7); cx.stroke(); cx.setLineDash([]);
