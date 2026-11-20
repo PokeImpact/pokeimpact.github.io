@@ -315,7 +315,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
   <div class="box">
     <!-- 1. tela inicial -->
     <section class="scr" id="scHome">
-      <div class="mhead"><h1>Poke Impact <small>v85 · 20/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
+      <div class="mhead"><h1>Poke Impact <small>v86 · 20/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
       <p class="sub">Empurre todo mundo para a névoa tóxica e seja o último em pé na arena.</p>
       <div class="hero">
         <button class="heroPk" data-go="poke"><img id="heroImg" alt=""><span><small>Seu Pokémon</small><b id="heroName"></b><em>Trocar de Pokémon ›</em></span></button>
@@ -1514,6 +1514,17 @@ function damage(e, a, by, quiet){
     else die(e);
   }
 }
+// grupos: cada grupo de amigos entra por um link próprio (/palmas, /cancun, /primos) que abre o jogo com ?g=grupo.
+// O jogo é um só; muda só a capa da tela de conta e a imagem do susto. Para um grupo novo: ponha as imagens em img/ e uma linha aqui.
+const GRUPOS = {
+  palmas: { capa:'img/capa.webp',        susto:'img/susto.webp' },
+  cancun: { capa:'img/capa-cancun.webp', susto:'img/susto-cancun.webp' },
+  primos: { capa:'img/capa-primos.webp', susto:'img/susto.webp' } };
+const GRUPO = (() => { let g = null;
+  try { g = new URLSearchParams(location.search).get('g'); } catch(e){}
+  if (g && GRUPOS[g]){ store.set('nt-grupo', g); try { history.replaceState(null, '', location.pathname); } catch(e){} }   // guarda e limpa o endereço
+  g = store.get('nt-grupo'); return GRUPOS[g] ? g : 'palmas'; })();
+{ const G0 = GRUPOS[GRUPO], c = document.querySelector('.acapa'), su = document.querySelector('#susto img'); if (c) c.src = G0.capa; if (su) su.src = G0.susto; }
 // susto ao morrer (zoeira temporária: para tirar, troque para false)
 const SUSTO_ON = true;
 let AC = null;
