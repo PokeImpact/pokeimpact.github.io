@@ -221,6 +221,25 @@ details.how p{margin:8px 0 0;line-height:1.5;max-width:70ch}
 #nmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;flex:1;min-width:0}
 #nmap .chip{text-align:left;border-radius:10px}
 .mfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;bottom:-20px;margin:0 -20px -20px;padding:12px 20px 20px;background:linear-gradient(rgba(35,26,46,0),var(--panel) 35%)}
+/* salas abertas */
+.rooms{background:#1a1323;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.rhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.rhead b{font-family:var(--font-d);font-weight:400;font-size:21px}
+.rhead small{color:var(--dim);font-weight:700}
+.live{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--gas);margin-right:6px;vertical-align:2px;box-shadow:0 0 8px var(--gas);animation:live 1.6s ease-in-out infinite}
+@keyframes live{50%{opacity:.35}}
+#roomList{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow:auto}
+.rm{display:grid;grid-template-columns:44px 1fr auto;gap:2px 10px;align-items:center;background:#120c19;border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.rm img{width:44px;height:44px;image-rendering:pixelated;border-radius:8px;background:#0e0a13;grid-row:span 2}
+.rm b{font-size:15px}
+.rm small{color:var(--dim);font-weight:700;font-size:12px}
+.rm .st{color:var(--gas)}.rm .st.play{color:var(--gold)}
+.rm button{grid-column:3;grid-row:1/3}
+.rempty{color:var(--dim);font-weight:700;text-align:center;padding:14px 8px;line-height:1.5}
+#pwRow input,#lobbyPw{text-transform:none!important;letter-spacing:0!important;font-size:15px!important}
+.wait{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.wait b{font-size:17px}
+#endWait{background:#1f2a1b;border:1px solid #4d6b3a;border-radius:10px;padding:8px 12px;font-weight:800;font-size:14px}
 /* escolha do Pokémon */
 .pkwrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
 .pkgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -248,7 +267,7 @@ details.how p{margin:8px 0 0;line-height:1.5;max-width:70ch}
 .mv>span{grid-row:span 2;font-size:20px;text-align:center}
 .mv b{font-size:13px}
 .mv small{color:var(--dim);font-size:11px;line-height:1.3;font-weight:600}
-@media (max-width:700px){.hero,.modes,.onl{grid-template-columns:1fr}.pkwrap{grid-template-columns:1fr}.pkd{position:static;order:-1}.pkgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.pkc{padding:8px 4px 6px}.pkc img{width:48px;height:48px}.pkc .stt{display:none}.cfgg>.row{flex-wrap:wrap}.cfgg>.row>.lbl{padding-top:0;min-width:0;width:100%}.mvs .mv small{display:none}.heroPk img{width:64px;height:64px}.mhead h1 small{display:block;margin-top:4px}.sc.has:not(.just) .ds{display:none}#shopOv .shop{grid-template-columns:1fr}}
+@media (max-width:700px){.hero,.modes,.onl{grid-template-columns:1fr}.pkwrap{grid-template-columns:1fr}.pkd{position:static;order:-1}.pkgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.pkc{padding:8px 4px 6px}.pkc img{width:48px;height:48px}.pkc .stt{display:none}.cfgg>.row{flex-wrap:wrap}.cfgg>.row>.lbl{padding-top:0;min-width:0;width:100%}.mvs .mv small{display:none}.heroPk img{width:64px;height:64px}.mhead h1 small{display:block;margin-top:4px}.sc.has:not(.just) .ds{display:none}#shopOv .shop{grid-template-columns:1fr}.rm{grid-template-columns:36px 1fr auto;padding:7px 8px}.rm img{width:36px;height:36px}.rm button{font-size:13px!important;padding:7px 10px!important}.onl .row{flex-wrap:nowrap}.onl .row input{min-width:0}}
 @keyframes need{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
 #nick.need{animation:need .4s;border-color:var(--hot)}
 /* toque */
@@ -296,7 +315,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
   <div class="box">
     <!-- 1. tela inicial -->
     <section class="scr" id="scHome">
-      <div class="mhead"><h1>Poke Impact <small>v80 · 20/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
+      <div class="mhead"><h1>Poke Impact <small>v81 · 20/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
       <p class="sub">Empurre todo mundo para a névoa tóxica e seja o último em pé na arena.</p>
       <div class="hero">
         <button class="heroPk" data-go="poke"><img id="heroImg" alt=""><span><small>Seu Pokémon</small><b id="heroName"></b><em>Trocar de Pokémon ›</em></span></button>
@@ -320,9 +339,10 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
       <button class="back" data-go="home">‹ Voltar</button>
       <h2>Jogar com amigos</h2>
       <div class="amsg err" id="onMsg" hidden></div>
+      <div class="rooms" id="roomsBox"><div class="rhead"><b><span class="live"></span>Salas abertas agora</b><small id="roomsSt">procurando…</small></div><div id="roomList"></div></div>
       <div class="onl">
-        <div><b>🏠 Criar uma sala</b><small>Você vira o anfitrião: escolhe o mapa e as regras e passa o código de 4 letras para os amigos.</small><button class="go" id="mkRoom" style="margin-top:auto">Criar sala</button></div>
-        <div><b>🔑 Entrar numa sala</b><small>Peça o código para quem criou a sala.</small><div class="row"><input id="roomIn" placeholder="ABCD" maxlength="4"><button class="go" id="joinRoom">Entrar</button></div></div>
+        <div><b>🏠 Criar uma sala</b><small>Você vira o anfitrião: escolhe o mapa e as regras. A sala aparece na lista para todo mundo (ou com 🔒 senha, se preferir).</small><button class="go" id="mkRoom" style="margin-top:auto">Criar sala</button></div>
+        <div><b>🔑 Entrar com código</b><small>Para sala que não aparece na lista: peça o código de 4 letras para quem criou.</small><div class="row"><input id="roomIn" placeholder="ABCD" maxlength="4"><button class="go" id="joinRoom">Entrar</button></div><div class="row" id="pwRow" hidden><input id="roomPw" placeholder="Senha da sala" maxlength="12" autocomplete="off"></div></div>
       </div>
     </section>
     <!-- 4. configurar a partida (sozinho ou sala) -->
@@ -405,6 +425,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
     <h2 id="endT">Fim de jogo</h2>
     <div class="pod" id="pod"></div>
     <div style="overflow-x:auto"><table id="endTb"></table></div>
+    <div id="endWait" hidden></div>
     <div class="row" style="justify-content:flex-end"><button class="ghost" id="toMenu">Trocar Pokémon</button><button class="go" id="again">Jogar de novo</button></div>
   </div>
 </div>
@@ -1460,6 +1481,7 @@ function banner(h, s, dur = 1.6){ if (NET.on && NET.host && G.phase !== 'count')
 
 /* ---------- partida e rodadas ---------- */
 function newMatch(){
+  if (NET.on && NET.host) waitMerge();
   G.units = []; $('#spec').hidden = true; G.mode = 'cl'; G.fmt = CFG.fmt || 0; G.teamWins = {}; G.caps = [];
   G.me = makeUnit(CFG.sp, NET.on ? NET.nick : 'Você', true, 0); G.me.skin = mySkin(); G.units.push(G.me);
   if (NET.on) for (const c of NET.peers){ const u = makeUnit(c.sp, c.nick, true, G.units.length); u.remote = c; c.u = u; u.skin = c.skin || null; G.units.push(u); }
@@ -1483,7 +1505,7 @@ function newMatch(){
   for (const id of ['menu','endOv','shopOv']) $('#' + id).hidden = true;
   for (const id of ['top','gold','plist','emo']) $('#' + id).hidden = false;
   $('#bar').hidden = false;
-  buildBar(); buildEmotes(); startRound();
+  buildBar(); buildEmotes(); startRound(); if (NET.on && NET.host) roomsTrack();
 }
 const MAPFEED = { gb:'Grande Batalha: mapa enorme, você só vê perto de você. Golpes tiram 3× mais vida, o mato esconde, caixas soltam Doce Raro e a névoa fecha devagar até o centro.', pt:'Navios: metade da sala em cada barco. Os barcos afundam por fora; a ponte e a roda do meio nunca caem. Sino tocado 3 vezes = canhões no outro navio.', ab:'Abordagem: os navios começam separados pelo mar. As pranchas baixam com o tempo; depois os navios afundam por fora.', ar:'Arquipélago: uma ilha afunda de cada vez (a que pisca é a próxima).', pn:'Pântano: poças de lama deixam lento.', sn:'Snorlax: ele se vira de vez em quando e esmaga quem estiver do lado. Muitos golpes nele o acordam.' };
 function startRound(){
@@ -1563,7 +1585,7 @@ function gameOver(){
     rows.map(u => `<tr><td>${u.place}º</td><td style="color:${u.col};font-weight:800">${u.name}</td><td>${POKE[u.sp].n}</td><td>${u.wins}</td><td>${u.kills}</td><td>${Math.round(u.dmg)}</td><td>${(u.dmg / Math.max(1, u.rounds || 1)).toFixed(1).replace('.', ',')}</td><td>${accTxt(u)}</td></tr>`).join('');
   renderPodium(w, rows);
   if (!isClient()) rankReport();
-  $('#endOv').hidden = false;
+  waitInfo(); $('#endOv').hidden = false;
 }
 // pódio: campeão com coroa comemorando, último colocado deitado chorando (e zoado)
 const LOSELINE = ['Dormiu no ponto. O Snorlax mandou lembranças.', 'Lixo tóxico: combinou direitinho com a névoa.', 'O Weezing agradece pela refeição.', 'Volte ao Centro Pokémon e pense no que fez.', 'Até o Magikarp teria durado mais.', 'Virou fumaça antes de todo mundo.'];
@@ -3302,7 +3324,7 @@ function menuScreen(s){
   if (s === 'solo'){ if (NET.on) netLeave(); s = 'cfg'; }
   if (s === 'online' && !cleanNick($('#nick').value)){ const n = $('#nick'); n.placeholder = 'Primeiro, digite seu nome'; n.focus(); n.classList.remove('need'); void n.offsetWidth; n.classList.add('need'); return; }
   if (s === 'poke' && MS !== 'poke') MSP = MS;
-  MS = s; $('#onMsg').hidden = true; renderMenu();
+  MS = s; $('#onMsg').hidden = true; $('#onMsg').className = 'amsg err'; renderMenu(); if (s === 'online') roomsOpen(); roomsTrack();
   const bx = $('#menu .box'); if (bx) bx.scrollTop = 0;
 }
 function renderMenu(){
@@ -3324,7 +3346,7 @@ function renderMenu(){
     <div class="mvs">${me.kit.map((id, i) => { const d = SK[id]; return `<div class="mv"><span>${d.ic}</span><b>${d.n}<span class="kb">${keyName(kk[i])}</span>${i === 0 ? ' <small style="color:var(--gas)">· já começa com</small>' : d.ult ? ' <small style="color:var(--gold)">· especial</small>' : ''}</b><small>${d.desc}</small></div>`; }).join('')}</div>`;
   // partida
   const cl = isClient();
-  $('#cfgT').textContent = NET.on ? (NET.host ? 'Sua sala' : 'Sala ' + NET.code) : 'Partida contra bots';
+  $('#cfgT').textContent = NET.on ? (NET.host ? 'Sua sala' : NET.hostNick ? 'Sala de ' + NET.hostNick : 'Sala ' + NET.code) : 'Partida contra bots';
   $('#cfgBack').textContent = NET.on ? '‹ Sair da sala' : '‹ Voltar';
   $('#cfgRows').hidden = cl;
   $('#cfgHint').textContent = cl ? 'O anfitrião escolhe o mapa e começa a partida.' : NET.on ? 'Bots completam as vagas que sobrarem.' : '';
@@ -3339,6 +3361,8 @@ function renderMenu(){
 $('#menu').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.dataset.go) return menuScreen(b.dataset.go);
+  if (b.dataset.room) return roomPick(b.dataset.room, b.dataset.lock === '1');
+  if (b.dataset.pv){ NET.pwOn = b.dataset.pv === '1'; if (!NET.pwOn) NET.pw = ''; netLobby(); if (NET.pwOn) setTimeout(() => { const i = $('#lobbyPw'); if (i) i.focus(); }, 0); return; }
   if (b.dataset.sp){ CFG.sp = +b.dataset.sp; if (isClient()) netSend({ t:'sp', sp:CFG.sp }); else if (NET.on) netLobby(); }
   if (b.dataset.nb) CFG.bots = +b.dataset.nb;
   if (b.dataset.nl) CFG.lives = +b.dataset.nl;
@@ -3350,6 +3374,8 @@ $('#menu').addEventListener('click', e => {
   store.set('nt-cfg', CFG); renderMenu(); if (NET.on && NET.host && G.phase === 'menu') netLobby();
 });
 $('#roomIn').addEventListener('keydown', e => { if (e.key === 'Enter') netJoin(); });
+$('#roomPw').addEventListener('keydown', e => { if (e.key === 'Enter') netJoin(); });
+$('#menu').addEventListener('input', e => { if (e.target.id === 'lobbyPw'){ NET.pw = e.target.value.trim().slice(0, 12); roomsTrackSoon(); } });
 $('#play').onclick = () => { if (!isClient()) newMatch(); };
 $('#again').onclick = () => { if (isClient()){ banner('Esperando o anfitrião', 'Ele começa a próxima partida', 3); return; } newMatch(); };
 // volta para a tela inicial (no online, para a sala): dá para trocar de Pokémon, mapa, vidas
@@ -3357,9 +3383,9 @@ function goMenu(){
   for (const id of ['endOv','shopOv','cfgOv']) $('#' + id).hidden = true;
   $('#menu').hidden = false; G.phase = 'menu'; G.paused = false; G.units = []; G.me = null; G.shots = []; G.zones = []; G.marks = []; G.waves = []; G.decoys = []; G.portals = []; G.obs = []; G.ice = []; G.fx = []; G.txt = [];
   for (const id of ['top','gold','plist','emo','bar']) $('#' + id).hidden = true; $('#banner').innerHTML = '';
-  renderMenu();
+  renderMenu(); if (NET.on && NET.host) roomsTrack();
 }
-function hostToLobby(){ for (const c of NET.peers){ c.u = null; if (c.open) c.send({ t:'tolobby' }); } goMenu(); netLobby(); }
+function hostToLobby(){ waitMerge(); for (const c of NET.peers){ c.u = null; if (c.open) c.send({ t:'tolobby' }); } goMenu(); netLobby(); }
 $('#toMenu').onclick = () => { if (NET.on && NET.host) hostToLobby(); else { goMenu(); if (isClient()) banner('', ''); } };
 $('#quitBtn').onclick = () => {
   if (!NET.on) goMenu();
@@ -3579,9 +3605,9 @@ async function netHost(){
   lobbyMsg('Criando sala…');
   try { await loadPeer(); } catch(e){ return lobbyMsg('Não deu para carregar o online. Confira a internet.'); }
   const code = Array.from({ length:4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.floor(Math.random() * 24)]).join('');
-  Object.assign(NET, { on:true, host:true, nick, code, peers:[] });
+  Object.assign(NET, { on:true, host:true, nick, code, peers:[], wait:[], pw:'', pwOn:false });
   NET.peer = new Peer(roomId(code), { debug:0 });
-  NET.peer.on('open', () => netLobby());
+  NET.peer.on('open', () => { netLobby(); roomsOpen(); roomsTrack(); });
   // se a conexão com o servidor das salas cair (aba escondida, internet piscou), reconecta com o mesmo código
   NET.peer.on('disconnected', () => { if (NET.on && NET.host && NET.peer && !NET.peer.destroyed) setTimeout(() => { try { NET.peer.reconnect(); } catch(e){} }, 1000); });
   NET.peer.on('error', e => { if (e.type === 'unavailable-id'){ NET.peer.destroy(); netHost(); } else if (e.type === 'network' || e.type === 'server-error' || e.type === 'socket-error' || e.type === 'socket-closed'){ if (G.phase === 'menu') lobbyMsg('Conexão com o servidor das salas caiu. Tentando de novo… (o código continua ' + NET.code + ')'); setTimeout(() => { try { NET.peer.reconnect(); } catch(x){} }, 2000); } else lobbyMsg('Erro no online: ' + e.type); });
@@ -3593,7 +3619,8 @@ async function netHost(){
   renderMenu();
 }
 function netDrop(c){
-  const i = NET.peers.indexOf(c); if (i < 0) return; NET.peers.splice(i, 1);
+  const w = (NET.wait || []).indexOf(c); if (w >= 0){ NET.wait.splice(w, 1); waitInfo(); roomsTrack(); return; }
+  const i = NET.peers.indexOf(c); if (i < 0) return; NET.peers.splice(i, 1); roomsTrack();
   if (c.u){ c.u.human = false; c.u.remote = null; feed(`${c.nick} saiu: um bot assume`, '#ff6a3d'); }
   if (G.phase === 'menu') netLobby();
 }
@@ -3602,23 +3629,30 @@ function netLobby(){
   NET.rk = CFG.ranked !== false;
   NET.fm = CFG.fmt || 0;
   for (const c of NET.peers) if (c.open) c.send({ t:'lobby', list, code:NET.code, fm:NET.fm, rk:NET.rk });
-  renderLobby(list);
+  renderLobby(list); roomsTrack();
 }
 function renderLobby(list){
   lobbyMsg(`<span class="lbl">Código da sala</span><span class="code">${NET.code}</span><small style="color:var(--dim)">${NET.host ? 'Passe o código para os amigos. Quando todos entrarem, aperte Jogar.' : 'Você entrou. Esperando o anfitrião começar…'}</small><span class="lbl" style="margin-top:4px">Jogadores · ${list.length} de 8</span>` +
     list.map(p => `<span class="pl"><img src="${IMG[p.sp] ? IMG[p.sp].por : ''}" alt="">${p.nick} · ${POKE[p.sp].n}${p.ac ? ' <span title="tem conta: conta na ranqueada">✔</span>' : ''}${NET.fm ? ` · <b style="color:${p.tm >= 0 ? TEAMCOL[p.tm][0] : 'var(--dim)'}">${p.tm >= 0 ? TEAMNAME[p.tm] : 'automático'}</b>` : ''}</span>`).join('') +
     `<span class="row" style="gap:6px"><span class="lbl">Ranqueada</span>${NET.host ? `<button class="chip" data-rk="1" aria-pressed="${NET.rk}">${NET.rk ? 'Sim' : 'Não'}</button>` : `<b>${NET.rk ? 'Sim' : 'Não'}</b>`}<small style="color:var(--dim)">conta para as rixas quem tem conta (✔)</small></span>` +
+    (NET.host ? `<span class="row" style="gap:6px"><span class="lbl">Quem entra</span><button class="chip" data-pv="0" aria-pressed="${!NET.pwOn}">Qualquer um</button><button class="chip" data-pv="1" aria-pressed="${!!NET.pwOn}">🔒 Com senha</button>${NET.pwOn ? `<input id="lobbyPw" placeholder="escolha a senha" maxlength="12" autocomplete="off" value="${(NET.pw || '').replace(/[<>&"'`]/g, '')}">` : ''}<small style="color:var(--dim)">${NET.pwOn ? 'a sala aparece na lista com 🔒' : 'a sala aparece na lista de salas abertas'}</small></span>` : '') +
     (NET.fm ? `<span class="row" style="gap:6px"><span class="lbl">Meu time</span>${[[0,'Azul'],[1,'Vermelho'],[-1,'Automático']].map(([t, n]) => `<button class="chip" data-tm="${t}" aria-pressed="${(NET.tm ?? -1) === t}">${n}</button>`).join('')}</span>` : ''));
   $('#play').hidden = !NET.host; $('#mkRoom').disabled = $('#joinRoom').disabled = true;
 }
 function netHostRecv(c, m){
   c.seen = performance.now();
   if (m.t === 'hello'){
-    if (NET.peers.length >= 7 || G.phase !== 'menu'){ c.send({ t:'full', why:G.phase !== 'menu' ? 'A partida já começou.' : 'A sala está cheia.' }); setTimeout(() => c.close(), 300); return; }
-    c.nick = cleanNick(m.nick) || 'Amigo'; c.uid = typeof m.uid === 'string' && UUIDRE.test(m.uid) ? m.uid : null; c.sp = POKE[m.sp] ? m.sp : 6; NET.peers.push(c); netLobby(); peerSkin(c); return;
+    const no = why => { c.send({ t:'full', why, pw:/senha/i.test(why) ? 1 : 0 }); setTimeout(() => c.close(), 300); };
+    if (roomLocked() && String(m.pw || '').trim().toLowerCase() !== NET.pw.toLowerCase()) return no(m.pw ? 'Senha errada. Confira com quem criou a sala.' : '🔒 Essa sala tem senha: digite a senha e tente de novo.');
+    if (NET.peers.length + (NET.wait || []).length >= 7) return no('A sala está cheia (8 jogadores).');
+    c.nick = cleanNick(m.nick) || 'Amigo'; c.uid = typeof m.uid === 'string' && UUIDRE.test(m.uid) ? m.uid : null; c.sp = POKE[m.sp] ? m.sp : 6;
+    if (G.phase !== 'menu'){   // partida rolando: entra na fila e joga a próxima
+      c.wait = true; (NET.wait = NET.wait || []).push(c); c.send({ t:'wait', host:NET.nick, map:CFG.map });
+      feed(`⏳ ${c.nick} entrou na sala e está esperando a próxima partida`, '#7fe05a'); waitInfo(); roomsTrack(); peerSkin(c); return; }
+    NET.peers.push(c); netLobby(); peerSkin(c); return;
   }
   if (m.t === 'skin'){ peerSkin(c); return; }   // trocou o visual na sala: busca de novo
-  if (m.t === 'sp' && POKE[m.sp]){ c.sp = m.sp; if (G.phase === 'menu') netLobby(); return; }
+  if (m.t === 'sp' && POKE[m.sp]){ c.sp = m.sp; if (G.phase === 'menu' && !c.wait) netLobby(); return; }
   if (m.t === 'tm'){ c.tm = [0, 1].includes(m.tm) ? m.tm : -1; if (G.phase === 'menu') netLobby(); return; }
   const u = c.u; if (!u || u.remote !== c) return;
   if (m.t === 'in' && Array.isArray(m.mv)){ const l = Math.hypot(m.mv[0], m.mv[1]); u.mvx = l > 1 ? m.mv[0] / l : +m.mv[0] || 0; u.mvy = l > 1 ? m.mv[1] / l : +m.mv[1] || 0;
@@ -3680,19 +3714,67 @@ async function netJoin(){
   NET.peer.on('error', e => { onlineErr(e.type === 'peer-unavailable' ? 'Sala ' + code + ' não encontrada. Confira o código (ou a sala já fechou).' : 'Erro no online: ' + e.type); $('#mkRoom').disabled = $('#joinRoom').disabled = false; });
   NET.peer.on('open', () => {
     const c = NET.conn = NET.peer.connect(roomId(code), { reliable:true, serialization:'json' });
-    c.on('open', () => c.send({ t:'hello', nick, sp:CFG.sp, uid:AUTH.user ? AUTH.user.id : null }));
+    c.on('open', () => c.send({ t:'hello', nick, sp:CFG.sp, uid:AUTH.user ? AUTH.user.id : null, pw:($('#roomPw').value || '').trim() }));
     c.on('data', netClientRecv);
     c.on('close', () => { if (NET.on){ banner('O anfitrião saiu', 'A partida acabou', 5); feed('Conexão com o anfitrião perdida', '#ff6a3d'); NET.on = false; } });
   });
   renderMenu();
 }
-function onlineErr(msg){ netLeave(); MS = 'online'; renderMenu(); const el = $('#onMsg'); el.hidden = false; el.textContent = msg; }
+function onlineErr(msg, pw){ netLeave(); MS = 'online'; renderMenu(); const el = $('#onMsg'); el.hidden = false; el.textContent = msg;
+  if (pw){ $('#pwRow').hidden = false; $('#roomPw').value = ''; $('#roomPw').focus(); } }
+/* salas abertas: o anfitrião anuncia a sala num canal do Supabase Realtime (Presence). A partida em si continua pelo PeerJS.
+   Só entra na lista quem tem a mesma versão (canal com o número da versão), para ninguém cair numa sala incompatível. */
+const ROOMS = { ch:null, on:false, list:[], sig:'', t:0 };
+const roomsVer = () => ((document.querySelector('#scHome h1 small') || {}).textContent || '').match(/v\d+/)?.[0] || 'v0';
+function roomsOpen(){
+  if (ROOMS.ch || !AUTH.ok || !AUTH.sb) return renderRooms();
+  ROOMS.ch = AUTH.sb.channel('pi-salas-' + roomsVer(), { config:{ presence:{ key:'k' + Math.random().toString(36).slice(2, 10) } } });
+  ROOMS.ch.on('presence', { event:'sync' }, () => {
+    const st = ROOMS.ch.presenceState(), all = Object.values(st).flat(); ROOMS.list = all.filter(r => r && /^[A-Z]{4}$/.test(r.code || '')); ROOMS.look = all.filter(r => r && r.look).length;
+    renderRooms(); });
+  ROOMS.ch.subscribe(s => { ROOMS.on = s === 'SUBSCRIBED'; if (ROOMS.on){ ROOMS.sig = ''; roomsTrack(); } renderRooms(); });
+}
+function roomsTrack(){
+  if (!ROOMS.ch){ if ((NET.on && NET.host) || MS === 'online') roomsOpen(); return; }
+  if (!ROOMS.on) return;
+  const host = NET.on && NET.host && NET.peer && !NET.peer.destroyed && NET.peer.open;
+  // o servidor só manda a lista para quem também se anuncia: quem está olhando entra como "procurando"
+  const info = host ? { code:NET.code, nick:NET.nick, sp:CFG.sp, n:1 + NET.peers.length + (NET.wait || []).length, ph:G.phase === 'menu' ? 0 : 1, map:CFG.map, lock:roomLocked() ? 1 : 0 } : !NET.on && MS === 'online' && G.phase === 'menu' ? { look:1 } : null;
+  const sig = JSON.stringify(info); if (sig === ROOMS.sig) return; ROOMS.sig = sig;
+  try { if (info) ROOMS.ch.track(info); else ROOMS.ch.untrack(); } catch(e){}
+}
+let roomsSoonT = 0; function roomsTrackSoon(){ clearTimeout(roomsSoonT); roomsSoonT = setTimeout(roomsTrack, 600); }
+const roomLocked = () => !!(NET.pwOn && NET.pw);
+const MAPN = { rand:'mapa sorteado', sq:'Quadrado', rd:'Redondo', vt:'Voltorbs', fl:'Floresta', pt:'Navios', ab:'Abordagem', gb:'Grande Batalha', ar:'Arquipélago', pn:'Pântano', sn:'Snorlax' };
+function renderRooms(){
+  const box = $('#roomsBox'); if (!box) return;
+  if (!AUTH.ok){ box.hidden = true; return; } box.hidden = false;
+  const L = ROOMS.list.filter(r => !(NET.on && r.code === NET.code)).sort((a, b) => a.ph - b.ph || b.n - a.n);
+  const lk = Math.max(0, (ROOMS.look || 0) - (ROOMS.sig.includes('look') ? 1 : 0));
+  $('#roomsSt').textContent = !ROOMS.on ? 'procurando…' : lk ? `👀 ${lk} ${lk > 1 ? 'pessoas procurando' : 'pessoa procurando'} sala` : '';
+  $('#roomList').innerHTML = !ROOMS.on ? '<div class="rempty">Procurando salas…</div>' : !L.length ? `<div class="rempty">Ninguém criou sala agora.<br>${lk ? 'Tem gente procurando: crie a sua e eles veem aqui na hora!' : 'Crie a sua: ela aparece aqui para todo mundo que abrir o jogo.'}</div>` :
+    L.map(r => { const full = r.n >= 8, sp = POKE[r.sp] ? r.sp : 6, nick = cleanNick(r.nick) || 'Alguém';
+      return `<div class="rm"><img src="${IMG[sp] ? IMG[sp].por : ''}" alt=""><b>${r.lock ? '🔒 ' : ''}Sala de ${nick}</b>
+        <small><span class="st ${r.ph ? 'play' : ''}">${r.ph ? '● jogando agora' : '● esperando gente'}</span> · ${Math.min(8, r.n | 0)} de 8 · ${MAPN[r.map] || 'mapa sorteado'}</small>
+        <button class="${r.ph ? 'ghost' : 'go'}" style="${r.ph ? '' : 'font-size:17px;padding:8px 16px'}" data-room="${r.code}" data-lock="${r.lock ? 1 : 0}" ${full ? 'disabled' : ''}>${full ? 'Cheia' : r.ph ? 'Entrar na fila' : 'Entrar'}</button></div>`; }).join('');
+}
+function roomPick(code, lock){
+  $('#roomIn').value = code; $('#onMsg').hidden = true;
+  if (lock && !$('#roomPw').value){ $('#pwRow').hidden = false; $('#roomPw').focus(); const el = $('#onMsg'); el.hidden = false; el.className = 'amsg'; el.textContent = '🔒 Essa sala tem senha: digite a senha embaixo do código e aperte Entrar.'; return; }
+  netJoin();
+}
+// quem entrou com a partida rolando espera aqui e entra na próxima
+function waitMerge(){ if (!NET.wait || !NET.wait.length) return; for (const c of NET.wait){ c.wait = false; NET.peers.push(c); } NET.wait = []; waitInfo(); }
+function waitInfo(){ const el = $('#endWait'); if (!el) return; const w = NET.on && NET.host ? (NET.wait || []) : [];
+  el.hidden = !w.length; el.textContent = `⏳ Esperando para entrar: ${w.map(c => c.nick).join(', ')}. Eles entram quando você apertar "Jogar de novo".`; }
 function netSend(m){ if (NET.conn && NET.conn.open) NET.conn.send(m); }
-function netLeave(){ try { NET.peer && NET.peer.destroy(); } catch(e){} Object.assign(NET, { on:false, host:false, conn:null, peers:[], peer:null }); $('#lobby').hidden = true; $('#play').hidden = false; $('#mkRoom').disabled = $('#joinRoom').disabled = false; }
+function netLeave(){ try { NET.peer && NET.peer.destroy(); } catch(e){} Object.assign(NET, { on:false, host:false, conn:null, peers:[], wait:[], pw:'', pwOn:false, peer:null, hostNick:'' }); roomsTrack(); waitInfo(); $('#lobby').hidden = true; $('#play').hidden = false; $('#mkRoom').disabled = $('#joinRoom').disabled = false; }
 function netClientRecv(m){
-  if (m.t === 'lobby'){ NET.fm = m.fm || 0; NET.rk = !!m.rk; renderLobby(m.list); return; }
+  if (m.t === 'lobby'){ NET.fm = m.fm || 0; NET.rk = !!m.rk; const hn = m.list && m.list[0] && cleanNick(m.list[0].nick); if (hn && hn !== NET.hostNick){ NET.hostNick = hn; renderMenu(); } renderLobby(m.list); return; }
   if (m.t === 'tolobby'){ goMenu(); banner('', ''); return; }
-  if (m.t === 'full'){ onlineErr(m.why); return; }
+  if (m.t === 'full'){ onlineErr(m.why, m.pw); return; }
+  if (m.t === 'wait'){ NET.hostNick = cleanNick(m.host) || ''; renderMenu(); $('#play').hidden = true; $('#mkRoom').disabled = $('#joinRoom').disabled = true;
+    lobbyMsg(`<span class="lbl">Código ${NET.code}</span><div class="wait"><b>⏳ A partida já está rolando</b><small style="color:var(--dim);font-weight:700">Você está na fila e entra sozinho na próxima partida. Enquanto isso, dá para trocar de Pokémon.</small></div>`); return; }
   if (m.t === 'start'){
     CFG.lives = m.lives;
     G.mode = m.mo || 'cl'; G.fmt = m.fm || 0; G.teamWins = {}; G.caps = [];
