@@ -177,7 +177,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v77 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v78 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado (Voltorb que rebate tudo), redondo (Lapras e gelo), Voltorbs, floresta, navios (canhões, barris e ventania), arquipélago, pântano, Snorlax e a Grande Batalha (mapa enorme com mato e caixas). Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2311,6 +2311,24 @@ const HURT = { hp:0, t:-9, u:null };
 function drawHurt(me){ const now = performance.now() / 1000; if (HURT.u !== me){ HURT.u = me; HURT.hp = me.hp; } if (me.hp < HURT.hp - 1.2) HURT.t = now;   // névoa tira aos pouquinhos e não pisca HURT.hp = me.hp;
   const hit = Math.max(0, 1 - (now - HURT.t) / .45), low = G.phase === 'play' && me.hp < me.maxhp * .25 ? .1 + .1 * Math.max(0, Math.sin(now * 7)) ** 4 : 0, a = Math.max(hit * .38, low); if (a <= .01) return;
   const g = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .7); g.addColorStop(0, 'rgba(255,40,40,0)'); g.addColorStop(1, `rgba(220,20,30,${a})`); cx.fillStyle = g; cx.fillRect(0, 0, W, H); }
+// beira perigosa: as bordas do chão perto de você acendem em vermelho (só para você)
+function drawEdgeDanger(){ const me = G.me; if (!me || !me.alive || me.air || G.phase !== 'play' || G.map === 'gb') return; const S = platCells(), i0 = Math.floor(me.x), j0 = Math.floor(me.y), pu = .55 + .35 * Math.sin(G.t * 9);
+  cx.lineWidth = Math.max(3, T * .1); cx.lineCap = 'round';
+  for (let i = i0 - 2; i <= i0 + 2; i++) for (let j = j0 - 2; j <= j0 + 2; j++){ if (!S.has(ck(i, j))) continue; const X = sx(i), Y = sy(j);
+    for (const [di, dj, x1, y1, x2, y2] of [[0, -1, 0, 0, 1, 0], [0, 1, 0, 1, 1, 1], [-1, 0, 0, 0, 0, 1], [1, 0, 1, 0, 1, 1]]){ if (S.has(ck(i + di, j + dj))) continue;
+      const mx = i + (x1 + x2) / 2, my = j + (y1 + y2) / 2, d = Math.hypot(mx - me.x, my - me.y); if (d > 1.9) continue; const a = (1 - d / 1.9) * pu;
+      cx.strokeStyle = `rgba(255,70,60,${a})`; cx.beginPath(); cx.moveTo(X + x1 * T, Y + y1 * T); cx.lineTo(X + x2 * T, Y + y2 * T); cx.stroke(); } } }
+// Arquipélago: espuma das ondas batendo na beira das ilhas; Pântano: neblina baixa passando (só desenho)
+function drawShore(){ if (fxLite() || G.phase === 'menu') return; const t = G.t;
+  if (G.map === 'ar'){ const S = platCells(); cx.strokeStyle = 'rgba(240,250,255,.55)'; cx.lineWidth = Math.max(1.5, T * .06); cx.beginPath();
+    for (const [key] of S){ const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T || X > W + T || Y < -T || Y > H + T) continue; const ph = .5 + .5 * Math.sin(t * 2.2 + i * .8 + j * .5), o = T * (.06 + .12 * ph);
+      if (!S.has(ck(i, j + 1))){ cx.moveTo(X, Y + T + o); cx.quadraticCurveTo(X + T / 2, Y + T + o + T * .08 * Math.sin(t * 3 + i), X + T, Y + T + o); }
+      if (!S.has(ck(i, j - 1))){ cx.moveTo(X, Y - o); cx.quadraticCurveTo(X + T / 2, Y - o - T * .08 * Math.sin(t * 3 + i), X + T, Y - o); }
+      if (!S.has(ck(i - 1, j))){ cx.moveTo(X - o, Y); cx.quadraticCurveTo(X - o - T * .08 * Math.sin(t * 3 + j), Y + T / 2, X - o, Y + T); }
+      if (!S.has(ck(i + 1, j))){ cx.moveTo(X + T + o, Y); cx.quadraticCurveTo(X + T + o + T * .08 * Math.sin(t * 3 + j), Y + T / 2, X + T + o, Y + T); } }
+    cx.stroke(); }
+  if (G.map === 'pn') for (let q = 0; q < 5; q++){ const h = hsh(q, 21), x = ((h * 3 + t * (.25 + h * .2)) % (SIZE + 10)) - 5, y = SIZE * (.1 + h * .8) + Math.sin(t * .3 + q) * 1.2, X = sx(x), Y = sy(y), R = T * (2.5 + h * 2);
+    const g = cx.createRadialGradient(X, Y, 0, X, Y, R); g.addColorStop(0, 'rgba(220,235,215,.16)'); g.addColorStop(1, 'rgba(220,235,215,0)'); cx.fillStyle = g; cx.save(); cx.translate(X, Y); cx.scale(1.8, .7); cx.translate(-X, -Y); cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.fill(); cx.restore(); } }
 // Grande Batalha: setas na borda da tela para a Pokébola gigante caindo e para os aliados que estão fora da tela
 function edgeArrow(wx, wy, col, label){ const X = sx(wx), Y = sy(wy), m = 46; if (X > m && X < W - m && Y > m + 30 && Y < H - m - 60) return;
   const cxm = W / 2, cym = H / 2, a = Math.atan2(Y - cym, X - cxm), k = Math.min((W / 2 - m) / Math.abs(Math.cos(a) || 1e-6), (H / 2 - m - 40) / Math.abs(Math.sin(a) || 1e-6)), ex = cxm + Math.cos(a) * k, ey = cym + Math.sin(a) * k;
@@ -2516,6 +2534,7 @@ function draw(){
   { const now = performance.now() / 1000; G.decals = (G.decals || []).filter(d => now - d.t0 < 14);
     for (const d of G.decals){ if (!onPlat(d.x, d.y)) continue; const a = .3 * (1 - (now - d.t0) / 14), X = sx(d.x), Y = sy(d.y), g = cx.createRadialGradient(X, Y, 0, X, Y, d.r * T);
       g.addColorStop(0, `rgba(25,15,10,${a})`); g.addColorStop(.7, `rgba(25,15,10,${a * .6})`); g.addColorStop(1, 'rgba(25,15,10,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(X, Y, d.r * T, 0, 7); cx.fill(); } }
+  drawShore(); drawEdgeDanger();
   // gelo
   for (const p of G.ice){ const a = Math.min(1, p.t / 1.5); cx.fillStyle = `rgba(190,240,255,${.42 * a})`; cx.beginPath(); cx.arc(sx(p.x), sy(p.y), p.r * T, 0, 7); cx.fill(); }
   for (const p of G.ice) if (p.r > 1){ cx.strokeStyle = 'rgba(255,255,255,.55)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(p.x), sy(p.y), p.r * T, 0, 7); cx.stroke();
