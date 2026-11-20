@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v52 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v53 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -690,8 +690,8 @@ function pickStep(dt = 1 / 30){
   if (!G.picks.length) return;
   for (const u of G.units){ if (!u.alive || u.air) continue;
     for (const p of G.picks) if (!p.taken && Math.hypot(p.x - u.x, p.y - u.y) < .5 + POKE[u.sp].rad){ p.taken = true;
-      if (p.k === 1){ const h = Math.min(u.maxhp - u.hp, u.maxhp * .3); u.hp += h; txt(u.x, u.y - 1.3, '🫐 +' + Math.round(h), '#7fe05a'); G.fx.push({ ring:1, x:u.x, y:u.y, r:.8, t:0, life:.35, col:'#7fe05a' }); continue; }
-      u.pow = (u.pow || 0) + 1; u.powHp = (u.powHp || 0) + 8; u.maxhp += 8; u.hp += 8; txt(u.x, u.y - 1.3, '🍬 Doce Raro!', '#7fd8ff'); G.fx.push({ ring:1, x:u.x, y:u.y, r:.8, t:0, life:.35, col:'#7fd8ff' }); } }
+      if (p.k === 1){ const h = Math.min(u.maxhp - u.hp, u.maxhp * .3); u.hp += h; txt(u.x, u.y - 1.3, '🫐 +' + Math.round(h), '#7fe05a'); G.fx.push({ ring:1, x:u.x, y:u.y, r:.8, t:0, life:.5, col:'#7fe05a', st:'tele' }); continue; }
+      u.pow = (u.pow || 0) + 1; u.powHp = (u.powHp || 0) + 8; u.maxhp += 8; u.hp += 8; txt(u.x, u.y - 1.3, '🍬 Doce Raro!', '#7fd8ff'); G.fx.push({ ring:1, x:u.x, y:u.y, r:.8, t:0, life:.5, col:'#7fd8ff', st:'tele' }); } }
   G.picks = G.picks.filter(p => !p.taken); }
 function makeGB(){ const N = SIZE, rot = (x, y, r) => r === 0 ? [x, y] : r === 1 ? [N - y, x] : r === 2 ? [N - x, N - y] : [y, N - x], segs = [];
   for (let k = 0; k < 7; k++) for (let t = 0; t < 60; t++){ const x = rnd(2.5, N / 2 - 1.5), y = rnd(2.5, N / 2 - 1.5), hz = Math.random() < .5, len = 3 + Math.floor(Math.random() * 3);
@@ -2092,7 +2092,7 @@ function nearMe(x, y, r){ const me = G.me; return me && me.alive && Math.hypot(m
 // ---------- enfeites de cada mapa ----------
 // no chão (antes dos Pokémon): emblema do ginásio, cabos dos Voltorbs, vitórias-régias do pântano
 function drawMapDecor(){ const c = SIZE / 2, t = G.t;
-  if ((G.map === 'sq' || G.map === 'sn') && onPlat(c, c)){ const X = sx(c), Y = sy(c), R = T * Math.min(2.4, SIZE * .16);   // Pokébola pintada no chão
+  if ((G.map === 'sq' || G.map === 'sn' || G.map === 'gb') && onPlat(c, c)){ const X = sx(c), Y = sy(c), R = T * (G.map === 'gb' ? 3.4 : Math.min(2.4, SIZE * .16));   // Pokébola pintada no chão
     cx.strokeStyle = 'rgba(255,255,255,.2)'; cx.lineWidth = T * .12; cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.stroke(); cx.beginPath(); cx.moveTo(X - R, Y); cx.lineTo(X - R * .32, Y); cx.moveTo(X + R * .32, Y); cx.lineTo(X + R, Y); cx.stroke();
     cx.beginPath(); cx.arc(X, Y, R * .32, 0, 7); cx.stroke(); cx.fillStyle = 'rgba(232,50,47,.13)'; cx.beginPath(); cx.arc(X, Y, R, Math.PI, 0); cx.closePath(); cx.fill(); }
   if (G.map === 'pt'){ const pw = (SIZE - (SIZE >= 14 ? 4 : 2)) / 2;   // timão na popa de cada navio
@@ -2193,6 +2193,7 @@ function drawHulls(S){
     cx.fillStyle = '#2a170a'; path(hl * T * .35, bob + T * .45, .3); cx.fill();   // lado do casco (aparece mais do lado em que inclina)
     cx.fillStyle = '#4a2c16'; path(0, bob, .3); cx.fill();
     cx.strokeStyle = '#8a5a30'; cx.lineWidth = Math.max(2, T * .08); path(0, bob, .18); cx.stroke();   // amurada
+    if (g && g.t > 0 && Math.random() < .5){ const wx = g.dx > 0 ? x0 - .5 : x1 + .5, yy = rnd(y0 + 1, y1 - 1); for (let q = 0; q < 3; q++) fx(wx, yy, (g.dx > 0 ? 1 : -1) * rnd(.5, 2), rnd(-3, -1), rnd(.4, .7), pick(['#ffffff','#cfe8ff']), rnd(4, 8)); }   // ondas batendo no casco
     cx.fillStyle = '#c9a76a'; for (let q = 0; q < 6; q++){ const yy = y0 + 1.6 + (y1 - y0 - 2.7) * q / 5; for (const xx of [x0 - .3, x1 + .3]){ cx.beginPath(); cx.arc(sx(xx), sy(yy) + bob, T * .06, 0, 7); cx.fill(); } }   // pinos da amurada
   }
 }
@@ -2624,7 +2625,7 @@ function hudTop(){
   if (isZona()){ const ts = allTeams().sort((a, b) => zoneScore(b) - zoneScore(a)).slice(0, teamOn() ? 2 : 3);
     $('#top').innerHTML = `<span>Rodada ${G.round}</span>` + (G.phase === 'play' ? `<span class="${G.timer <= 10 ? 'warn' : ''}">⏱ ${Math.max(0, Math.ceil(G.timer))} s</span>` : '') + ts.map(t => `<span style="color:${teamCol(t)};font-weight:800">${teamOn() ? TEAMNAME[t] : teamLabel(t)} ${Math.round(zoneScore(t))}%${G.teamWins[t] ? ' · ' + '★'.repeat(G.teamWins[t]) : ''}</span>`).join('') + (G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">voltando…</span>' : '');
     $('#goldv').textContent = '🪙 ' + (G.me ? G.me.gold : 0); return; }
-  $('#top').innerHTML = `<span>Rodada ${G.round}</span><span class="sh">${platGone() ? 'sem chão' : 'chão: ' + (PATSHORT[G.pat] || '')}</span>` + (!platGone() && G.phase === 'play' ? `<span class="${s <= WARN ? 'warn' : ''}">encolhe em ${s} s</span>` : '') + (G.me && G.me.out ? '<span class="warn">assistindo</span>' : G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">você caiu: assistindo</span>' : '');
+  $('#top').innerHTML = `<span>Rodada ${G.round}</span>` + (G.map === 'gb' ? `<span style="font-weight:800">👥 ${G.units.filter(u => u.alive).length} vivos</span>` : '') + `<span class="sh">${platGone() ? 'sem chão' : G.map === 'gb' ? 'gás' : 'chão: ' + (PATSHORT[G.pat] || '')}</span>` + (!platGone() && G.phase === 'play' ? `<span class="${s <= WARN ? 'warn' : ''}">encolhe em ${s} s</span>` : '') + (G.me && G.me.out ? '<span class="warn">assistindo</span>' : G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">você caiu: assistindo</span>' : '');
   $('#goldv').textContent = '🪙 ' + (G.me ? G.me.gold : 0);
 }
 function buildEmotes(){ $('#emo').innerHTML = EMOTES.map((e, i) => `<button data-e="${i}" title="Tecla ${i + 1}">${e}</button>`).join(''); }
