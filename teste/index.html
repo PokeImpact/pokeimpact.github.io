@@ -175,8 +175,8 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v74 · 20/11 · TESTE</small></h1>
-    <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v75 · 20/11 · TESTE</small></h1>
+    <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado (Voltorb que rebate tudo), redondo (Lapras e gelo), Voltorbs, floresta, navios (canhões, barris e ventania), arquipélago, pântano, Snorlax e a Grande Batalha (mapa enorme com mato e caixas). Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
     <div class="row"><span class="lbl">Formato</span><span class="row" id="nfmt"></span></div>
@@ -2471,6 +2471,11 @@ function draw(){
   const ms = Math.min(8, G.step || 0); cx.fillStyle = `rgb(${16 + ms},${20 + ms * 2.5},${Math.round(19 - ms * .5)})`; cx.fillRect(0, 0, W, H);   // a névoa fica mais verde a cada encolhida
   cx.save(); if (G.shake > .3 && CFG.shake !== false){ cx.translate(rnd(-1, 1) * G.shake, rnd(-1, 1) * G.shake); G.shake *= .86; } else G.shake = 0;   // tremida em golpes grandes
   drawMist(ms); drawWhale(0); drawGyarados();
+  if (G.phase === 'menu'){ const t = performance.now() / 1000;   // fundo do menu: Pokébolas flutuando devagar na névoa
+    for (let q = 0; q < 7; q++){ const h = hsh(q, 5), R = Math.min(W, H) * (.06 + h * .08), x = ((h * 1.7 + t * (.008 + h * .01)) % 1.2 - .1) * W, y = (.12 + ((q * .37 + h) % 1) * .8) * H + Math.sin(t * .4 + q) * 18, a = t * (.1 + h * .15) * (q % 2 ? 1 : -1);
+      cx.save(); cx.translate(x, y); cx.rotate(a); cx.globalAlpha = .07 + h * .06; cx.strokeStyle = '#9be36a'; cx.lineWidth = Math.max(2, R * .09);
+      cx.beginPath(); cx.arc(0, 0, R, 0, 7); cx.stroke(); cx.beginPath(); cx.moveTo(-R, 0); cx.lineTo(-R * .3, 0); cx.moveTo(R * .3, 0); cx.lineTo(R, 0); cx.stroke(); cx.beginPath(); cx.arc(0, 0, R * .3, 0, 7); cx.stroke();
+      cx.fillStyle = '#9be36a'; cx.globalAlpha *= .35; cx.beginPath(); cx.arc(0, 0, R, Math.PI, 0); cx.fill(); cx.restore(); } cx.globalAlpha = 1; }
   // plataforma: cada mapa tem o seu chão; a beira tem paredão e contorno para dar para ler onde o chão acaba
   const S = platCells(), TH = THEME[G.map] || THEME.sq, play = G.phase === 'play', pulse = .25 + .25 * Math.sin(G.t * 14);
   if (G.map === 'gb' && G.stages[0]) for (const [key] of G.stages[0]){ if (S.has(key)) continue; const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T || X > W + T || Y < -T || Y > H + T) continue;   // chão tomado pelo gás
