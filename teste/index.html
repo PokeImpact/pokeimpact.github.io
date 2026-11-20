@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v47 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v48 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -663,7 +663,8 @@ function doShrink(){
 }
 function addFalling(before, after){ for (const [k, m] of before) if (after.get(k) !== m){ const [i, j] = k.split(',').map(Number), c = tileRGB(i, j, m, before);
   G.falling.push({ i, j, t:0, m, c, rot:rnd(-1.2, 1.2) });
-  if (Math.random() < .6) fx(i + .5, j + .5, rnd(-1, 1), rnd(.5, 2), rnd(.4, .7), `rgb(${c[0] - 30},${c[1] - 30},${c[2] - 30})`, rnd(4, 7)); } }
+  if (Math.random() < .6) fx(i + .5, j + .5, rnd(-1, 1), rnd(.5, 2), rnd(.4, .7), `rgb(${c[0] - 30},${c[1] - 30},${c[2] - 30})`, rnd(4, 7));
+  if ((G.map === 'pt' || G.map === 'ar' || G.map === 'rd') && Math.random() < .7) for (let q = 0; q < 2; q++) fx(i + .5 + rnd(-.3, .3), j + .7, rnd(-1.2, 1.2), rnd(-3, -1.2), rnd(.4, .6), pick(['#ffffff','#cfe8ff']), rnd(4, 7)); } }
 const mistDps = () => (platGone() ? 12 : 4 + G.step * .7);   // fraca no começo, piora a cada encolhida
 
 /* ---------- obstáculos e gelo ---------- */
@@ -813,6 +814,32 @@ function cannonFire(o){ const right = o.x < SIZE / 2, foes = G.units.filter(u =>
   G.cballs.push({ sx:o.x + Math.cos(o.face) * .5, sy:o.y + Math.sin(o.face) * .5, tx, ty, t:0, dur:1.6 });
   for (let k = 0; k < 16; k++) fx(o.x + Math.cos(o.face) * .6, o.y + Math.sin(o.face) * .6, Math.cos(o.face) * rnd(1, 4) + rnd(-1, 1), Math.sin(o.face) * rnd(1, 4) + rnd(-1, 1), rnd(.5, 1), pick(['rgba(200,200,200,.8)','rgba(150,150,150,.7)','#ffcf4a']), rnd(6, 11));
   txt(o.x, o.y - 1, 'BUM!', '#ffcf4a'); }
+// Navios: um tentáculo de Tentacruel sai do mar, avisa (1,6 s) e bate no convés, arremessando quem estiver na faixa
+function tentStep(dt){ if (G.map !== 'pt' || G.phase !== 'play') return; const Tn = G.tent;
+  if (!Tn){ G.tentCd = (G.tentCd ?? 12) - dt; if (G.tentCd > 0) return; G.tentCd = rnd(13, 18);
+    const I = sInfo(platCells()), c = I.cells.filter(c => !onBridge(Math.floor(c.x), Math.floor(c.y))); if (!c.length) return; const p = pick(c), dir = p.x < SIZE / 2 ? -1 : 1;
+    let ex = p.x; while (onPlat(ex + dir * .5, p.y) && Math.abs(ex - p.x) < 10) ex += dir * .5;
+    G.tent = { x0:ex + dir * 1.1, y0:p.y, dx:-dir, dy:0, t:0, ph:0, len:Math.min(5.5, Math.abs(ex - p.x) + 3) }; txt(ex + dir, p.y - 1, 'tem algo na água…', '#9fd8ff'); return; }
+  Tn.t += dt;
+  if (Tn.ph === 0 && Tn.t >= 1.6){ Tn.ph = 1; Tn.t = 0;
+    for (const e of G.units){ if (!e.alive || e.air || e.b.intang > 0) continue; const ex = e.x - Tn.x0, ey = e.y - Tn.y0, al = ex * Tn.dx + ey * Tn.dy, pp = ex * Tn.dy - ey * Tn.dx;
+      if (al > 0 && al < Tn.len + .3 && Math.abs(pp) < .75 + POKE[e.sp].rad){ damage(e, 4 * DMG, null); push(e, Tn.dx * .5 + Tn.dy * (pp >= 0 ? 1 : -1), Tn.dy * .5 - Tn.dx * (pp >= 0 ? 1 : -1), 10); } }
+    G.fx.push({ ring:1, x:Tn.x0 + Tn.dx * Tn.len * .7, y:Tn.y0 + Tn.dy * Tn.len * .7, r:2.1, t:0, life:.45, col:'#9fd8ff', st:'boom' }); txt(Tn.x0 + Tn.dx * 2, Tn.y0 - 1.2, 'TENTACRUEL!', '#7fb8ff'); }
+  else if (Tn.ph === 1 && Tn.t >= 1){ Tn.ph = 2; Tn.t = 0; }
+  else if (Tn.ph === 2 && Tn.t >= .5) G.tent = null; }
+function drawTent(){ const Tn = G.tent; if (!Tn) return; const L = Tn.len * T, W0 = T * .55;
+  cx.save(); cx.translate(sx(Tn.x0), sy(Tn.y0)); cx.rotate(Math.atan2(Tn.dy, Tn.dx));
+  for (let q = 0; q < 3; q++){ const ph = (G.t * 1.5 + q / 3) % 1; cx.strokeStyle = `rgba(220,240,255,${.6 * (1 - ph)})`; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(0, 0, T * (.3 + ph * .9), T * (.15 + ph * .45), 0, 0, 7); cx.stroke(); }   // ondinhas
+  let ext;
+  if (Tn.ph === 0){ const k = Tn.t / 1.6; cx.fillStyle = `rgba(255,80,80,${.1 + .15 * k + .08 * Math.sin(G.t * 16)})`; cx.fillRect(T * .3, -T * .75, L, T * 1.5);
+    cx.strokeStyle = 'rgba(255,120,120,.8)'; cx.setLineDash([7, 5]); cx.lineWidth = 2; cx.strokeRect(T * .3, -T * .75, L, T * 1.5); cx.setLineDash([]); ext = .12 + .12 * Math.sin(G.t * 6); }
+  else ext = Tn.ph === 1 ? Math.min(1, Tn.t / .1) : 1 - Tn.t / .5;
+  const n = 14, P = []; for (let q = 0; q <= n; q++){ const f = q / n, x = f * L * ext, y = Math.sin(f * 5 + G.t * (Tn.ph === 0 ? 8 : 3)) * T * .18 * (Tn.ph === 0 ? 1 : .4) - (Tn.ph === 0 ? f * T * .6 : 0); P.push([x, y, W0 * (1 - f * .8)]); }
+  cx.fillStyle = '#2f6fc8'; cx.beginPath(); P.forEach(([x, y, w], q) => q ? cx.lineTo(x, y - w) : cx.moveTo(x, y - w)); for (let q = n; q >= 0; q--) cx.lineTo(P[q][0], P[q][1] + P[q][2]); cx.closePath(); cx.fill();
+  cx.fillStyle = '#8fc3ff'; cx.beginPath(); P.forEach(([x, y, w], q) => q ? cx.lineTo(x, y + w * .1) : cx.moveTo(x, y + w * .1)); for (let q = n; q >= 0; q--) cx.lineTo(P[q][0], P[q][1] + P[q][2] * .8); cx.closePath(); cx.fill();
+  cx.fillStyle = '#d9ecff'; for (let q = 2; q < n; q += 2){ const [x, y, w] = P[q]; cx.beginPath(); cx.arc(x, y + w * .45, w * .22, 0, 7); cx.fill(); }   // ventosas
+  if (ext > .3){ cx.fillStyle = '#e8322f'; cx.beginPath(); cx.arc(P[0][0] + T * .1, P[0][1] - W0 * .3, T * .16, 0, 7); cx.fill(); cx.fillStyle = 'rgba(255,255,255,.7)'; cx.beginPath(); cx.arc(P[0][0] + T * .05, P[0][1] - W0 * .4, T * .05, 0, 7); cx.fill(); }   // a joia vermelha
+  cx.restore(); }
 function cballStep(dt){ if (!G.cballs || !G.cballs.length) return;
   for (const b of G.cballs){ b.t += dt; if (b.t < b.dur) continue; b.done = true;
     if (onPlat(b.tx, b.ty)){ for (const e of G.units){ if (!e.alive || e.air || e.b.intang > 0) continue; const ex = e.x - b.tx, ey = e.y - b.ty, el = Math.hypot(ex, ey); if (el > 1.4 + POKE[e.sp].rad) continue;
@@ -1205,7 +1232,7 @@ function newMatch(){
 const MAPFEED = { gb:'Grande Batalha: mapa enorme, você só vê perto de você. Golpes tiram 3× mais vida, o mato esconde, caixas soltam Doce Raro e a névoa fecha devagar até o centro.', pt:'Navios: dois barcos ligados por uma prancha (a última a cair). De tempos em tempos vem uma ventania.', ar:'Arquipélago: uma ilha afunda de cada vez (a que pisca é a próxima).', pn:'Pântano: poças de lama deixam lento.', sn:'Snorlax: ele se vira de vez em quando e esmaga quem estiver do lado. Muitos golpes nele o acordam.' };
 function startRound(){
   G.round++; G.map = G.matchMap || 'sq'; { const n = G.units.filter(u => !u.out).length; SIZE = G.map === 'gb' ? (n <= 4 ? 26 : n <= 6 ? 30 : 34) : sizeFor(n) + (isRd() ? 2 : 0); } G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
-  G.R = SIZE / 2 + .45; G.pat = isZona() || isPb() ? 'anel' : pickPat(G.map); G.seed = 1 + Math.floor(Math.random() * 1e9); buildStages(); G.decals = []; G.picks = []; G.oranT = 12; G.drop = null; G.dropN = 0; G.dmgMul = G.map === 'gb' ? 3 : 1; if (G.map === 'gb') G.shrinkIn = 30; makeObstacles();
+  G.R = SIZE / 2 + .45; G.pat = isZona() || isPb() ? 'anel' : pickPat(G.map); G.seed = 1 + Math.floor(Math.random() * 1e9); buildStages(); G.decals = []; G.picks = []; G.oranT = 12; G.drop = null; G.dropN = 0; G.tent = null; G.tentCd = 12; G.dmgMul = G.map === 'gb' ? 3 : 1; if (G.map === 'gb') G.shrinkIn = 30; makeObstacles();
   G.shots = []; G.zones = []; G.marks = []; G.waves = []; G.decoys = []; G.portals = []; G.chains = []; G.falling = []; G.fx = []; G.txt = [];
   const live = G.units.filter(u => !u.out), n = live.length, off = Math.random() * Math.PI * 2;
   for (const u of live){ u.rounds = (u.rounds || 0) + 1; u._w0 = u.wins; } G.inRound = live.slice(); G.playT = 0;
@@ -1606,7 +1633,7 @@ function updateWorld(dt){
     u.x = clamp(u.x, -3, SIZE + 3); u.y = clamp(u.y, -3, SIZE + 3);
     u.rvx = (u.x - ox) / dt; u.rvy = (u.y - oy) / dt;
   }
-  obstacleStep(dt); cballStep(dt); gustStep(dt); pickStep(dt); obstacleUnits();
+  obstacleStep(dt); cballStep(dt); tentStep(dt); gustStep(dt); pickStep(dt); obstacleUnits();
   // separação entre Pokémon
   const al = G.units.filter(u => u.alive && !u.air && !u.whip && !(u.b.nocol > 0));
   for (let i = 0; i < al.length; i++) for (let j = i + 1; j < al.length; j++){
@@ -2402,7 +2429,7 @@ function draw(){
     if (u.b.conf > 0){ for (let k = 0; k < 3; k++){ const a = G.t * 5 + k * 2.1; cx.fillText('✦', sx(u.x) + Math.cos(a) * T * .3, by - T * .35 + Math.sin(a) * T * .1); } }   // confuso: estrelinhas girando
     if (u.emo){ cx.font = `${T * .6}px system-ui`; cx.fillText(u.emo.e, sx(u.x) + T * .6, by - 2); }
   }
-  drawCanopies(); drawBushes(); drawAmbient();
+  drawCanopies(); drawTent(); drawBushes(); drawAmbient();
   if (G.drop){ const D = G.drop, p = Math.min(1, D.t / D.dur), X = sx(D.x), Y = sy(D.y), h = (1 - p) * (1 - p) * 9, R = T * .55;   // Pokébola gigante caindo
     cx.fillStyle = `rgba(0,0,0,${.15 + .35 * p})`; cx.beginPath(); cx.ellipse(X, Y, R * (.4 + .8 * p), R * (.15 + .3 * p), 0, 0, 7); cx.fill();
     cx.strokeStyle = `rgba(255,210,63,${.5 + .4 * Math.sin(G.t * 14)})`; cx.setLineDash([6, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, T * 1.7, 0, 7); cx.stroke(); cx.setLineDash([]);
@@ -3002,7 +3029,7 @@ function netBroadcast(){
     mo:G.mode, fm:G.fmt, tw:G.teamWins, bl:G.ball ? [r2(G.ball.x), r2(G.ball.y), r2(G.ball.vx), r2(G.ball.vy)] : 0, gl:G.goals || [0, 0], pt:r2(G.pbT || 0), cp:G.caps.map(z => [r2(z.x), r2(z.y), z.r, z.cap, Object.entries(z.acc).map(([k, v]) => [+k, r2(v)]), z.full ? 1 : 0]),
     mp:G.map, R:G.R, ob:G.obs.filter(o => !OB_STATIC.has(o.k)).map(obSer), os:obStaticMsg(),
     ic:G.ice.map(p => [r2(p.x), r2(p.y), p.r, r2(Math.min(p.t, 99))]),
-    md:G.mud.map(p => [r2(p.x), r2(p.y), r2(p.r)]), pk:G.picks.map(p => [r2(p.x), r2(p.y), p.k || 0]), dp:G.drop ? [r2(G.drop.x), r2(G.drop.y), r2(G.drop.t), G.drop.dur] : 0, cb:(G.cballs || []).map(b => [r2(b.sx), r2(b.sy), r2(b.tx), r2(b.ty), r2(b.t), b.dur]), gu:G.gust ? [r2(G.gust.dx), r2(G.gust.dy), r2(G.gust.warn), r2(G.gust.t)] : 0,
+    md:G.mud.map(p => [r2(p.x), r2(p.y), r2(p.r)]), pk:G.picks.map(p => [r2(p.x), r2(p.y), p.k || 0]), tn:G.tent ? [r2(G.tent.x0), r2(G.tent.y0), G.tent.dx, G.tent.dy, r2(G.tent.t), G.tent.ph, r2(G.tent.len)] : 0, dp:G.drop ? [r2(G.drop.x), r2(G.drop.y), r2(G.drop.t), G.drop.dur] : 0, cb:(G.cballs || []).map(b => [r2(b.sx), r2(b.sy), r2(b.tx), r2(b.ty), r2(b.t), b.dur]), gu:G.gust ? [r2(G.gust.dx), r2(G.gust.dy), r2(G.gust.warn), r2(G.gust.t)] : 0,
     ev:NET.ev.concat(fxs)
   };
   NET.ev = [];
@@ -3058,7 +3085,7 @@ function applySnap(S){
   if (S.rd !== G.round || S.mp !== G.map || !G.pa || G.pa[0] !== S.pa[0] || G.pa[1] !== S.pa[1] || G.pa[2] !== SIZE){ G.map = S.mp; G.pat = S.pa[0]; G.seed = S.pa[1]; G.pa = [S.pa[0], S.pa[1], SIZE]; G.step = S.st; buildStages(); G.decals = []; }
   else if (S.st !== G.step){ const b = platCells(); G.step = S.st; addFalling(b, platCells()); }
   Object.assign(G, { phase:S.ph, timer:S.tm, round:S.rd, shrinkIn:S.si, step:S.st, map:S.mp, R:S.R });
-  G.mud = (S.md || []).map(a => ({ x:a[0], y:a[1], r:a[2] })); G.picks = (S.pk || []).map(a => ({ x:a[0], y:a[1], k:a[2] || 0 })); G.drop = S.dp ? { x:S.dp[0], y:S.dp[1], t:S.dp[2], dur:S.dp[3] } : null; G.cballs = (S.cb || []).map(a => ({ sx:a[0], sy:a[1], tx:a[2], ty:a[3], t:a[4], dur:a[5] })); G.gust = S.gu ? { dx:S.gu[0], dy:S.gu[1], warn:S.gu[2], t:S.gu[3] } : null;
+  G.mud = (S.md || []).map(a => ({ x:a[0], y:a[1], r:a[2] })); G.picks = (S.pk || []).map(a => ({ x:a[0], y:a[1], k:a[2] || 0 })); G.tent = S.tn ? { x0:S.tn[0], y0:S.tn[1], dx:S.tn[2], dy:S.tn[3], t:S.tn[4], ph:S.tn[5], len:S.tn[6] } : null; G.drop = S.dp ? { x:S.dp[0], y:S.dp[1], t:S.dp[2], dur:S.dp[3] } : null; G.cballs = (S.cb || []).map(a => ({ sx:a[0], sy:a[1], tx:a[2], ty:a[3], t:a[4], dur:a[5] })); G.gust = S.gu ? { dx:S.gu[0], dy:S.gu[1], warn:S.gu[2], t:S.gu[3] } : null;
   const obPar = a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0, chg:a[8], boom:a[9], down:a[10], frenzy:a[11], r:a[12] || OBR[a[0]], dr:a[13] || 0, main:a[0] === 'mast' && !a[13] ? 1 : 0 });
   if (S.os) G.obsStatic = S.os.map(obPar);
   G.obs = (G.obsStatic || []).concat(S.ob.map(obPar));
