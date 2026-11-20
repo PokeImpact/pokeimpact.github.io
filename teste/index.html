@@ -174,7 +174,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v70 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v71 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -921,6 +921,8 @@ function obstacleShot(s){
       if (s.d.aoe) explode(s); return true; }
     if (o.k === 'barrel' && !s.d.tele){ const v = Math.hypot(s.vx, s.vy) || 1, f = 2.5 + (s.d.push || 4) * .45; o.vx += s.vx / v * f; o.vy += s.vy / v * f; if (s.d.aoe) explode(s); for (let k = 0; k < 6; k++) fx(s.x, s.y, rnd(-2, 2), rnd(-2, 2), .3, '#c9a76a', 5); return true; }
     if (o.k === 'lapras') lapRage(o); else if (o.k === 'snor') snorHit(o);
+    if (o.k === 'tree' && G.fx.length < 120) G.fx.push({ ring:1, x:o.x, y:o.y, r:.3, t:0, life:.8, col:'#5cad46', st:'leaf' });   // árvore atingida: copa treme e solta folhas
+    if (o.k === 'mast' && G.fx.length < 120) G.fx.push({ ring:1, x:o.x, y:o.y, r:.3, t:0, life:.6, col:'#c9a76a', st:'mast' });   // mastro atingido: treme e solta lascas (vai pela rede)
     if (s.d.tele){
       if (o.k === 'lapras' || o.k === 'snor' || o.k === 'mast' || o.k === 'barrel' || o.k === 'wall'){ teleTo(s.o, o.x + nx * (o.r + .45), o.y + ny * (o.r + .45)); return true; }
       const u = s.o, ux = u.x, uy = u.y; teleTo(u, o.x, o.y); o.x = ux; o.y = uy; if (o.ice){ o.ice.x = ux; o.ice.y = uy; }
@@ -2031,6 +2033,10 @@ function drawRingFx(f){
     for (let q = 0; q < 46; q++){ const a = (q * 2.399) % 6.283, v = T * (2 + (q * 37 % 11) * .35), x = X + Math.cos(a) * v * Math.min(1, p * 3), y = Y - T * 1 + Math.sin(a) * v * .6 * Math.min(1, p * 3) - T * 2.5 * Math.sin(Math.min(1, p * 2) * Math.PI / 2) + T * 4 * p * p, rot = p * 12 + q;
       cx.save(); cx.globalAlpha = Math.min(1, k * 2); cx.translate(x, y); cx.rotate(rot); cx.fillStyle = C[q % C.length]; cx.fillRect(-T * .07, -T * .035 * Math.abs(Math.cos(rot * 2)) - 1, T * .14, T * .07 * Math.abs(Math.cos(rot * 2)) + 2); cx.restore(); }
     cx.globalAlpha = 1; if (p < .5){ glow(X, Y - T * .4, T * 1.4 * (1 - p), `rgba(255,240,150,${.5 * (1 - p * 2)})`, 'rgba(255,210,63,.15)'); } return; }
+  if (f.st === 'leaf'){ for (let q = 0; q < 7; q++){ const a = q * .9 + f.x * 5, d = T * (.3 + p * .8), Y2 = Y - T * 1.1 + p * T * 1.2 + Math.sin(a) * T * .3;   // folhas caindo da copa
+      cx.save(); cx.translate(X + Math.cos(a) * d + Math.sin(p * 9 + q) * T * .12, Y2); cx.rotate(a + p * 6); cx.globalAlpha = k; cx.fillStyle = q % 2 ? '#5cad46' : '#3f8e33'; cx.beginPath(); cx.ellipse(0, 0, T * .1, T * .045, 0, 0, 7); cx.fill(); cx.restore(); } cx.globalAlpha = 1; return; }
+  if (f.st === 'mast'){ for (let q = 0; q < 6; q++){ const a = q * 1.05 + f.x * 3, d = T * (.2 + p * .9), hy = T * (.9 + .6 * Math.sin(p * Math.PI));   // lascas de madeira
+      cx.save(); cx.translate(X + Math.cos(a) * d, Y - hy + Math.sin(a) * d * .5 + p * p * T * .8); cx.rotate(a + p * 8); cx.globalAlpha = k; cx.fillStyle = q % 2 ? '#8a5a30' : '#c9a76a'; cx.fillRect(-T * .07, -T * .025, T * .14, T * .05); cx.restore(); } cx.globalAlpha = 1; return; }
   if (f.st === 'crate'){ for (let q = 0; q < 7; q++){ const a = q / 7 * 6.283 + f.x * 2, d = T * (.2 + 1.3 * p), hy = T * 1.2 * Math.sin(p * Math.PI) * (.5 + (q % 3) * .25);   // tábuas voando e girando
       cx.save(); cx.translate(X + Math.cos(a) * d, Y + Math.sin(a) * d * .6 - hy); cx.rotate(a + p * (q % 2 ? 9 : -7)); cx.globalAlpha = Math.min(1, k * 1.6); cx.fillStyle = q % 2 ? '#9a6a3a' : '#c9a76a'; cx.fillRect(-T * .2, -T * .05, T * .4, T * .1); cx.strokeStyle = '#5a3a1c'; cx.lineWidth = 1; cx.strokeRect(-T * .2, -T * .05, T * .4, T * .1); cx.restore(); }
     cx.globalAlpha = 1; if (p < .35) glow(X, Y, T * (.6 + p * 2), `rgba(127,216,255,${.6 * (1 - p / .35)})`, 'rgba(127,216,255,.15)'); return; }
@@ -2180,7 +2186,8 @@ function drawAmbient(){ const t = G.t;
 }
 function drawCanopies(){
   for (const o of G.obs){
-    if (o.k === 'tree'){ const cr = (o.dr && o.dr > .7 ? o.dr : .95) * T, sw = Math.sin(G.t * 1.3 + o.x) * T * .03, X = sx(o.x) + sw, Y = sy(o.y) - T * .75;
+    if (o.k === 'tree'){ let hit = 0; for (const f of G.fx) if (f.st === 'leaf' && Math.abs(f.x - o.x) < .2 && Math.abs(f.y - o.y) < .2) hit = Math.max(hit, 1 - f.t / f.life);
+      const cr = (o.dr && o.dr > .7 ? o.dr : .95) * T, sw = Math.sin(G.t * 1.3 + o.x) * T * .03 + Math.sin(G.t * 40) * T * .07 * hit, X = sx(o.x) + sw, Y = sy(o.y) - T * .75;
       const B = [[0, 0, 1], [-.5, .2, .62], [.5, .2, .62], [-.3, -.4, .58], [.32, -.38, .55], [0, .45, .55]];
       if (nearMe(o.x, o.y - .45, cr / T + .15)){   // você está embaixo: só a silhueta clarinha, para se ver
         cx.fillStyle = 'rgba(60,150,60,.22)'; cx.strokeStyle = 'rgba(160,230,140,.55)'; cx.lineWidth = 1.5; cx.beginPath(); for (const [a, b, r] of B){ cx.moveTo(X + a * cr + r * cr, Y + b * cr); cx.arc(X + a * cr, Y + b * cr, r * cr, 0, 7); } cx.fill(); cx.stroke(); continue; }
@@ -2196,7 +2203,9 @@ function drawCanopies(){
 // mastro, verga, vela inflando para o lado do vento, bandeira e cordas
 function drawMast(o){
   const g = G.gust || { dx:1, dy:0, t:0, warn:0 }, on = g.t > 0 ? 1 : g.warn > 0 ? .35 : .15, wx = g.dx || 1, wy = g.dy || 0, X = sx(o.x), Y = sy(o.y), H = T * (o.main ? 3 : 2.3), sw = T * (o.main ? 2.2 : 1.6);
-  const top = Y - H, yard = top + T * .25, bot = Y - T * .55, fl = Math.sin(G.t * (on > .5 ? 22 : 6) + o.x) * T * .06;
+  let hit = 0; for (const f of G.fx) if (f.st === 'mast' && Math.abs(f.x - o.x) < .2 && Math.abs(f.y - o.y) < .2) hit = Math.max(hit, 1 - f.t / f.life);   // treme quando um golpe acerta
+  const top = Y - H, yard = top + T * .25, bot = Y - T * .55, fl = Math.sin(G.t * (on > .5 ? 22 : 6) + o.x) * T * .06 + Math.sin(G.t * 45) * T * .12 * hit;
+  if (hit > 0){ cx.save(); cx.translate(Math.sin(G.t * 60) * T * .06 * hit, 0); }
   cx.globalAlpha = nearMe(o.x, o.y - 1.2, 1.3) ? .4 : 1;
   cx.strokeStyle = 'rgba(40,25,10,.6)'; cx.lineWidth = 1; cx.beginPath(); for (const s of [-1, 1]){ cx.moveTo(X, top + T * .1); cx.lineTo(X + s * T * .9, Y + T * .1); } cx.stroke();   // cordas
   cx.fillStyle = '#5a3a1c'; cx.fillRect(X - T * .07, top, T * .14, H); cx.fillStyle = '#7a5530'; cx.fillRect(X - T * .07, top, T * .05, H);
@@ -2212,7 +2221,7 @@ function drawMast(o){
   cx.fillStyle = tc; cx.beginPath(); cx.arc(X + bx * .5, (yard + bot) / 2 + by * .5, T * .16, 0, 7); cx.fill();   // emblema
   const fx0 = X, fy0 = top, L = T * (.5 + .2 * on);   // bandeira apontando para onde o vento vai
   cx.fillStyle = teamOn() ? tc : '#e8322f'; cx.beginPath(); cx.moveTo(fx0, fy0); cx.quadraticCurveTo(fx0 + wx * L * .5, fy0 + wy * L * .3 - T * .08 + fl, fx0 + wx * L, fy0 + wy * L * .5 + fl); cx.lineTo(fx0 + wx * L * .9, fy0 + wy * L * .5 + T * .14 + fl); cx.quadraticCurveTo(fx0 + wx * L * .45, fy0 + wy * L * .3 + T * .12, fx0, fy0 + T * .2); cx.fill();
-  cx.globalAlpha = 1; }
+  cx.globalAlpha = 1; if (hit > 0) cx.restore(); }
 // ---------- névoa ----------
 // textura de neblina feita uma vez (manchas suaves que emendam nas bordas) e rolada em duas camadas, com paralaxe
 const FOG = (() => { const S = 512, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d');
