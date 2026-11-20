@@ -177,7 +177,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v78 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v79 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado (Voltorb que rebate tudo), redondo (Lapras e gelo), Voltorbs, floresta, navios (canhões, barris e ventania), arquipélago, pântano, Snorlax e a Grande Batalha (mapa enorme com mato e caixas). Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -537,6 +537,9 @@ function inCell(m, fx, fy){ if (m === 15) return true; if (bits(m) !== 3) return
   const out = [0,1,2,3].find(k => !(m >> k & 1));
   return out === 0 ? fx + fy >= 1 : out === 1 ? fy >= fx : out === 2 ? fx + fy <= 1 : fx >= fy; }
 const isRd = (m = G.map) => m === 'rd' || m === 'flr';
+const isShip = (m = G.map) => m === 'pt' || m === 'ab';
+// largura de cada navio e do mar entre eles (Navios: ponte com roda no meio; Abordagem: mar mais estreito, pranchas baixam com o tempo)
+function shipGeo(N = SIZE){ const gap = G.map === 'ab' ? 4 : (N >= 16 ? 6 : 4); return { gap, pw:(N - gap) / 2 }; }
 const ck = (i, j) => i + ',' + j;
 const EMPTY = new Map();
 const platCells = () => (G.stages && G.stages[Math.min(G.step, G.stages.length - 1)]) || EMPTY;
@@ -563,19 +566,19 @@ function platCenter(x, y, S = platCells()){ const I = sInfo(S); if (!I.cells.len
   for (const c of I.cells){ const s = c.e - (x == null ? Math.hypot(c.x - SIZE / 2, c.y - SIZE / 2) * .05 : Math.hypot(c.x - x, c.y - y) * .3); if (s > bs){ bs = s; best = c; } }
   return best; }
 // ---------- formas de encolher ----------
-const PATS = { gb:['anel'], sq:['anel','lado','buraco'], rd:['anel','lado','buraco'], vt:['anel','lado','buraco'], fl:['anel','lado','buraco'], flr:['anel','lado','buraco'], pt:['ponte'], ar:['ilha'], pn:['anel','lado'], sn:['anel','buraco'] };
-const PATNAME = { anel:'a borda cai toda de uma vez', lado:'cai um lado de cada vez: o meio vai andando!', buraco:'a borda cai e abrem buracos no meio', ponte:'os navios afundam por fora; a prancha do meio cai por último', ilha:'uma ilha afunda de cada vez' };
-const PATSHORT = { anel:'borda', lado:'por lados', buraco:'buracos', ponte:'ponte', ilha:'ilhas' };
+const PATS = { gb:['anel'], sq:['anel','lado','buraco'], rd:['anel','lado','buraco'], vt:['anel','lado','buraco'], fl:['anel','lado','buraco'], flr:['anel','lado','buraco'], pt:['ponte'], ab:['abord'], ar:['ilha'], pn:['anel','lado'], sn:['anel','buraco'] };
+const PATNAME = { anel:'a borda cai toda de uma vez', lado:'cai um lado de cada vez: o meio vai andando!', buraco:'a borda cai e abrem buracos no meio', ponte:'os navios afundam por fora; a ponte e a roda do meio nunca caem', abord:'as pranchas baixam com o tempo; depois os navios afundam por fora', ilha:'uma ilha afunda de cada vez' };
+const PATSHORT = { anel:'borda', lado:'por lados', buraco:'buracos', ponte:'ponte', abord:'pranchas', ilha:'ilhas' };
 function rng32(s){ return () => { s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 // monta todas as fases da rodada. Usa um sorteio com semente: o anfitrião manda só (forma, semente) e todo mundo monta igual.
 function buildStages(){
   const N = SIZE, R = rng32(G.seed || 1), pat = G.pat || 'anel', st = [], holes = new Set();
-  G.bridge = null;
+  G.bridge = null; G.bridgeSet = null;
   const rect = (x0, y0, x1, y1, m = new Map()) => { for (let i = Math.max(0, x0); i < Math.min(N, x1); i++) for (let j = Math.max(0, y0); j < Math.min(N, y1); j++) m.set(ck(i, j), 15); return m; };
   const pickHole = m => { const c = [];   // buraco 2×2 só no miolo (com chão em volta)
     for (let i = 1; i < N - 2; i++) for (let j = 1; j < N - 2; j++){ let ok = true;
       for (let a = -1; a <= 2 && ok; a++) for (let b = -1; b <= 2; b++) if (m.get(ck(i + a, j + b)) !== 15){ ok = false; break; }
-      if (ok) c.push([i, j]); }
+      if (ok && !(G.map === 'rd' && Math.hypot(i + 1 - N / 2, j + 1 - N / 2) < 4.5)) c.push([i, j]); }
     if (!c.length) return; const [i, j] = c[Math.floor(R() * c.length)]; for (const [a, b] of [[0,0],[1,0],[0,1],[1,1]]) holes.add(ck(i + a, j + b)); };
   const add = m => { for (const h of holes) m.delete(h); if (pat === 'buraco' && st.length >= 1 && st.length <= 3) pickHole(m); for (const h of holes) m.delete(h); st.push(m); return m.size; };
   if (pat === 'ilha'){
@@ -587,20 +590,31 @@ function buildStages(){
     let alive = isl.slice(); add(draw(alive));
     while (alive.length > 1){ alive = alive.slice(alive.length > 5 ? 2 : 1); add(draw(alive)); }
     let q = alive[0]; for (let n = 0; n < 20; n++){ q = { x0:q.x0 + 1, y0:q.y0 + 1, x1:q.x1 - 1, y1:q.y1 - 1 }; if (!add(draw([q]))) break; }
-  } else if (pat === 'ponte'){
-    const gap = N >= 14 ? 4 : 2, pw = (N - gap) / 2, by = N / 2 - 1;
-    G.bridge = { x0:pw, x1:N - pw, y0:by, y1:by + 2 };
+  } else if (pat === 'ponte' || pat === 'abord'){
+    const ab = pat === 'abord', { pw } = shipGeo(N), mid = N / 2, by = mid - 1, rr = N >= 16 ? 3 : 2.5;
+    const rows = ab ? [by, Math.round(N * .22) - 1, Math.round(N * .78) - 1] : [by];   // pranchas (2 casas de largura)
+    const fixed = s => { const m = new Map(), L = ab ? rows.slice(0, s >= 2 ? 3 : s >= 1 ? 1 : 0) : rows;
+      for (const y0 of L) for (let i = pw; i < N - pw; i++) for (let j = y0; j < y0 + 2; j++) m.set(ck(i, j), 15);
+      if (!ab) for (let i = Math.floor(mid - rr); i <= Math.ceil(mid + rr); i++) for (let j = Math.floor(mid - rr); j <= Math.ceil(mid + rr); j++){ const mk = cellMask(i, j, rr, mid, mid); if (cellOn(mk) && !m.has(ck(i, j))) m.set(ck(i, j), mk); }   // a roda do meio
+      return m; };
+    G.bridgeSet = new Set(fixed(99).keys()); G.bridge = { x0:pw, x1:N - pw, y0:by, y1:by + 2 };
     const hull = (i, j) => { const x0 = i < N / 2 ? 0 : N - pw, d = Math.min(j + .5, N - j - .5), hw = pw / 2 * Math.min(1, .35 + d * .22); return Math.abs(i + .5 - x0 - pw / 2) <= hw + .01; };   // formato de barco: proa e popa finas
-    for (let k = 0; k < 40; k++){ const m = new Map();
-      if (pw - k > 0 && N - 2 * k > 0){ rect(k, k, pw, N - k, m); rect(N - pw, k, N - k, N - k, m); for (const key of [...m.keys()]){ const [i, j] = key.split(',').map(Number); if (!hull(i, j)) m.delete(key); } }   // os dois navios encolhem por fora (e pela proa e pela popa)
-      if (N - 2 * k > 0) rect(k, by, N - k, by + 2, m);   // a ponte é a última a cair, das pontas para o meio
-      if (!add(m)) break; }
+    for (let s = 0; s < 40; s++){ const k = ab ? Math.max(0, s - 2) : s, m = fixed(s), ships = new Map();
+      if (pw - k > 0 && N - 2 * k > 0){ rect(k, k, pw, N - k, ships); rect(N - pw, k, N - k, N - k, ships); }   // afundam pela borda de fora, pela proa e pela popa
+      for (const [key, v] of ships){ const [i, j] = key.split(',').map(Number); if (hull(i, j) && m.get(key) !== 15) m.set(key, v); }
+      add(m); if (!ships.size && (!ab || s >= 2)) break; }
   } else if (isRd()){
+    const lap = G.map === 'rd', RMIN = 3.2;   // redondo: para de cair quando chega na área do Lapras
     let r = N / 2 + .45, c0 = N / 2, c1 = N / 2, ang = R() * 6.283;
     for (let n = 0; n < 40; n++){ const m = new Map();
       for (let i = 0; i < N; i++) for (let j = 0; j < N; j++){ const mk = cellMask(i, j, r, c0, c1); if (cellOn(mk)) m.set(ck(i, j), mk); }
+      if (lap && st.length && m.size >= st[st.length - 1].size) break;   // não repete a mesma fase
       if (!add(m)) break;
-      r -= 1; if (pat === 'lado'){ ang += (R() - .5) * 1.4; c0 += Math.cos(ang) * .9; c1 += Math.sin(ang) * .9; } }   // o círculo novo sempre cabe dentro do anterior
+      if (lap && r <= RMIN + .01) break;
+      r = lap ? Math.max(RMIN, r - 1) : r - 1;
+      if (pat === 'lado'){ ang += (R() - .5) * 1.4; c0 += Math.cos(ang) * .9; c1 += Math.sin(ang) * .9;
+        if (lap){ const d = Math.hypot(c0 - N / 2, c1 - N / 2), lim = Math.max(0, r - RMIN); if (d > lim){ c0 = N / 2 + (c0 - N / 2) * lim / d; c1 = N / 2 + (c1 - N / 2) * lim / d; } } }   // o Lapras sempre fica dentro
+      else if (lap){ c0 = N / 2; c1 = N / 2; } }   // o círculo novo sempre cabe dentro do anterior
   } else if (pat === 'lado'){
     let x0 = 0, y0 = 0, x1 = N, y1 = N, hs = R() < .5, vs = R() < .5;
     for (let n = 0; n < 40; n++){
@@ -611,13 +625,10 @@ function buildStages(){
   } else {
     for (let k = 0; k < 40; k++) if (!add(rect(k, k, N - k, N - k))) break;
   }
-  if (st[st.length - 1].size) st.push(new Map());
+  if (st[st.length - 1].size && G.map !== 'rd' && !isShip()) st.push(new Map());
   G.stages = st;
   // Grande Batalha: moitas de mato alto (pela semente, igual para todos), simétricas em 4 lados
-  G.bush = null; if (G.map === 'gb'){ const R2 = rng32((G.seed || 1) ^ 0x5bd1), set = new Set();
-    for (let k = 0; k < 7; k++){ let i = 2 + Math.floor(R2() * (N / 2 - 3)), j = 2 + Math.floor(R2() * (N / 2 - 3)); const n = 4 + Math.floor(R2() * 7);
-      for (let q = 0; q < n; q++){ for (const [a, b] of [[i, j], [N - 1 - j, i], [N - 1 - i, N - 1 - j], [j, N - 1 - i]]) set.add(ck(a, b)); const d = Math.floor(R2() * 4); i = clamp(i + [1, -1, 0, 0][d], 1, N / 2 - 1); j = clamp(j + [0, 0, 1, -1][d], 1, N / 2 - 1); } }
-    G.bush = set; }
+  G.bush = G.map === 'gb' ? gbLayout(G.seed || 1, N).bush : null;
 }
 const pickPat = m => pick(PATS[m] || ['anel']);
 // ponto de nascer: se cair na névoa (ilhas, ponte), vai para o chão mais perto
@@ -625,8 +636,9 @@ function safeSpot(x, y, m){ const S = platCells(), I = sInfo(S); if (!I.cells.le
   if (edgeIn(S, x, y) >= need) return [x, y];
   let best = null, bd = 1e9; for (const c of I.cells){ if (c.e < need - 1e-6) continue; const d = Math.hypot(c.x - x, c.y - y); if (d < bd){ bd = d; best = c; } }
   return best ? [best.x + rnd(-.15, .15), best.y + rnd(-.15, .15)] : [x, y]; }
-const MAPNAME = { sq:'quadrado', rd:'redondo', vt:'dos Voltorbs', fl:'floresta', flr:'floresta redonda', pt:'dos navios', gb:'da Grande Batalha', ar:'arquipélago', pn:'pântano', sn:'do Snorlax' };
-const MAPLINE = { gb:['Mato alto esconde. Atacar revela.', 'Quebre as caixas: cada Doce Raro deixa você mais forte.', 'Aqui o golpe dói 3 vezes mais. A névoa fecha devagar.'], pt:['A prancha entre os navios é a última a cair. A briga final é lá.', 'Quando a vela enche, segura: a ventania empurra todo mundo.', 'Mastro segura tiro. E ninguém vê quem está atrás da vela.'],
+const MAPNAME = { sq:'quadrado', rd:'redondo', vt:'dos Voltorbs', fl:'floresta', flr:'floresta redonda', pt:'dos navios', ab:'da Abordagem', gb:'da Grande Batalha', ar:'arquipélago', pn:'pântano', sn:'do Snorlax' };
+const MAPLINE = { gb:['Mato alto esconde. Atacar revela.', 'Quebre as caixas: cada Doce Raro deixa você mais forte.', 'Aqui o golpe dói 3 vezes mais. A névoa fecha devagar.'], pt:['A ponte nunca cai. A briga final é na roda do meio.', 'Acerte o sino do seu navio 3 vezes: os canhões disparam no outro navio.', 'Do seu navio você mal enxerga o outro. Chegue na beirada para espiar.'],
+  ab:['Sem ponte no começo: só dá para trocar tiro de um navio para o outro.', 'Acerte o sino do seu navio 3 vezes: os canhões disparam no outro.', 'As pranchas baixam com o tempo. Depois a briga é em cima delas.'],
   ar:['Pular de ilha em ilha custa um pouco de vida.', 'Fique de olho: a ilha que pisca é a próxima a afundar.', 'Voo, Teleporte e Portal valem ouro aqui.'],
   pn:['Lama deixa lento: quem fica na poça vira alvo fácil.', 'Bomba de Lama aqui é covardia.', 'Pântano: pise onde está seco.'],
   sn:['O Snorlax está dormindo… por enquanto.', 'Quando ele se vira, esmaga quem estiver do lado.', 'Bater muito nele acorda ele de mau humor.'] };
@@ -653,6 +665,7 @@ function countSub(){
     : `${base}<br><b style="color:#ffe066">${L[0]}</b><br><span>${L[1]}</span>`;
 }
 const platGone = () => platCells().size === 0;
+const lastStage = () => !!G.stages && G.step + 1 >= G.stages.length && platCells().size > 0;   // chão final que não cai mais (redondo)
 // distância até a borda (para os bots) e ponto seguro dentro da plataforma (a próxima, se vai encolher logo)
 const edgeDist = (x, y) => edgeIn(platCells(), x, y);
 const soonCells = () => G.shrinkIn <= WARN + 1 && nextCells().size ? nextCells() : platCells();
@@ -667,16 +680,19 @@ const willFall = (i, j, m) => G.shrinkIn <= WARN && !!G.stages && G.step + 1 < G
 function doShrink(){
   const before = platCells();
   G.step++; addFalling(before, platCells()); G.shrinkIn = G.map === 'gb' ? 9 : SHRINK;
-  for (const o of G.obs) if ((o.k === 'mast' || o.k === 'cannon') && !onPlat(o.x, o.y)){ o.gone = true; for (let k = 0; k < 16; k++) fx(o.x, o.y, rnd(-2, 2), rnd(-3, 0), .6, pick(['#5a3a1c','#efe6cf','#cfe8ff']), 7); }
+  for (const o of G.obs) if ((o.k === 'mast' || o.k === 'cannon' || o.k === 'bell') && !onPlat(o.x, o.y)){ o.gone = true; for (let k = 0; k < 16; k++) fx(o.x, o.y, rnd(-2, 2), rnd(-3, 0), .6, pick(['#5a3a1c','#efe6cf','#cfe8ff']), 7); }
   G.obs = G.obs.filter(o => !o.gone);
   // os objetos (Voltorbs, árvores, pedras, Lapras, Snorlax) ficam no lugar mesmo quando o chão some embaixo deles
-  feed(platGone() ? 'A plataforma sumiu! Só resta a névoa.' : G.pat === 'ilha' ? 'Uma ilha afundou' : 'A plataforma encolheu', '#9be36a');
+  if (G.map === 'ab'){ const add = [...platCells().keys()].filter(k => !before.has(k)); if (add.length){ feed('As pranchas baixaram! Agora dá para atravessar.', '#e0b878');
+    for (const k of add){ const [i, j] = k.split(',').map(Number); if (Math.random() < .5) G.fx.push({ ring:1, x:i + .5, y:j + .5, r:.6, t:0, life:.5, col:'#c9a76a', st:'land' }); } } }
+  if (isShip() && lastStage()) feed('Os navios afundaram. Agora é tudo ou nada na madeira do meio!', '#ffcf4a');
+  else feed(platGone() ? 'A plataforma sumiu! Só resta a névoa.' : G.pat === 'ilha' ? 'Uma ilha afundou' : 'A plataforma encolheu', '#9be36a');
 }
 function addFalling(before, after){ if (G.map === 'gb') return;   // no mapa grande o chão não cai: o gás vai cobrindo
   for (const [k, m] of before) if (after.get(k) !== m){ const [i, j] = k.split(',').map(Number), c = tileRGB(i, j, m, before);
   G.falling.push({ i, j, t:0, m, c, rot:rnd(-1.2, 1.2) });
   if (Math.random() < .6) fx(i + .5, j + .5, rnd(-1, 1), rnd(.5, 2), rnd(.4, .7), `rgb(${c[0] - 30},${c[1] - 30},${c[2] - 30})`, rnd(4, 7));
-  if ((G.map === 'pt' || G.map === 'ar' || G.map === 'rd') && Math.random() < .7) for (let q = 0; q < 2; q++) fx(i + .5 + rnd(-.3, .3), j + .7, rnd(-1.2, 1.2), rnd(-3, -1.2), rnd(.4, .6), pick(['#ffffff','#cfe8ff']), rnd(4, 7)); } }
+  if ((isShip() || G.map === 'ar' || G.map === 'rd') && Math.random() < .7) for (let q = 0; q < 2; q++) fx(i + .5 + rnd(-.3, .3), j + .7, rnd(-1.2, 1.2), rnd(-3, -1.2), rnd(.4, .6), pick(['#ffffff','#cfe8ff']), rnd(4, 7)); } }
 const mistDps = () => (platGone() ? 12 : 4 + G.step * .7);   // fraca no começo, piora a cada encolhida
 
 /* ---------- obstáculos e gelo ---------- */
@@ -687,6 +703,18 @@ const VOLT_BIG = .57;   // Voltorb sozinho: 1,5× maior, mais fácil de mirar a 
 const inBush = (x, y) => !!G.bush && G.bush.has(ck(Math.floor(x), Math.floor(y))) && onPlat(x, y);
 const revealed = e => !!(e.anim && e.anim.n === 'Shoot' && e.anim.t < .8);
 // quem o "viewer" não enxerga: longe demais, ou no mato (a não ser bem perto ou atacando)
+function shipFog(){ const me = G.me; if (!isShip() || !me || !me.alive || G.phase === 'menu') return null; const { pw } = shipGeo(), N = SIZE;
+  if (me.x < pw){ const rv = clamp((2.2 - (pw - me.x)) * 1.3, 0, 2.6); return { side:0, x:N - pw + rv }; }   // tudo à direita de x fica no escuro
+  if (me.x > N - pw){ const rv = clamp((2.2 - (me.x - N + pw)) * 1.3, 0, 2.6); return { side:1, x:pw - rv }; }
+  return null; }   // na ponte/roda: vê tudo
+function fogHidden(e, v){ if (!v || v !== G.me) return false; const F = shipFog(); return !!F && (F.side ? e.x < F.x - .25 : e.x > F.x + .25); }
+function drawShipFog(){ const F = shipFog(); if (!F) return; const X = sx(F.x), e = T * 1.3, t = G.t, d = F.side ? -1 : 1, far = F.side ? -20 : W + 20;
+  const g = cx.createLinearGradient(X, 0, X + d * e, 0); g.addColorStop(0, 'rgba(18,28,42,0)'); g.addColorStop(1, 'rgba(18,28,42,.93)');
+  cx.fillStyle = g; cx.fillRect(Math.min(X, X + d * e), -20, e, H + 40); cx.fillStyle = 'rgba(18,28,42,.93)'; cx.fillRect(Math.min(X + d * e, far), -20, Math.abs(far - X - d * e), H + 40);
+  for (let q = 0; q < 7; q++){ const y = sy(SIZE * (q + .5) / 7) + Math.sin(t * .4 + q) * T * .5, x = X + d * (e * .7 + T * (.6 + (q % 3) * .5) + Math.sin(t * .6 + q * 2) * T * .3), r = T * (1.1 + (q % 2) * .4);   // fiapos de neblina na beirada
+    const gg = cx.createRadialGradient(x, y, 0, x, y, r); gg.addColorStop(0, 'rgba(120,140,160,.18)'); gg.addColorStop(1, 'rgba(120,140,160,0)'); cx.fillStyle = gg; cx.beginPath(); cx.arc(x, y, r, 0, 7); cx.fill(); }
+  cx.font = `800 ${Math.max(11, T * .28)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = 'rgba(200,215,230,.35)';
+  const lx = F.side ? Math.max(T * 1.5, (X - e) / 2) : Math.min(W - T * 1.5, X + e + (W - X - e) / 2); cx.fillText('chegue na beirada para espiar', lx, sy(SIZE / 2) + T * 2.6); }
 function gbHidden(e, v){ if (G.map !== 'gb' || !v) return false; const d = Math.hypot(e.x - v.x, e.y - v.y); return d > 11 || (inBush(e.x, e.y) && d > 2.4 && !revealed(e)); }
 function pickStep(dt = 1 / 30){
   if (G.map === 'gb' && G.phase === 'play'){ G.dropN = G.dropN || 0;
@@ -704,25 +732,64 @@ function pickStep(dt = 1 / 30){
       if (p.k === 1){ const h = Math.min(u.maxhp - u.hp, u.maxhp * .3); u.hp += h; txt(u.x, u.y - 1.3, '🫐 +' + Math.round(h), '#7fe05a'); G.fx.push({ ring:1, x:u.x, y:u.y, r:.8, t:0, life:.5, col:'#7fe05a', st:'tele' }); continue; }
       u.pow = (u.pow || 0) + 1; u.powHp = (u.powHp || 0) + 8; u.maxhp += 8; u.hp += 8; txt(u.x, u.y - 1.3, '🍬 Doce Raro!', '#7fd8ff'); G.fx.push({ ring:1, x:u.x, y:u.y, r:.8, t:0, life:.5, col:'#7fd8ff', st:'tele' }); } }
   G.picks = G.picks.filter(p => !p.taken); }
-function makeGB(){ const N = SIZE, rot = (x, y, r) => r === 0 ? [x, y] : r === 1 ? [N - y, x] : r === 2 ? [N - x, N - y] : [y, N - x], segs = [];
-  for (let k = 0; k < 7; k++) for (let t = 0; t < 60; t++){ const x = rnd(2.5, N / 2 - 1.5), y = rnd(2.5, N / 2 - 1.5), hz = Math.random() < .5, len = 3 + Math.floor(Math.random() * 3);
-    const pts = Array.from({ length:len }, (_, q) => hz ? [x + q * .85, y] : [x, y + q * .85]);
-    if (pts.some(([a, b]) => segs.some(([c, d]) => Math.hypot(a - c, b - d) < 2.4) || Math.hypot(a - N / 2, b - N / 2) < 3.5)) continue; segs.push(...pts); break; }
-  for (let r = 0; r < 4; r++) for (const [x, y] of segs){ const [a, b] = rot(x, y, r); G.obs.push({ k:'wall', x:a, y:b, r:.45 }); }
-  const bx = []; for (let k = 0; k < 2; k++) for (let t = 0; t < 80; t++){ const x = rnd(3, N / 2 - 1), y = rnd(3, N / 2 - 1); if (G.obs.some(o => Math.hypot(o.x - x, o.y - y) < 1.6) || bx.some(([c, d]) => Math.hypot(x - c, y - d) < 4)) continue; bx.push([x, y]); break; }
-  for (let r = 0; r < 4; r++) for (const [x, y] of bx){ const [a, b] = rot(x, y, r); G.obs.push({ k:'box', x:a, y:b, r:.45, chg:3 }); }
+// W = muro, B = mato alto, X = caixa, . = livre
+const GB_PRE = [
+  ['WWW', 'WBB', '.BB'],            // abrigo em L com mato atrás
+  ['WWWW', 'BBBB'],                 // muro com mato encostado
+  ['.BB.', 'BBBB', 'BBBB', '.BB.'],  // moita redonda
+  ['W..W'],                         // dois pilares (cobertura para duelo)
+  ['WW.', 'WX.'],                   // cantinho com caixa
+  ['BBBBB', 'BBBBB'],               // faixa de mato comprida
+  ['W.', 'W.', 'WB', '.B'],          // muro em pé com mato na ponta
+  ['.B.', 'BXB', '.B.'] ];          // caixa escondida no mato
+const GBL = { key:'', v:null };
+function gbLayout(seed, N){ const key = seed + ':' + N; if (GBL.key === key) return GBL.v;
+  const R = rng32((seed ^ 0x2f1c) >>> 0), Q = N / 2, c = N / 2;
+  const rotC = (i, j, r) => r === 0 ? [i, j] : r === 1 ? [N - 1 - j, i] : r === 2 ? [N - 1 - i, N - 1 - j] : [j, N - 1 - i];
+  let out = null;
+  for (let tr = 0; tr < 40 && !out; tr++){
+    const cell = new Map(), want = Math.max(4, 7 + Math.floor(R() * 3) - Math.floor(tr / 10)); let placed = 0, nx = 0;
+    for (let a = 0; a < 300 && placed < want; a++){
+      let Pz = GB_PRE[Math.floor(R() * GB_PRE.length)].map(r => r.split(''));
+      const o = Math.floor(R() * 4); for (let q = 0; q < o; q++) Pz = Pz[0].map((_, x) => Pz.map(r => r[x]).reverse());   // gira
+      if (R() < .5) Pz = Pz.map(r => r.slice().reverse());   // espelha
+      const h = Pz.length, w = Pz[0].length, hasX = Pz.some(r => r.includes('X')); if (w > Q - 2 || h > Q - 2 || (hasX && nx >= 1)) continue;   // no máximo 1 caixa de peça por quarto
+      const i0 = 1 + Math.floor(R() * (Q - 1 - w)), j0 = 1 + Math.floor(R() * (Q - 1 - h)), L = []; let ok = true;
+      for (let y = 0; y < h && ok; y++) for (let x = 0; x < w && ok; x++){ const v = Pz[y][x]; if (v === '.') continue; const i = i0 + x, j = j0 + y;
+        if (i >= Q || j >= Q || (v === 'W' && (i >= Q - 1 || j >= Q - 1)) || Math.hypot(i + .5 - c, j + .5 - c) < 4.3){ ok = false; break; }   // muro longe da emenda e do meio
+        const rad = v === 'W' ? 2 : 1;
+        for (let a2 = -rad; a2 <= rad && ok; a2++) for (let b2 = -rad; b2 <= rad; b2++){ const u = cell.get((i + a2) + ',' + (j + b2)); if (!u) continue;
+          if ((a2 === 0 && b2 === 0) || (Math.abs(a2) <= 1 && Math.abs(b2) <= 1 && (u === 'W' || v === 'W' || u === 'X' || v === 'X')) || (u === 'W' && v === 'W')){ ok = false; break; } }   // corredor de 2 casas entre muros
+        L.push([i, j, v]); }
+      if (!ok) continue; for (const [i, j, v] of L) cell.set(i + ',' + j, v); placed++; if (hasX) nx++; }
+    // uma caixa solta por quarto, num lugar aberto
+    for (let a = 0; a < 80; a++){ const i = 2 + Math.floor(R() * (Q - 3)), j = 2 + Math.floor(R() * (Q - 3)); let free = Math.hypot(i + .5 - c, j + .5 - c) >= 4.3;
+      for (let a2 = -1; a2 <= 1 && free; a2++) for (let b2 = -1; b2 <= 1; b2++) if (cell.has((i + a2) + ',' + (j + b2))){ free = false; break; }
+      if (free){ cell.set(i + ',' + j, 'X'); break; } }
+    const walls = [], bush = new Set(), boxes = [], wset = new Set();
+    for (const [k, v] of cell){ const [i, j] = k.split(',').map(Number); for (let r = 0; r < 4; r++){ const [a, b] = rotC(i, j, r);
+      if (v === 'W'){ walls.push([a, b]); wset.add(a + ',' + b); } else if (v === 'B') bush.add(ck(a, b)); else boxes.push([a, b]); } }
+    // dá para ir de qualquer lugar a qualquer lugar?
+    const seen = new Set([ck(Math.floor(c), Math.floor(c))]), stack = [[Math.floor(c), Math.floor(c)]];
+    while (stack.length){ const [i, j] = stack.pop(); for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]){ const x = i + a, y = j + b, k = x + ',' + y; if (x < 0 || y < 0 || x >= N || y >= N || seen.has(k) || wset.has(k)) continue; seen.add(k); stack.push([x, y]); } }
+    if (seen.size === N * N - wset.size) out = { walls, bush, boxes }; }
+  if (!out) out = { walls:[], bush:new Set(), boxes:[] };
+  GBL.key = key; GBL.v = out; return out; }
+function makeGB(){ const N = SIZE, L = gbLayout(G.seed || 1, N);
+  for (const [i, j] of L.walls) G.obs.push({ k:'wall', x:i + .5, y:j + .5, r:.5 });
+  for (const [i, j] of L.boxes) G.obs.push({ k:'box', x:i + .5, y:j + .5, r:.45, chg:3 });
   for (const [a, b] of [[-1.6, 0], [1.6, 0], [0, -1.6], [0, 1.6]]) G.obs.push({ k:'box', x:N / 2 + a, y:N / 2 + b, r:.45, chg:4 });   // 4 caixas no meio: vale disputar
 }
 function makeObstacles(){
   const c = SIZE / 2; G.obs = []; G.ice = []; G.mud = []; G.gust = null; G.cballs = [];
   if (G.map === 'ar') return;   // ilhas: o próprio chão é o obstáculo
   if (G.map === 'gb'){ makeGB(); return; }
-  if (G.map === 'pt'){   // navios: mastros (seguram tiro) e ventania
-    const pw = (SIZE - (SIZE >= 14 ? 4 : 2)) / 2;
-    for (const x of [pw / 2, SIZE - pw / 2]){ G.obs.push({ k:'mast', x, y:SIZE * .36, r:OBR.mast, main:1 }); if (SIZE >= 12) G.obs.push({ k:'mast', x, y:SIZE * .72, r:OBR.mast, dr:.01 }); }
-    for (const x of [pw / 2, SIZE - pw / 2]) for (const y of [SIZE * .2, SIZE * .55]) G.obs.push({ k:'barrel', x:x + rnd(-1, 1), y, r:OBR.barrel, vx:0, vy:0 });
-    G.obs.push({ k:'cannon', x:pw / 2 + 1, y:SIZE * .8, r:OBR.cannon, face:0, cd:rnd(6, 9) }, { k:'cannon', x:SIZE - pw / 2 - 1, y:SIZE * .2, r:OBR.cannon, face:Math.PI, cd:rnd(9, 12) });   // um canhão em cada navio, mirando no outro
-    G.gust = { cd:rnd(6, 9), warn:0, t:0, dx:1, dy:0, ship:1 }; G.cballs = []; return; }
+  if (isShip()){   // navios: mastro, sino (3 golpes = canhões disparam no outro navio) e 2 canhões na borda de dentro
+    const { pw } = shipGeo(), N = SIZE;
+    for (const side of [0, 1]){ const fl = (x, y) => side ? [N - x, N - y] : [x, y], [mx, my] = fl(pw / 2, N * .3), [bx, by] = fl(pw / 2, N * .66);
+      G.obs.push({ k:'mast', x:mx, y:my, r:OBR.mast, main:1 }, { k:'bell', x:bx, y:by, r:.4, chg:0, down:0 });
+      for (const yy of [.25, .75]){ const [cx0, cy0] = fl(pw - .6, N * yy); G.obs.push({ k:'cannon', x:cx0, y:cy0, r:OBR.cannon, face:side ? Math.PI : 0, cd:0 }); } }
+    G.cballs = []; return; }
   if (G.map === 'pn'){   // pântano: poças de lama (deixam lento) e ventania de tempos em tempos
     const n = 4 + Math.round(SIZE / 3);
     for (let k = 0; k < n; k++) for (let t = 0; t < 200; t++){ const x = rnd(2, SIZE - 2), y = rnd(2, SIZE - 2), r = rnd(1, 1.6);
@@ -740,8 +807,9 @@ function makeObstacles(){
       for (let t = 0; t < 300; t++){
         const x = rd ? c + Math.cos(t * 2.4 + Math.random()) * Math.sqrt(Math.random()) * maxR : rnd(2.2, SIZE - 2.2), y = rd ? c + Math.sin(t * 2.4 + Math.random()) * Math.sqrt(Math.random()) * maxR : rnd(2.2, SIZE - 2.2);
         if (rd && Math.hypot(x - c, y - c) > maxR) continue;
-        if (G.obs.some(o => Math.hypot(o.x - x, o.y - y) < (o.k === 'tree' ? 1.15 : o.r) + (k === 'tree' ? 1.15 : r) + .6)) continue;
-        const o = { k, x, y, r:k === 'tree' ? .3 : r, dr:k === 'tree' ? 1.25 : r }; G.obs.push(o);   // árvore grande: copa larga (só desenho), tronco fino (hitbox)
+        const tr = k === 'tree' || k === 'xmas', isTr = o => o.k === 'tree' || o.k === 'xmas';
+        if (G.obs.some(o => Math.hypot(o.x - x, o.y - y) < (isTr(o) ? 1.15 : o.r) + (tr ? 1.15 : r) + .6)) continue;
+        const o = { k, x, y, r:tr ? .3 : r, dr:tr ? 1.25 : r }; G.obs.push(o);   // árvore grande: copa larga (só desenho), tronco fino (hitbox)
         if (k === 'xmas'){ const p = { x, y, r:1.7, t:1e9, o }; G.ice.push(p); o.ice = p; }
         break; }
     }
@@ -771,9 +839,15 @@ function gustStep(dt){ const g = G.gust; if (!g) return;
   if ((g.cd -= dt) <= 0){ const a = g.ship ? pick([0, Math.PI, Math.PI / 4, 3 * Math.PI / 4, -Math.PI / 4, -3 * Math.PI / 4]) : Math.floor(Math.random() * 8) * Math.PI / 4; g.dx = Math.cos(a); g.dy = Math.sin(a); g.warn = 2; txt(SIZE / 2, SIZE / 2 - 2, 'vem vento!', '#cfe8ff'); } }
 // Snorlax: dorme no meio; de tempos em tempos se vira para um lado e esmaga quem estiver ali (e anda um pouco).
 // Golpes nele enchem a barra: cheia, ele acorda bravo e pisa forte em volta de si.
-const SNOR_MAX = 16, SNOR_RAD = 2.4;
+const SNOR_MAX = 10, SNOR_RAD = 2.4;
 function snorHit(o){ if (o.frenzy > 0) return; o.chg = (o.chg || 0) + 1; o.hitT = .3;
   if (o.chg >= SNOR_MAX){ o.chg = 0; o.frenzy = 1; o.charge = .9; feed('O Snorlax acordou bravo!', '#ffcf4a'); txt(o.x, o.y - 1.6, 'acordou!', '#ffcf4a'); } }
+// golpe em Snorlax/Lapras vindo de qualquer lugar (tiro fantasma, explosão, pedra, jato)
+function bigHit(o){ if (o.k === 'lapras') lapRage(o); else if (o.k === 'snor') snorHit(o); else if (o.k === 'bell') bellHit(o); o.hitT = .3; }
+const isBig = o => o.k === 'snor' || o.k === 'lapras' || o.k === 'bell';
+function bigArea(x, y, r){ for (const o of G.obs) if (isBig(o) && Math.hypot(o.x - x, o.y - y) < r + o.r) bigHit(o); }
+function bigLine(x, y, dx, dy, len, w){ for (const o of G.obs){ if (!isBig(o)) continue; const ex = o.x - x, ey = o.y - y, al = ex * dx + ey * dy; if (al > 0 && al < len + o.r && Math.abs(ex * dy - ey * dx) < w + o.r) bigHit(o); } }
+function ghostBig(s){ for (const o of G.obs){ if (!isBig(o) || Math.hypot(s.x - o.x, s.y - o.y) >= o.r + s.d.r) continue; s.bh = s.bh || new Set(); if (s.bh.has(o)) continue; s.bh.add(o); bigHit(o); } }
 function snorAim(o){ // vira para o lado com mais gente perto, mas sem sair do chão
   const dirs = [0, Math.PI / 2, Math.PI, -Math.PI / 2].filter(a => edgeDist(o.x + Math.cos(a) * 1.3, o.y + Math.sin(a) * 1.3) >= 2.2);
   const L = dirs.length ? dirs : [0, Math.PI / 2, Math.PI, -Math.PI / 2];
@@ -790,10 +864,24 @@ function snorGo(o){
   if (!full){ o.mv = { sx:o.x, sy:o.y, ex:o.x + dx * 1.2, ey:o.y + dy * 1.2, t:0 }; o.face = o.aim; }
   o.frenzy = 0; o.anim = .7; o.cd = rnd(8, 12); }
 
+// sino do navio: 3 golpes e os canhões DAQUELE navio disparam no outro; depois descansa 8 s
+const BELL_MAX = 3, BELL_CD = 8;
+function bellHit(o){ if (o.down > 0) return; o.chg = (o.chg || 0) + 1; o.hitT = .3; o.anim = .6;
+  txt(o.x, o.y - 1.5, o.chg >= BELL_MAX ? 'DLÉM!' : 'dim!', '#ffd76a');
+  if (o.chg < BELL_MAX) return; o.chg = 0; o.down = BELL_CD; const left = o.x < SIZE / 2; let n = 0;
+  for (const c of G.obs) if (c.k === 'cannon' && (c.x < SIZE / 2) === left){ c.q = [rnd(.15, .35), .6]; n++; }
+  G.fx.push({ ring:1, x:o.x, y:o.y, r:1.4, t:0, life:.5, col:'#ffd76a' });
+  feed(n ? `O sino tocou: os canhões do navio da ${left ? 'esquerda' : 'direita'} vão disparar!` : 'O sino tocou… mas não sobrou canhão.', '#ffcf4a'); }
+// navios afundados: quem ficou na madeira do meio leva bala de canhão de tempos em tempos (para a rodada acabar)
+function shipStep(dt){ if (!isShip() || G.phase !== 'play' || !lastStage()) return; if ((G.sdT = (G.sdT ?? 3) - dt) > 0) return; G.sdT = 4.5;
+  const al = G.units.filter(u => u.alive && !u.air && onPlat(u.x, u.y)), I = sInfo(platCells()), c = al.length && Math.random() < .7 ? pick(al) : I.cells.length ? pick(I.cells) : null; if (!c) return;
+  const side = Math.random() < .5; G.cballs.push({ sx:side ? -1.5 : SIZE + 1.5, sy:c.y + rnd(-3, 3), tx:c.x, ty:c.y, t:0, dur:1.8 }); }
 const LAP_MAX = 20;   // golpes no Lapras até ele ficar furioso
 function lapRage(o){ if (o.frenzy > 0) return; o.chg = (o.chg || 0) + 1;
   if (o.chg >= LAP_MAX){ o.chg = 0; o.frenzy = 5; o.charge = .6; o.aim = lapAim(o); feed('O Lapras ficou furioso!', '#bff3ff'); txt(o.x, o.y - 1.3, 'furioso!', '#bff3ff'); } }
-function lapAim(o){ const alive = G.units.filter(u => u.alive), t = alive.length && Math.random() < .5 ? pick(alive) : null; return t ? Math.atan2(t.y - o.y, t.x - o.x) : rnd(0, 6.283); }
+const lapHeat = () => G.map === 'rd' ? clamp((G.playT || 0) / 150, 0, 1) : 0;   // 0 → 1 ao longo da rodada
+const lapCd = () => rnd(6, 9) * (1 - .65 * lapHeat());
+function lapAim(o){ const alive = G.units.filter(u => u.alive), t = alive.length && Math.random() < .5 + .4 * lapHeat() ? pick(alive) : null; return t ? Math.atan2(t.y - o.y, t.x - o.x) : rnd(0, 6.283); }
 const VOLT_MAX = 20;   // cada projétil rebatido enche 1
 function voltCharge(o, by){ if (o.down > 0 || o.boom > 0) return; o.chg++; if (by) o.by = by; if (o.chg >= VOLT_MAX){ o.boom = 1; txt(o.x, o.y - 1, 'vai explodir!', '#ff5d5d'); } }
 function voltExplode(o){
@@ -819,9 +907,9 @@ function barrelStep(o, dt){
     G.barrelT = (G.barrelT || 0) + 1; }
 }
 // canhão: mira em alguém do outro navio (ou num ponto dele); a bala voa 1,6 s com o lugar da queda marcado
-function cannonFire(o){ const right = o.x < SIZE / 2, foes = G.units.filter(u => u.alive && (u.x > SIZE / 2) === right && onPlat(u.x, u.y));
+function cannonFire(o){ const right = o.x < SIZE / 2, deck = (x, y) => (x > SIZE / 2) === right && onPlat(x, y) && !onBridge(Math.floor(x), Math.floor(y)), foes = G.units.filter(u => u.alive && deck(u.x, u.y));   // só no convés do outro navio
   let tx, ty; if (foes.length && Math.random() < .75){ const e = pick(foes); tx = e.x + (e.rvx || 0) * .6; ty = e.y + (e.rvy || 0) * .6; }
-  else { const I = sInfo(platCells()), c = I.cells.filter(c => (c.x > SIZE / 2) === right); if (!c.length) return; const p = pick(c); tx = p.x; ty = p.y; }
+  else { const I = sInfo(platCells()), c = I.cells.filter(c => deck(c.x, c.y)); if (!c.length) return; const p = pick(c); tx = p.x; ty = p.y; }
   o.face = Math.atan2(ty - o.y, tx - o.x); o.anim = .4;
   G.cballs.push({ sx:o.x + Math.cos(o.face) * .5, sy:o.y + Math.sin(o.face) * .5, tx, ty, t:0, dur:1.6 });
   for (let k = 0; k < 16; k++) fx(o.x + Math.cos(o.face) * .6, o.y + Math.sin(o.face) * .6, Math.cos(o.face) * rnd(1, 4) + rnd(-1, 1), Math.sin(o.face) * rnd(1, 4) + rnd(-1, 1), rnd(.5, 1), pick(['rgba(200,200,200,.8)','rgba(150,150,150,.7)','#ffcf4a']), rnd(6, 11));
@@ -864,7 +952,8 @@ function obstacleStep(dt){
     if (o.hitT > 0) o.hitT -= dt;
     if (o.k === 'volt'){ if (o.boom > 0 && (o.boom -= dt) <= 0) voltExplode(o); if (o.down > 0 && (o.down -= dt) <= 0){ o.down = 0; G.fx.push({ ring:1, x:o.x, y:o.y, r:.8, t:0, life:.4, col:'#ffe066' }); } continue; }
     if (o.k === 'barrel'){ barrelStep(o, dt); continue; }
-    if (o.k === 'cannon'){ if (o.anim > 0) o.anim -= dt; if ((o.cd -= dt) <= 0){ o.cd = rnd(8, 12); cannonFire(o); } continue; }
+    if (o.k === 'cannon'){ if (o.anim > 0) o.anim -= dt; if (o.q && o.q.length && (o.q[0] -= dt) <= 0){ o.q.shift(); cannonFire(o); } continue; }
+    if (o.k === 'bell'){ if (o.anim > 0) o.anim -= dt; if (o.down > 0) o.down = Math.max(0, o.down - dt); continue; }
     if (o.k === 'snor'){
       if (o.mv){ o.mv.t += dt / .45; const p = Math.min(1, o.mv.t); o.x = o.mv.sx + (o.mv.ex - o.mv.sx) * p; o.y = o.mv.sy + (o.mv.ey - o.mv.sy) * p; if (p >= 1) o.mv = null; }
       if (o.charge > 0){ if ((o.charge -= dt) <= 0) snorGo(o); }
@@ -881,8 +970,8 @@ function obstacleStep(dt){
         for (let a = o.r + .3; a < len; a += .7) G.ice.push({ x:o.x + dx * a, y:o.y + dy * a, r:.6, t:10 });
         G.fx.push({ beam:1, x:o.x, y:o.y, dx, dy, len, w:.5, t:0, life:.4, col:'#bff3ff' });
         o.anim = .6;
-        if (o.frenzy > 0){ o.frenzy--; o.charge = o.frenzy > 0 ? .4 : 0; o.aim = lapAim(o); if (!o.frenzy) o.cd = rnd(6, 9); }   // fúria: 5 raios seguidos
-        else o.cd = rnd(6, 9); }
+        if (o.frenzy > 0){ o.frenzy--; o.charge = o.frenzy > 0 ? .4 : 0; o.aim = lapAim(o); if (!o.frenzy) o.cd = lapCd(); }   // fúria: 5 raios seguidos
+        else o.cd = lapCd(); }
     } else if ((o.cd -= dt) <= 0){
       o.aim = lapAim(o); o.charge = 1.2; }
     if (o.anim > 0) o.anim -= dt;
@@ -924,9 +1013,9 @@ function obstacleShot(s){
       if (o.chg <= 0){ o.gone = true; G.picks.push({ x:o.x, y:o.y }); G.fx.push({ ring:1, x:o.x, y:o.y, r:.9, t:0, life:.7, col:'#c9a76a', st:'crate' }); for (let k = 0; k < 16; k++) fx(o.x, o.y, rnd(-3, 3), rnd(-3, 3), .5, pick(['#9a6a3a','#5a3a1c','#7fd8ff']), 7); }
       if (s.d.aoe) explode(s); return true; }
     if (o.k === 'barrel' && !s.d.tele){ const v = Math.hypot(s.vx, s.vy) || 1, f = 2.5 + (s.d.push || 4) * .45; o.vx += s.vx / v * f; o.vy += s.vy / v * f; if (s.d.aoe) explode(s); for (let k = 0; k < 6; k++) fx(s.x, s.y, rnd(-2, 2), rnd(-2, 2), .3, '#c9a76a', 5); return true; }
-    if (o.k === 'lapras') lapRage(o); else if (o.k === 'snor') snorHit(o);
+    if (o.k === 'lapras') lapRage(o); else if (o.k === 'snor') snorHit(o); else if (o.k === 'bell') bellHit(o);
     if ((o.k === 'wall' || o.k === 'rock') && G.fx.length < 120) G.fx.push({ ring:1, x:s.x, y:s.y, r:.3, t:0, life:.5, col:'#9da1ac', st:'stone' });   // pedra atingida: lascas e poeira
-    if (o.k === 'tree' && G.fx.length < 120) G.fx.push({ ring:1, x:o.x, y:o.y, r:.3, t:0, life:.8, col:'#5cad46', st:'leaf' });   // árvore atingida: copa treme e solta folhas
+    if ((o.k === 'tree' || o.k === 'xmas') && G.fx.length < 120) G.fx.push({ ring:1, x:o.x, y:o.y, r:.3, t:0, life:.8, col:'#5cad46', st:'leaf' });   // árvore atingida: copa treme e solta folhas
     if (o.k === 'mast' && G.fx.length < 120) G.fx.push({ ring:1, x:o.x, y:o.y, r:.3, t:0, life:.6, col:'#c9a76a', st:'mast' });   // mastro atingido: treme e solta lascas (vai pela rede)
     if (s.d.tele){
       if (o.k === 'lapras' || o.k === 'snor' || o.k === 'mast' || o.k === 'barrel' || o.k === 'wall'){ teleTo(s.o, o.x + nx * (o.r + .45), o.y + ny * (o.r + .45)); return true; }
@@ -1019,6 +1108,8 @@ function capStep(dt){
 }
 function spawnAt(u, k, n){
   const c = SIZE / 2;
+  if (isShip()){ const { pw } = shipGeo(), gi = G.units.indexOf(u), side = teamOn() ? u.team % 2 : gi % 2, idx = teamOn() ? k : Math.floor(gi / 2), m = teamOn() ? n : Math.ceil(G.units.length / 2), sp = Math.min(2.4, (SIZE - 6) / Math.max(1, m - 1));
+    const x = (side ? SIZE - pw / 2 : pw / 2) + (idx % 2 ? .7 : -.7), y = c + (idx - (m - 1) / 2) * sp; return safeSpot(x, y, 1.2); }
   if (teamOn()){ const side = u.team ? 1 : -1, x = c + side * SIZE * .3, y = c + (k - (n - 1) / 2) * 1.5; return safeSpot(x, y, 1.3); }
   const a = (G.spawnOff || 0) + k / Math.max(1, n) * Math.PI * 2; return safeSpot(c + Math.cos(a) * SIZE * .34, c + Math.sin(a) * SIZE * .34, 1.3);
 }
@@ -1237,17 +1328,17 @@ function newMatch(){
   if (NET.on) netStartMsg();
   G.round = 0; G.t = 0; G.kv = {}; G.rv = {}; G.diff = CFG.diff || 'normal'; G.ranked = NET.on && CFG.ranked !== false;
   G.me.uid = AUTH.user ? AUTH.user.id : null; if (NET.on) for (const c of NET.peers) if (c.u) c.u.uid = c.uid || null;
-  const pm = CFG.map === 'rand' ? pick(['sq','rd','vt','fl','pt','ar','pn','sn']) : CFG.map;
+  const pm = CFG.map === 'rand' ? pick(['sq','rd','vt','fl','pt','ab','ar','pn','sn']) : CFG.map;
   G.matchMap = G.mode === 'pb' ? 'sq' : pm === 'fl' ? pick(['fl','flr']) : pm;   // floresta: quadrada ou redonda   // o mesmo mapa a partida inteira
   for (const id of ['menu','endOv','shopOv']) $('#' + id).hidden = true;
   for (const id of ['top','gold','plist','emo']) $('#' + id).hidden = false;
   $('#bar').hidden = false;
   buildBar(); buildEmotes(); startRound();
 }
-const MAPFEED = { gb:'Grande Batalha: mapa enorme, você só vê perto de você. Golpes tiram 3× mais vida, o mato esconde, caixas soltam Doce Raro e a névoa fecha devagar até o centro.', pt:'Navios: dois barcos ligados por uma prancha (a última a cair). De tempos em tempos vem uma ventania.', ar:'Arquipélago: uma ilha afunda de cada vez (a que pisca é a próxima).', pn:'Pântano: poças de lama deixam lento.', sn:'Snorlax: ele se vira de vez em quando e esmaga quem estiver do lado. Muitos golpes nele o acordam.' };
+const MAPFEED = { gb:'Grande Batalha: mapa enorme, você só vê perto de você. Golpes tiram 3× mais vida, o mato esconde, caixas soltam Doce Raro e a névoa fecha devagar até o centro.', pt:'Navios: metade da sala em cada barco. Os barcos afundam por fora; a ponte e a roda do meio nunca caem. Sino tocado 3 vezes = canhões no outro navio.', ab:'Abordagem: os navios começam separados pelo mar. As pranchas baixam com o tempo; depois os navios afundam por fora.', ar:'Arquipélago: uma ilha afunda de cada vez (a que pisca é a próxima).', pn:'Pântano: poças de lama deixam lento.', sn:'Snorlax: ele se vira de vez em quando e esmaga quem estiver do lado. Muitos golpes nele o acordam.' };
 function startRound(){
-  G.round++; G.map = G.matchMap || 'sq'; { const n = G.units.filter(u => !u.out).length; SIZE = G.map === 'gb' ? (n <= 4 ? 26 : n <= 6 ? 30 : 34) : sizeFor(n) + (isRd() ? 2 : 0); } G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
-  G.R = SIZE / 2 + .45; G.pat = isZona() || isPb() ? 'anel' : pickPat(G.map); G.seed = 1 + Math.floor(Math.random() * 1e9); buildStages(); G.decals = []; G.picks = []; G.oranT = 12; G.drop = null; G.dropN = 0; G.tent = null; G.tentCd = 12; G.dmgMul = G.map === 'gb' ? 3 : 1; if (G.map === 'gb') G.shrinkIn = 30; makeObstacles();
+  G.round++; G.map = G.matchMap || 'sq'; { const n = G.units.filter(u => !u.out).length; SIZE = G.map === 'gb' ? (n <= 4 ? 26 : n <= 6 ? 30 : 34) : sizeFor(n) + (isRd() ? 2 : 0) + (isShip() ? 4 : 0); } G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
+  G.R = SIZE / 2 + .45; G.pat = isZona() || isPb() ? 'anel' : pickPat(G.map); G.seed = 1 + Math.floor(Math.random() * 1e9); buildStages(); G.decals = []; G.picks = []; G.oranT = 12; G.drop = null; G.dropN = 0; G.tent = null; G.tentCd = 12; G.sdT = 3; G.dmgMul = G.map === 'gb' ? 3 : 1; if (G.map === 'gb') G.shrinkIn = 30; makeObstacles();
   G.shots = []; G.zones = []; G.marks = []; G.waves = []; G.decoys = []; G.portals = []; G.chains = []; G.falling = []; G.fx = []; G.txt = [];
   const live = G.units.filter(u => !u.out), n = live.length, off = Math.random() * Math.PI * 2;
   for (const u of live){ u.rounds = (u.rounds || 0) + 1; u._w0 = u.wins; } G.inRound = live.slice(); G.playT = 0;
@@ -1489,6 +1580,7 @@ function botThink(u, dt){
   if (dodge){ mx = dodge[0]; my = dodge[1]; } else if (ml < .25){ mx = my = 0; } else { mx /= ml; my /= ml; }
   if (inMist){ mx = C.x - u.x; my = C.y - u.y; const l = Math.hypot(mx, my) || 1; mx /= l; my /= l; }
   u.mvx = mx; u.mvy = my;
+  if (isShip() && (!tgt || best > 4) && canAct(u) && u.sk[0].lvl && u.sk[0].cd <= 0 && SK[u.sk[0].id].k === 'shot' && Math.random() < .6){ const bl = G.obs.find(o => o.k === 'bell' && !(o.down > 0) && (o.x < SIZE / 2) === (u.x < SIZE / 2) && Math.hypot(o.x - u.x, o.y - u.y) < 5.5); if (bl) cast(u, 0, bl.x, bl.y); }
   if (G.map === 'gb' && u.ai.box && !u.ai.box.gone && canAct(u) && u.sk[0].lvl && u.sk[0].cd <= 0 && Math.hypot(u.ai.box.x - u.x, u.ai.box.y - u.y) < 5.5 && SK[u.sk[0].id].k === 'shot') cast(u, 0, u.ai.box.x, u.ai.box.y);
   // Pokébol: chuta a bola com o golpe Q quando ela está entre o bot e o gol do outro time
   if (isPb() && G.ball && u.ai.cdr <= 0 && canAct(u) && u.sk[0].lvl && u.sk[0].cd <= 0){ const B = G.ball, gT = u.team ? 0 : SIZE, ax = B.x - u.x, ay = B.y - u.y, bd = Math.hypot(ax, ay), gx2 = gT - B.x, gy2 = SIZE / 2 - B.y;
@@ -1569,7 +1661,7 @@ function update(dt){
 
   if (isZona()){ G.timer -= dt; capStep(dt); respawnStep(dt); if (G.timer <= 0 || (G.caps.length && G.caps.every(z => z.full))){ endRound(); return; } }
   else if (isPb()){ G.pbT -= dt; respawnStep(dt); if (G.pbT <= 0){ endRound(); return; } }   // Zona: sem encolher, quem cai volta
-  else { G.shrinkIn -= dt; if (G.shrinkIn <= 0 && !platGone()) doShrink(); }
+  else { G.shrinkIn -= dt; if (G.shrinkIn <= 0 && !platGone() && !lastStage()) doShrink(); }
   localMove();
   for (const u of G.units) if (!u.human && u.alive) botThink(u, dt);
   updateWorld(dt);
@@ -1629,7 +1721,7 @@ function updateWorld(dt){
       else if (u.wind.t <= 0){ const { dx, dy, d, L } = u.wind; u.wind = null;
         for (const e of foesOf(u)){ const ex = e.x - u.x, ey = e.y - u.y, along = ex * dx + ey * dy, perp = Math.abs(ex * dy - ey * dx); if (along > 0 && along < d.len && perp < d.w + .3) hit(u, e, d, L, dx, dy); }
         if (G.ball){ const ex = G.ball.x - u.x, ey = G.ball.y - u.y, along = ex * dx + ey * dy, perp = Math.abs(ex * dy - ey * dx); if (along > 0 && along < d.len && perp < d.w + .5) ballPush(dx, dy, d.push * L.p); }
-        G.fx.push({ beam:1, x:u.x, y:u.y, dx, dy, len:d.len, w:d.w, t:0, life:.3, col:d.col });
+        bigLine(u.x, u.y, dx, dy, d.len, d.w); G.fx.push({ beam:1, x:u.x, y:u.y, dx, dy, len:d.len, w:d.w, t:0, life:.3, col:d.col });
       }
     } else {
       const sp = u.b.shell > 0 ? 0 : POKE[u.sp].spd * st.spd * (onMud(u.x, u.y) ? .55 : 1), kn = Math.hypot(u.vx, u.vy), ctl = kn > 2 ? .25 : 1, cf = u.b.conf > 0 ? -1 : 1; let mvx = u.mvx, mvy = u.mvy;
@@ -1648,7 +1740,7 @@ function updateWorld(dt){
     u.x = clamp(u.x, -3, SIZE + 3); u.y = clamp(u.y, -3, SIZE + 3);
     u.rvx = (u.x - ox) / dt; u.rvy = (u.y - oy) / dt;
   }
-  obstacleStep(dt); cballStep(dt); tentStep(dt); gustStep(dt); pickStep(dt); obstacleUnits();
+  obstacleStep(dt); cballStep(dt); shipStep(dt); gustStep(dt); pickStep(dt); obstacleUnits();
   // separação entre Pokémon
   const al = G.units.filter(u => u.alive && !u.air && !u.whip && !(u.b.nocol > 0));
   for (let i = 0; i < al.length; i++) for (let j = i + 1; j < al.length; j++){
@@ -1670,7 +1762,7 @@ function updateWorld(dt){
         for (const e of foesOf(s.o)) if (!e.air && Math.hypot(e.x - s.tx, e.y - s.ty) <= s.d.rad) damage(e, s.d.dmg * DMG * s.L.p, s.o);
         for (let k = 0; k < 18; k++) fx(s.tx, s.ty, rnd(-3, 3), rnd(-3, 3), .45, pick(['#8a6a3e','#5e4426','#b08a5a']), 7); }
       continue; }
-    if (!s.d.ghost && obstacleShot(s)){ s.dead = true; continue; }
+    if (s.d.ghost) ghostBig(s); else if (obstacleShot(s)){ s.dead = true; continue; }
     if (G.ball && !s.d.tele && Math.hypot(G.ball.x - s.x, G.ball.y - s.y) < s.d.r + G.ball.r){ s.dead = true;
       if (s.d.aoe) explode(s); else ballPush(s.vx / sp, s.vy / sp, (s.d.push || 4) * s.L.p * (s.d.fade ? 1 - s.d.fade * clamp(1 - s.left / s.d.range, 0, 1) : 1));
       for (let k = 0; k < 8; k++) fx(s.x, s.y, rnd(-3, 3), rnd(-3, 3), .3, s.d.col, 5); continue; }
@@ -1800,7 +1892,7 @@ function shotHit(s, e, sp){
 }
 function explode(s){
   for (const e of foesOf(s.o)){ const ex = e.x - s.x, ey = e.y - s.y, el = Math.hypot(ex, ey); if (el <= s.d.aoe + .3) hit(s.o, e, s.d, s.L, ex / (el || 1), ey / (el || 1), el < .7 ? 1 : .75); }
-  G.fx.push({ ring:1, x:s.x, y:s.y, r:s.d.aoe, t:0, life:.45, col:s.d.col, st:'boom' }); ballArea(s.x, s.y, s.d.aoe + .3, s.d.push * s.L.p * .9);
+  bigArea(s.x, s.y, s.d.aoe); G.fx.push({ ring:1, x:s.x, y:s.y, r:s.d.aoe, t:0, life:.45, col:s.d.col, st:'boom' }); ballArea(s.x, s.y, s.d.aoe + .3, s.d.push * s.L.p * .9);
   for (let k = 0; k < 24; k++) fx(s.x, s.y, rnd(-5, 5), rnd(-5, 5), .45, pick(['#ffd23f','#ff7a1a','#fff']), 7);
 }
 
@@ -1815,7 +1907,7 @@ function rockLand(s){
   for (const e of foesOf(s.o)){ if (e.air || e.b.intang > 0) continue; let ex = e.x - s.tx, ey = e.y - s.ty, el = Math.hypot(ex, ey); if (el > d.rad + POKE[e.sp].rad) continue;
     if (el < .05){ const a = rnd(0, 6.283); ex = Math.cos(a); ey = Math.sin(a); el = 1; }
     hit(s.o, e, d, s.L, ex / el, ey / el, el < d.rad * .5 ? 1 : .75); }
-  ballArea(s.tx, s.ty, d.rad + .3, d.push * s.L.p);
+  ballArea(s.tx, s.ty, d.rad + .3, d.push * s.L.p); bigArea(s.tx, s.ty, d.rad);
   if (d.frag){ const a0 = rnd(0, 6.283), f = SK.pedra2; for (let k = 0; k < 3; k++){ const a = a0 + k * 2.094; G.shots.push({ o:s.o, x:s.tx, y:s.ty, bx:s.tx, by:s.ty, vx:Math.cos(a) * f.spd, vy:Math.sin(a) * f.spd, left:f.range, d:f, L:s.L, age:0, q:false, ph:1 }); } }
   G.fx.push({ ring:1, x:s.tx, y:s.ty, r:d.rad * 1.4, t:0, life:.5, col:'#c9b28a', st:'mag' });
   for (let k = 0; k < 16; k++) fx(s.tx, s.ty, rnd(-3, 3), rnd(-3, 3), .4, pick(['#8d96a0','#5e646c','#c9b28a']), 6);
@@ -1847,7 +1939,7 @@ function rollStep(u, dt){
     R.v *= .6; txt(u.x, u.y - 1.35, R.n >= 2 ? 'STRIKE!' : 'pow!', R.n >= 2 ? '#ffcf4a' : '#f1eaf7');
     G.fx.push({ ring:1, x:e.x, y:e.y, r:.7, t:0, life:.3, col:'#c9d2dc' }); }
   for (const o of G.obs){ if (o.down > 0) continue; if (Math.hypot(u.x - o.x, u.y - o.y) < o.r + ur + .02){
-    if (o.k === 'volt') voltCharge(o, u); else if (o.k === 'lapras') lapRage(o); else if (o.k === 'snor') snorHit(o);
+    if (o.k === 'volt') voltCharge(o, u); else if (o.k === 'lapras') lapRage(o); else if (o.k === 'snor') snorHit(o); else if (o.k === 'bell') bellHit(o);
     endRoll(u); u.b.stun = .6; txt(u.x, u.y - 1.3, 'tonto!', '#c9b28a'); G.fx.push({ ring:1, x:u.x, y:u.y, r:.6, t:0, life:.3, col:'#fff' });
     for (let k = 0; k < 10; k++) fx(u.x, u.y, rnd(-3, 3), rnd(-3, 3), .35, pick(['#8d96a0','#c9b28a']), 6); return; } }
   if (G.ball){ const ex = G.ball.x - u.x, ey = G.ball.y - u.y, el = Math.hypot(ex, ey); if (el < ur + G.ball.r) ballPush(ex / (el || 1), ey / (el || 1), d.push0 + d.pushV * R.v); }
@@ -1894,7 +1986,7 @@ const tileShade = (i, j) => ((i * 7 + j * 13) % 5) * 3;
 const hsh = (i, j) => { let h = (i * 374761393 + j * 668265263) | 0; h = Math.imul(h ^ h >>> 13, 1274126177); return ((h ^ h >>> 16) >>> 0) / 4294967296; };
 const NATMAP = new Set(['fl', 'flr', 'sn', 'ar', 'gb', 'pn']);
 const isEdgeCell = (S, i, j) => !S.has(ck(i - 1, j)) || !S.has(ck(i + 1, j)) || !S.has(ck(i, j - 1)) || !S.has(ck(i, j + 1));
-const onBridge = (i, j) => !!G.bridge && i >= G.bridge.x0 && i < G.bridge.x1 && j >= G.bridge.y0 && j < G.bridge.y1;
+const onBridge = (i, j) => !!G.bridgeSet && G.bridgeSet.has(ck(i, j));   // ponte, roda do meio e pranchas (madeira escura, nunca cai)
 function tileRGB(i, j, m, S){ const s = tileShade(i, j), h = hsh(i, j); let c;
   switch (G.map){
     case 'rd': c = [150 + s, 196 + s, 222 + s * .6]; break;
@@ -1904,7 +1996,7 @@ function tileRGB(i, j, m, S){ const s = tileShade(i, j), h = hsh(i, j); let c;
     case 'vt': c = [100 + s, 108 + s, 120 + s]; break;
     case 'pn': c = [84 + s + h * 10, 96 + s + h * 8, 60 + s]; break;
     case 'ar': c = S && isEdgeCell(S, i, j) ? [214 + s * .6, 192 + s * .6, 138 + s] : [80 + s, 146 + s + h * 10, 78 + s]; break;
-    case 'pt': c = onBridge(i, j) ? [120 + s, 84 + s, 50 + s] : [168 + s + h * 8, 124 + s + h * 6, 78 + s]; break;
+    case 'pt': case 'ab': { const hb = hsh(i, 97) - .5; c = onBridge(i, j) ? [118 + s * .3, 82 + s * .3, 50 + s * .3] : [166 + hb * 14 + s * .25, 122 + hb * 10 + s * .25, 78 + hb * 6]; } break;   // convés: tábuas compridas (cor por coluna), quase sem xadrez
     default: c = [118 + s, 108 + s, 94 + s]; }
   if (NATMAP.has(G.map)){ const n = Math.sin(i * .45 + j * .2) * 5 + Math.cos(j * .38 - i * .15) * 5; c[0] += n * .5; c[1] += n; c[2] += n * .4; }   // manchas grandes: o campo não fica uniforme
   return c.map(Math.round); }
@@ -2049,7 +2141,7 @@ function drawRingFx(f){
       cx.save(); cx.translate(X + Math.cos(a) * d, Y + Math.sin(a) * d * .6 - hy); cx.rotate(a + p * (q % 2 ? 9 : -7)); cx.globalAlpha = Math.min(1, k * 1.6); cx.fillStyle = q % 2 ? '#9a6a3a' : '#c9a76a'; cx.fillRect(-T * .2, -T * .05, T * .4, T * .1); cx.strokeStyle = '#5a3a1c'; cx.lineWidth = 1; cx.strokeRect(-T * .2, -T * .05, T * .4, T * .1); cx.restore(); }
     cx.globalAlpha = 1; if (p < .35) glow(X, Y, T * (.6 + p * 2), `rgba(127,216,255,${.6 * (1 - p / .35)})`, 'rgba(127,216,255,.15)'); return; }
   if (f.st === 'poof'){ for (let q = 0; q < 8; q++){ const a = q / 8 * 6.283 + f.x * 3, rr = R * (.15 + .7 * p), s2 = T * (.3 - .15 * p); cx.fillStyle = `rgba(225,232,220,${.8 * k})`; cx.beginPath(); cx.arc(X + Math.cos(a) * rr, Y - T * .3 + Math.sin(a) * rr * .7 - T * .3 * p, s2, 0, 7); cx.fill(); } return; }
-  if (f.st === 'ko' && (G.map === 'pt' || G.map === 'ar' || G.map === 'rd') && !onPlat(f.x, f.y)){   // caiu na água: tchibum
+  if (f.st === 'ko' && (isShip() || G.map === 'ar' || G.map === 'rd') && !onPlat(f.x, f.y)){   // caiu na água: tchibum
     for (let q = 0; q < 3; q++){ const pp = Math.max(0, p - q * .15); if (pp <= 0) continue; cx.strokeStyle = `rgba(225,245,255,${.7 * (1 - pp)})`; cx.lineWidth = 2.5; cx.beginPath(); cx.ellipse(X, Y, T * (.3 + pp * 1.5), T * (.12 + pp * .6), 0, 0, 7); cx.stroke(); }
     const hg = T * 1.8 * Math.sin(Math.min(1, p * 1.6) * Math.PI); for (let q = 0; q < 12; q++){ const sd = (q % 2 ? 1 : -1) * (q / 12), dx = sd * T * .9 * p, dy = -hg * (1 - Math.abs(sd) * .7);
       cx.fillStyle = `rgba(${q % 3 ? '230,246,255' : '150,205,240'},${.85 * k})`; cx.beginPath(); cx.arc(X + dx, Y + dy, T * (.08 + .08 * (1 - p)), 0, 7); cx.fill(); }
@@ -2158,7 +2250,12 @@ function drawMapDecor(){ const c = SIZE / 2, t = G.t; drawDust();
   if ((G.map === 'sq' || G.map === 'sn' || G.map === 'gb') && onPlat(c, c)){ const X = sx(c), Y = sy(c), R = T * (G.map === 'gb' ? 3.4 : Math.min(2.4, SIZE * .16));   // Pokébola pintada no chão
     cx.strokeStyle = 'rgba(255,255,255,.2)'; cx.lineWidth = T * .12; cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.stroke(); cx.beginPath(); cx.moveTo(X - R, Y); cx.lineTo(X - R * .32, Y); cx.moveTo(X + R * .32, Y); cx.lineTo(X + R, Y); cx.stroke();
     cx.beginPath(); cx.arc(X, Y, R * .32, 0, 7); cx.stroke(); cx.fillStyle = 'rgba(232,50,47,.13)'; cx.beginPath(); cx.arc(X, Y, R, Math.PI, 0); cx.closePath(); cx.fill(); }
-  if (G.map === 'pt'){ const pw = (SIZE - (SIZE >= 14 ? 4 : 2)) / 2;   // timão na popa de cada navio
+  if (isShip()){ const { pw } = shipGeo();   // timão na popa de cada navio
+    if (G.map === 'pt' && onPlat(c, c)){ const X = sx(c), Y = sy(c), R = T * (SIZE >= 16 ? 3 : 2.5);   // aro e rosa dos ventos na roda do meio
+      cx.strokeStyle = 'rgba(40,22,8,.55)'; cx.lineWidth = T * .14; cx.beginPath(); cx.arc(X, Y, R - T * .1, 0, 7); cx.stroke(); cx.strokeStyle = 'rgba(255,230,180,.16)'; cx.lineWidth = T * .06; cx.beginPath(); cx.arc(X, Y, R * .55, 0, 7); cx.stroke();
+      cx.fillStyle = 'rgba(255,230,180,.13)'; cx.beginPath(); for (let q = 0; q < 8; q++){ const a = q * Math.PI / 4, rr = q % 2 ? R * .3 : R * .75; cx.lineTo(X + Math.cos(a) * rr, Y + Math.sin(a) * rr); cx.lineTo(X + Math.cos(a + Math.PI / 8) * R * .14, Y + Math.sin(a + Math.PI / 8) * R * .14); } cx.closePath(); cx.fill(); }
+    if (G.map === 'ab' && G.phase === 'play' && G.shrinkIn <= WARN + 1){ const S0 = platCells(), on = .25 + .2 * Math.sin(t * 10); cx.fillStyle = `rgba(201,167,106,${on})`; cx.strokeStyle = 'rgba(255,230,180,.6)'; cx.setLineDash([5, 4]); cx.lineWidth = 1.5;   // pranchas que vão baixar
+      for (const k of nextCells().keys()){ if (S0.has(k)) continue; const [i, j] = k.split(',').map(Number); cx.fillRect(sx(i), sy(j), T, T); cx.strokeRect(sx(i) + 1, sy(j) + 1, T - 2, T - 2); } cx.setLineDash([]); }
     for (const [x, y] of [[pw / 2, SIZE - 2.1], [SIZE - pw / 2, 2.1]]){ if (!onPlat(x, y)) continue; const X = sx(x), Y = sy(y), R = T * .42, a = Math.sin(t * .7 + x) * .5;
       cx.strokeStyle = '#5a3a1c'; cx.lineWidth = Math.max(2, T * .08); cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.stroke(); cx.beginPath(); for (let q = 0; q < 8; q++){ const b = a + q * Math.PI / 4; cx.moveTo(X, Y); cx.lineTo(X + Math.cos(b) * R * 1.3, Y + Math.sin(b) * R * 1.3); } cx.stroke();
       cx.fillStyle = '#8a5a30'; cx.beginPath(); cx.arc(X, Y, R * .25, 0, 7); cx.fill(); } }
@@ -2186,38 +2283,40 @@ function drawGas(){ if (G.map !== 'gb' || !G.stages[0]) return; const S = platCe
 function drawAmbient(){ const t = G.t;
   if (G.map === 'fl' || G.map === 'flr') for (let q = 0; q < 14; q++){ const ph = (t * .07 + q * .0713) % 1, x = (q * 5.37) % (SIZE + 4) - 2 + ph * 4 + Math.sin(t * 1.2 + q) * .6, y = -2 + ph * (SIZE + 4), a = t * 2 + q;
     cx.save(); cx.translate(sx(x), sy(y)); cx.rotate(a); cx.fillStyle = ['#6fbf4a','#a9c94a','#d9a441','#4f9a3c'][q % 4]; cx.beginPath(); cx.ellipse(0, 0, T * .13, T * .06, 0, 0, 7); cx.fill(); cx.restore(); }
-  if (G.map === 'pt') for (let q = 0; q < 5; q++){ const ph = (t * .05 + q * .23) % 1, x = -3 + ph * (SIZE + 6), y = SIZE * (.15 + q * .17) + Math.sin(t * .8 + q) * .8, f = Math.sin(t * 9 + q * 2) * T * .12;   // gaivotas
-    cx.fillStyle = 'rgba(0,0,0,.15)'; cx.beginPath(); cx.ellipse(sx(x + 1), sy(y + 1.5), T * .2, T * .07, 0, 0, 7); cx.fill();
-    cx.strokeStyle = '#f4f4f4'; cx.lineWidth = Math.max(2, T * .07); cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(sx(x) - T * .32, sy(y) - f); cx.quadraticCurveTo(sx(x) - T * .12, sy(y) - T * .14, sx(x), sy(y)); cx.quadraticCurveTo(sx(x) + T * .12, sy(y) - T * .14, sx(x) + T * .32, sy(y) - f); cx.stroke(); cx.lineCap = 'butt'; }
-  if (G.map === 'pt'){ const pw = (SIZE - (SIZE >= 14 ? 4 : 2)) / 2; for (const [x, y] of [[pw / 2, 1.2], [pw / 2, SIZE - 1.2], [SIZE - pw / 2, 1.2], [SIZE - pw / 2, SIZE - 1.2]]){ if (!onPlat(x, y)) continue;   // lanternas
-    const X = sx(x), Y = sy(y) - T * .6, f = .8 + .2 * Math.sin(t * 9 + x * 3) * Math.sin(t * 5.3 + y); glow(X, Y, T * 1.1 * f, 'rgba(255,220,130,.5)', 'rgba(255,170,60,.12)');
-    cx.fillStyle = '#3a2412'; cx.fillRect(X - T * .03, Y, T * .06, T * .55); cx.fillStyle = '#2a1a0c'; cx.fillRect(X - T * .12, Y - T * .2, T * .24, T * .05); cx.fillStyle = `rgba(255,214,110,${f})`; cx.fillRect(X - T * .09, Y - T * .15, T * .18, T * .2); cx.strokeStyle = '#2a1a0c'; cx.lineWidth = 1.5; cx.strokeRect(X - T * .09, Y - T * .15, T * .18, T * .2); } }
   if (G.map === 'pn') for (let q = 0; q < 16; q++){ const x = SIZE / 2 + Math.sin(t * .23 + q * 1.7) * SIZE * .45 + Math.sin(t * 1.1 + q) * .4, y = SIZE / 2 + Math.cos(t * .19 + q * 2.3) * SIZE * .45 + Math.cos(t * .9 + q) * .4, on = .5 + .5 * Math.sin(t * 3 + q * 1.3);
     if (on > .2) glow(sx(x), sy(y), T * .28 * on, `rgba(230,255,140,${.9 * on})`, `rgba(160,220,60,${.3 * on})`); }
 }
 function drawCanopies(){
   for (const o of G.obs){
-    if (o.k === 'tree'){ let hit = 0; for (const f of G.fx) if (f.st === 'leaf' && Math.abs(f.x - o.x) < .2 && Math.abs(f.y - o.y) < .2) hit = Math.max(hit, 1 - f.t / f.life);
+    if (o.k === 'tree' || o.k === 'xmas'){ const xm = o.k === 'xmas', PAL = xm ? ['#123a26','#1f5c37','#2c7845','#46985a'] : ['#1d4a22','#2f7a34','#3f9a43','#5cbf5a']; let hit = 0; for (const f of G.fx) if (f.st === 'leaf' && Math.abs(f.x - o.x) < .2 && Math.abs(f.y - o.y) < .2) hit = Math.max(hit, 1 - f.t / f.life);
       const cr = (o.dr && o.dr > .7 ? o.dr : .95) * T, sw = Math.sin(G.t * 1.3 + o.x) * T * .03 + Math.sin(G.t * 40) * T * .07 * hit, X = sx(o.x) + sw, Y = sy(o.y) - T * .75;
       const B = [[0, 0, 1], [-.5, .2, .62], [.5, .2, .62], [-.3, -.4, .58], [.32, -.38, .55], [0, .45, .55]];
       if (nearMe(o.x, o.y - .45, cr / T + .15)){   // você está embaixo: só a silhueta clarinha, para se ver
         cx.fillStyle = 'rgba(60,150,60,.22)'; cx.strokeStyle = 'rgba(160,230,140,.55)'; cx.lineWidth = 1.5; cx.beginPath(); for (const [a, b, r] of B){ cx.moveTo(X + a * cr + r * cr, Y + b * cr); cx.arc(X + a * cr, Y + b * cr, r * cr, 0, 7); } cx.fill(); cx.stroke(); continue; }
       cx.globalAlpha = .97;
-      cx.fillStyle = '#1d4a22'; for (const [a, b, r] of B){ cx.beginPath(); cx.arc(X + a * cr, Y + b * cr, r * cr + 2, 0, 7); cx.fill(); }
-      cx.fillStyle = '#2f7a34'; for (const [a, b, r] of B){ cx.beginPath(); cx.arc(X + a * cr, Y + b * cr, r * cr, 0, 7); cx.fill(); }
-      cx.fillStyle = '#3f9a43'; for (const [a, b, r] of B){ cx.beginPath(); cx.arc(X + a * cr - r * cr * .18, Y + b * cr - r * cr * .2, r * cr * .7, 0, 7); cx.fill(); }
-      cx.fillStyle = '#5cbf5a'; for (const [a, b, r] of B){ cx.beginPath(); cx.arc(X + a * cr - r * cr * .32, Y + b * cr - r * cr * .36, r * cr * .32, 0, 7); cx.fill(); }
+      cx.fillStyle = PAL[0]; for (const [a, b, r] of B){ cx.beginPath(); cx.arc(X + a * cr, Y + b * cr, r * cr + 2, 0, 7); cx.fill(); }
+      cx.fillStyle = PAL[1]; for (const [a, b, r] of B){ cx.beginPath(); cx.arc(X + a * cr, Y + b * cr, r * cr, 0, 7); cx.fill(); }
+      cx.fillStyle = PAL[2]; for (const [a, b, r] of B){ cx.beginPath(); cx.arc(X + a * cr - r * cr * .18, Y + b * cr - r * cr * .2, r * cr * .7, 0, 7); cx.fill(); }
+      cx.fillStyle = PAL[3]; for (const [a, b, r] of B){ cx.beginPath(); cx.arc(X + a * cr - r * cr * .32, Y + b * cr - r * cr * .36, r * cr * .32, 0, 7); cx.fill(); }
+      if (xm){ cx.fillStyle = '#f2f9ff';   // neve por cima de cada tufo
+        for (const [a, b, r] of B){ const px = X + a * cr, py = Y + b * cr, rr = r * cr; cx.save(); cx.beginPath(); cx.arc(px, py, rr, 0, 7); cx.clip(); cx.beginPath(); cx.ellipse(px - rr * .12, py - rr * 1.22, rr * 1.0, rr * .62, 0, 0, 7); cx.fill(); cx.restore(); }
+        const LC = ['#ff4d4d','#ffd23f','#4dabff','#7fe05a','#ff7bc0'];   // pisca-pisca
+        for (let q = 0; q < 12; q++){ const a = q * 2.399 + o.x, rr = cr * (.2 + .62 * ((q * 37 % 11) / 11)), lx = X + Math.cos(a) * rr, ly = Y + Math.sin(a) * rr * .85 + cr * .12, on = Math.sin(G.t * 2.6 + q * 1.9) > -.1, c = LC[q % LC.length];
+          if (on) glow(lx, ly, T * .24, c, 'rgba(255,255,255,0)'); cx.globalAlpha = on ? 1 : .55; cx.fillStyle = on ? '#fffbe8' : c; cx.beginPath(); cx.arc(lx, ly, T * .06, 0, 7); cx.fill(); cx.globalAlpha = .97; }
+        const sx0 = X, sy0 = Y - cr * 1.02, sr = T * .2 * (1 + .08 * Math.sin(G.t * 4));   // estrela no topo
+        glow(sx0, sy0, sr * 2.2, 'rgba(255,240,150,.6)', 'rgba(255,210,63,.2)'); cx.fillStyle = '#ffe066'; cx.strokeStyle = '#a8740e'; cx.lineWidth = 1.5; cx.beginPath();
+        for (let k = 0; k < 10; k++){ const b = k * .628 - Math.PI / 2, rr = k % 2 ? sr * .45 : sr; cx.lineTo(sx0 + Math.cos(b) * rr, sy0 + Math.sin(b) * rr); } cx.closePath(); cx.fill(); cx.stroke(); }
       cx.globalAlpha = 1; continue; }
     if (o.k === 'mast') drawMast(o);
   }
 }
 // mastro, verga, vela inflando para o lado do vento, bandeira e cordas
 function drawMast(o){
-  const g = G.gust || { dx:1, dy:0, t:0, warn:0 }, on = g.t > 0 ? 1 : g.warn > 0 ? .35 : .15, wx = g.dx || 1, wy = g.dy || 0, X = sx(o.x), Y = sy(o.y), H = T * (o.main ? 3 : 2.3), sw = T * (o.main ? 2.2 : 1.6);
+  const g = G.gust || { dx:1, dy:0, t:0, warn:0 }, on = g.t > 0 ? 1 : g.warn > 0 ? .35 : .15, wx = g.dx || 1, wy = g.dy || 0, X = sx(o.x), Y = sy(o.y), H = T * (o.main ? 2.5 : 2.1), sw = T * (o.main ? 1.6 : 1.3);
   let hit = 0; for (const f of G.fx) if (f.st === 'mast' && Math.abs(f.x - o.x) < .2 && Math.abs(f.y - o.y) < .2) hit = Math.max(hit, 1 - f.t / f.life);   // treme quando um golpe acerta
   const top = Y - H, yard = top + T * .25, bot = Y - T * .55, fl = Math.sin(G.t * (on > .5 ? 22 : 6) + o.x) * T * .06 + Math.sin(G.t * 45) * T * .12 * hit;
   if (hit > 0){ cx.save(); cx.translate(Math.sin(G.t * 60) * T * .06 * hit, 0); }
-  cx.globalAlpha = nearMe(o.x, o.y - 1.2, 1.3) ? .4 : 1;
+  cx.globalAlpha = nearMe(o.x, o.y - 1.2, 1.3) ? .35 : .85;
   cx.strokeStyle = 'rgba(40,25,10,.6)'; cx.lineWidth = 1; cx.beginPath(); for (const s of [-1, 1]){ cx.moveTo(X, top + T * .1); cx.lineTo(X + s * T * .9, Y + T * .1); } cx.stroke();   // cordas
   cx.fillStyle = '#5a3a1c'; cx.fillRect(X - T * .07, top, T * .14, H); cx.fillStyle = '#7a5530'; cx.fillRect(X - T * .07, top, T * .05, H);
   cx.fillStyle = '#5a3a1c'; cx.fillRect(X - sw / 2, yard - T * .05, sw, T * .1);
@@ -2349,7 +2448,7 @@ function drawMeHints(){ const me = G.me; if (!me || !me.alive) return; const X =
       const px = clamp(X + Math.cos(a) * T * 2.2, m, W - m), py = clamp(Y + Math.sin(a) * T * 2.2, m, H - m), qx = inMist ? px : (tx < 0 || tx > W || ty < 0 || ty > H ? ex : px), qy = inMist ? py : (tx < 0 || tx > W || ty < 0 || ty > H ? ey : py);
       cx.save(); cx.translate(qx, qy); cx.rotate(a); cx.fillStyle = `rgba(155,227,106,${.75 + .25 * Math.sin(G.t * 10)})`; cx.strokeStyle = '#13240c'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(T * .45, 0); cx.lineTo(-T * .25, -T * .3); cx.lineTo(-T * .1, 0); cx.lineTo(-T * .25, T * .3); cx.closePath(); cx.fill(); cx.stroke(); cx.restore(); } } }
 const WHALE_P = 46, WHALE_D = 16;   // a cada 46 s um Wailord atravessa o mar (16 s de travessia), só desenho preso ao relógio da partida
-function whaleAt(){ if (G.map !== 'pt' && G.map !== 'ar') return null; const t = G.t + 20, n = Math.floor(t / WHALE_P), ph = (t % WHALE_P) / WHALE_D; if (ph >= 1) return null;
+function whaleAt(){ if (G.map !== 'ar') return null; const t = G.t + 20, n = Math.floor(t / WHALE_P), ph = (t % WHALE_P) / WHALE_D; if (ph >= 1) return null;
   const dir = n % 2 ? 1 : -1, L = SIZE + 14;
   if (G.map === 'pt') return { x:SIZE / 2, y:dir > 0 ? -7 + ph * L : SIZE + 7 - ph * L, a:dir > 0 ? Math.PI / 2 : -Math.PI / 2, ph, n };   // nos Navios passa por baixo da prancha
   const y = SIZE * (.3 + (n * 37 % 5) * .1); return { x:dir > 0 ? -7 + ph * L : SIZE + 7 - ph * L, y, a:dir > 0 ? 0 : Math.PI, ph, n }; }
@@ -2378,7 +2477,7 @@ const DUST = [];
 function drawDust(){ const now = performance.now() / 1000, dt = Math.min(.1, now - (DUST.at || now)); DUST.at = now;   // poeirinha dos passos (só desenho)
   if (G.phase === 'play' && !fxLite()) for (const u of G.units){ if (!u.alive || u.air || u.b.inv > 0) continue; const v = Math.hypot(u.rvx || 0, u.rvy || 0); if (v < .8 || !onPlat(u.x, u.y)) continue;
     u._dc = (u._dc || 0) - dt * v; if (u._dc > 0) continue; u._dc = 1.1; if (DUST.length < 80) DUST.push({ x:u.x - (u.rvx || 0) / v * .2 + (Math.random() - .5) * .2, y:u.y + .12, t:0, s:.6 + Math.random() * .5 }); }
-  const col = G.map === 'pn' ? '110,84,50' : G.map === 'pt' ? '225,205,165' : G.map === 'rd' ? '230,245,255' : '205,190,150';
+  const col = G.map === 'pn' ? '110,84,50' : isShip() ? '225,205,165' : G.map === 'rd' ? '230,245,255' : '205,190,150';
   for (let q = DUST.length - 1; q >= 0; q--){ const d = DUST[q]; d.t += dt; if (d.t > .6){ DUST.splice(q, 1); continue; } const k = d.t / .6; cx.fillStyle = `rgba(${col},${.45 * (1 - k)})`; cx.beginPath(); cx.arc(sx(d.x), sy(d.y) - k * T * .15, T * (.07 + k * .13) * d.s, 0, 7); cx.fill(); } }
 // Navios: a cada 70 s um Gyarados sobe do mar ao lado de um barco, ruge levantando ondas e mergulha (só desenho, preso ao relógio da partida: todos veem igual)
 const GYA_P = 70, GYA_D = 4.6;
@@ -2413,7 +2512,7 @@ function drawLights(){ if (G.phase === 'menu' || fxLite()) return; const t = G.t
   if (G.map === 'rd'){ for (let q = 0; q < 18; q++){ const h = hsh(q, 77), x = 1 + h * (SIZE - 2), y = 1 + hsh(77, q) * (SIZE - 2), tw = Math.sin(t * (1.5 + h * 2) + q * 2.3); if (tw < .6 || !onPlat(x, y)) continue;   // brilhos piscando no gelo
       const a = (tw - .6) / .4, X = sx(x), Y = sy(y), r = T * .22 * a; cx.strokeStyle = `rgba(255,255,255,${.9 * a})`; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(X - r, Y); cx.lineTo(X + r, Y); cx.moveTo(X, Y - r * 1.4); cx.lineTo(X, Y + r * 1.4); cx.stroke(); glow(X, Y, r * 1.2, `rgba(255,255,255,${.7 * a})`, 'rgba(200,240,255,.2)'); } } }
 const fxLite = () => CFG.fx === 'lite' || (CFG.fx !== 'full' && W < 700);   // efeitos leves: tira os enfeites mais pesados (nuvens, luzes, bichinhos, chuva, poeira)
-const CLOUD_MAPS = new Set(['pt','ar','gb','fl','flr','pn','sn','sq','vt','rd']);
+const CLOUD_MAPS = new Set(['ar','gb','fl','flr','pn','sn','sq','vt','rd']);
 function drawClouds(){ if (!CLOUD_MAPS.has(G.map) || G.phase === 'menu' || fxLite()) return; const t = G.t;   // sombras de nuvens passando (só desenho)
   const vx = .6, vy = .25, span = SIZE + 16;
   for (let q = 0; q < 4; q++){ const r = SIZE * (.14 + (q * 13 % 5) * .03), x = ((q * 9.7 + t * .35 * vx * (1 + q * .15)) % span + span) % span - 8, y = ((q * 6.3 + SIZE * .2 * q + t * .35 * vy) % span + span) % span - 8;
@@ -2479,7 +2578,7 @@ function drawBirds(){ if (!BIRD_MAPS.has(G.map) || G.phase === 'menu' || fxLite(
 function drawMist(ms){
   if (!fogPat){ fogPat = cx.createPattern(FOG, 'repeat'); seaPat = cx.createPattern(SEA, 'repeat'); }
   const t = G.t;
-  if (G.map === 'pt' || G.map === 'ar' || G.map === 'rd'){ patLayer(seaPat, SEA, OX * .9 + t * 6, OY * .9 + Math.sin(t * .5) * 8, T / 40, 1);   // mar (navios e ilhas) ou lago gelado (redondo)
+  if (isShip() || G.map === 'ar' || G.map === 'rd'){ patLayer(seaPat, SEA, OX * .9 + t * 6, OY * .9 + Math.sin(t * .5) * 8, T / 40, 1);   // mar (navios e ilhas) ou lago gelado (redondo)
     if (G.map === 'rd'){ cx.fillStyle = 'rgba(170,215,240,.28)'; cx.fillRect(0, 0, W, H);
       for (let q = 0; q < 12; q++){ const a = q * 2.4 + t * .02 * (q % 2 ? 1 : -1), d = SIZE * (.6 + (q * 37 % 10) * .03), x = SIZE / 2 + Math.cos(a) * d, y = SIZE / 2 + Math.sin(a) * d + Math.sin(t + q) * .1, r = T * (.35 + (q % 3) * .18);   // blocos de gelo boiando
         if (onPlat(x, y)) continue; cx.fillStyle = 'rgba(30,60,80,.3)'; cx.beginPath(); cx.ellipse(sx(x), sy(y) + r * .25, r * 1.05, r * .55, 0, 0, 7); cx.fill();
@@ -2499,7 +2598,7 @@ function drawMist(ms){
 function draw(){
   const ms = Math.min(8, G.step || 0); cx.fillStyle = `rgb(${16 + ms},${20 + ms * 2.5},${Math.round(19 - ms * .5)})`; cx.fillRect(0, 0, W, H);   // a névoa fica mais verde a cada encolhida
   cx.save(); if (G.shake > .3 && CFG.shake !== false){ cx.translate(rnd(-1, 1) * G.shake, rnd(-1, 1) * G.shake); G.shake *= .86; } else G.shake = 0;   // tremida em golpes grandes
-  drawMist(ms); drawWhale(0); drawGyarados();
+  drawMist(ms); drawWhale(0);
   if (G.phase === 'menu'){ const t = performance.now() / 1000;   // fundo do menu: Pokébolas flutuando devagar na névoa
     for (let q = 0; q < 7; q++){ const h = hsh(q, 5), R = Math.min(W, H) * (.06 + h * .08), x = ((h * 1.7 + t * (.008 + h * .01)) % 1.2 - .1) * W, y = (.12 + ((q * .37 + h) % 1) * .8) * H + Math.sin(t * .4 + q) * 18, a = t * (.1 + h * .15) * (q % 2 ? 1 : -1);
       cx.save(); cx.translate(x, y); cx.rotate(a); cx.globalAlpha = .07 + h * .06; cx.strokeStyle = '#9be36a'; cx.lineWidth = Math.max(2, R * .09);
@@ -2511,7 +2610,7 @@ function draw(){
     const c = tileRGB(i, j, 15, S); cx.fillStyle = `rgb(${c[0] * .45 + 20 | 0},${c[1] * .5 + 30 | 0},${c[2] * .35 + 10 | 0})`; cx.fillRect(X, Y, T + .5, T + .5); }
   for (const [key, m] of S){ if (m !== 15 || G.map === 'gb') continue; const [i, j] = key.split(',').map(Number); if (S.get(ck(i, j + 1)) === 15) continue;
     cx.fillStyle = TH.cliff; cx.fillRect(sx(i), sy(j + 1) - 1, T, T * .38); cx.fillStyle = 'rgba(0,0,0,.28)'; cx.fillRect(sx(i), sy(j + 1) + T * .24, T, T * .14); }
-  if (G.map === 'pt') drawHulls(S);
+  if (isShip()) drawHulls(S);
   for (const [key, m] of S){ const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T || X > W + T || Y < -T * 2 || Y > H + T) continue; const c = tileRGB(i, j, m, S);
     cx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
     if (m === 15){ if (TH.nat) cx.fillRect(X, Y, T + .5, T + .5); else cx.fillRect(X + 1, Y + 1, T - 2, T - 2); TH.deco(i, j, X, Y, hsh(i, j), S); } else { cellPath(i, j, m, TH.nat ? 0 : 1); cx.fill(); }
@@ -2556,7 +2655,7 @@ function draw(){
   // zonas
   for (const z of G.zones) drawZone(z);
   drawPicks();
-  for (const o of G.obs) if (o.k === 'tree' && onPlat(o.x, o.y)){ const cr = (o.dr && o.dr > .7 ? o.dr : .95) * T; cx.fillStyle = 'rgba(10,30,10,.28)'; cx.beginPath(); cx.ellipse(sx(o.x) + T * .15, sy(o.y) - T * .2, cr * 1.05, cr * .75, 0, 0, 7); cx.fill(); }
+  for (const o of G.obs) if ((o.k === 'tree' || o.k === 'xmas') && onPlat(o.x, o.y)){ const cr = (o.dr && o.dr > .7 ? o.dr : .95) * T; cx.fillStyle = 'rgba(10,30,10,.28)'; cx.beginPath(); cx.ellipse(sx(o.x) + T * .15, sy(o.y) - T * .2, cr * 1.05, cr * .75, 0, 0, 7); cx.fill(); }
   // selos das Correntes ficam no chão, por baixo dos Pokémon
   for (const C of G.chains || []){ const k = clamp(1 - Math.max(0, C.t) / (C.wu || C.d.windup), 0, 1); darkSeal(sx(C.x), sy(C.y), (C.rad || C.d.rad) * T, k, G.t * 1.2, 1); }
   for (const u of G.units) if (u.alive && u.b.chain > 0 && u.b.ax != null) darkSeal(sx(u.b.ax), sy(u.b.ay) + T * .1, T * .5, 1, G.t * 2, .9);
@@ -2630,7 +2729,7 @@ function draw(){
   const us = G.units.filter(u => u.alive).concat(G.obs).sort((a, b) => a.y - b.y);
   for (const u of us){
     if (u.k){ drawObstacle(u); continue; }
-    if (G.me && G.me.alive && u !== G.me && !(teamOn() && u.team === G.me.team) && gbHidden(u, G.me)) continue;   // escondido no mato
+    if (G.me && G.me.alive && u !== G.me && !(teamOn() && u.team === G.me.team) && (gbHidden(u, G.me) || fogHidden(u, G.me))) continue;   // escondido no mato
     let alpha = 1;
     if (u.b.inv > 0) alpha = u === G.me ? .35 : 0;
     if (alpha === 0) continue;
@@ -2716,7 +2815,7 @@ function draw(){
   }
   drawCanopies(); drawTent(); drawBushes(); { const now = performance.now() / 1000, dt = Math.min(.1, now - (LEAVES.at || now)); LEAVES.at = now;   // folhinhas caindo do mato mexido
     for (let q = LEAVES.length - 1; q >= 0; q--){ const L = LEAVES[q]; L.t += dt; if (L.t > .9){ LEAVES.splice(q, 1); continue; } cx.save(); cx.translate(sx(L.x + Math.sin(L.t * 6 + L.r) * .15), sy(L.y + L.t * .6) - T * .3 * (1 - L.t)); cx.rotate(L.r + L.t * 5); cx.globalAlpha = 1 - L.t / .9; cx.fillStyle = L.r > 3 ? '#5cad46' : '#3f8e33'; cx.beginPath(); cx.ellipse(0, 0, T * .09, T * .04, 0, 0, 7); cx.fill(); cx.restore(); } cx.globalAlpha = 1; }
-  for (const f of LATE) f(); LATE.length = 0; drawHideTag(); drawGas(); drawWhale(1); drawBirds(); drawCrabs(); drawRopes(); drawClouds(); drawLights(); drawAmbient(); drawStorm(); drawSnow();
+  for (const f of LATE) f(); LATE.length = 0; drawHideTag(); drawGas(); drawWhale(1); drawBirds(); drawCrabs(); drawClouds(); drawLights(); drawAmbient(); drawStorm(); drawSnow();
   if (G.drop){ const D = G.drop, p = Math.min(1, D.t / D.dur), X = sx(D.x), Y = sy(D.y), h = (1 - p) * (1 - p) * 9, R = T * .55;   // Pokébola gigante caindo
     cx.fillStyle = `rgba(0,0,0,${.15 + .35 * p})`; cx.beginPath(); cx.ellipse(X, Y, R * (.4 + .8 * p), R * (.15 + .3 * p), 0, 0, 7); cx.fill();
     cx.strokeStyle = `rgba(255,210,63,${.5 + .4 * Math.sin(G.t * 14)})`; cx.setLineDash([6, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, T * 1.7, 0, 7); cx.stroke(); cx.setLineDash([]);
@@ -2773,7 +2872,7 @@ function draw(){
     if (f.ring){ if (!f.sk){ f.sk = 1; if (f.r >= 2) G.shake = Math.max(G.shake || 0, Math.min(8, f.r * (f.st === 'boom' ? 2.6 : 1.8))); } drawRingFx(f); continue; }
     if (f.beam){ if (!f.sk){ f.sk = 1; if (f.len > 5) G.shake = Math.max(G.shake || 0, 4); } drawBeamFx(f); continue; }
     cx.globalAlpha = k * .9; cx.fillStyle = f.col; cx.beginPath(); cx.arc(sx(f.x), sy(f.y), Math.max(1.5, f.size * k * .5), 0, 7); cx.fill(); cx.globalAlpha = 1; }
-  drawVision();
+  drawShipFog(); drawVision();
   cx.restore();
   if (G.phase !== 'menu'){ const vg = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75);
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(${8 + ms * 3},${20 + ms * 6},${10 + ms * 2},${.22 + ms * .05})`); cx.fillStyle = vg; cx.fillRect(0, 0, W, H); }
@@ -2792,9 +2891,20 @@ function cellPath(i, j, m, inset){ cx.beginPath(); let first = true;
   cx.closePath(); }
 function drawObstacle(o){
   cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(sx(o.x), sy(o.y) + T * .12, T * o.r, T * o.r * .4, 0, 0, 7); cx.fill();
-  if (o.k === 'tree'){ const x = sx(o.x), y = sy(o.y), w = T * o.r * .75;   // só o tronco: a copa é desenhada por cima de todos (drawCanopies)
+  if (o.k === 'tree' || o.k === 'xmas'){ const x = sx(o.x), y = sy(o.y), w = T * o.r * .75;   // só o tronco: a copa é desenhada por cima de todos (drawCanopies)
     cx.fillStyle = '#4a311a'; cx.beginPath(); cx.ellipse(x, y + T * .06, w * 1.5, w * .55, 0, 0, 7); cx.fill();
     cx.fillStyle = '#6b4a2a'; cx.fillRect(x - w * .6, y - T * .9, w * 1.2, T * .95); cx.fillStyle = '#8a6438'; cx.fillRect(x - w * .6, y - T * .9, w * .4, T * .95); return; }
+  if (o.k === 'bell'){ const X = sx(o.x), Y = sy(o.y), cd = o.down > 0, n = o.chg || 0, sw = o.anim > 0 ? Math.sin(G.t * 30) * .45 * (o.anim / .6) : Math.sin(G.t * 1.5 + o.x) * .04;
+    cx.fillStyle = 'rgba(0,0,0,.25)'; cx.beginPath(); cx.ellipse(X, Y + T * .08, T * .5, T * .15, 0, 0, 7); cx.fill();
+    if (n === BELL_MAX - 1 && !cd) glow(X, Y - T * .8, T * (1 + .15 * Math.sin(G.t * 10)), 'rgba(255,215,106,.45)', 'rgba(255,180,40,.12)');   // falta 1
+    cx.fillStyle = '#5a3a1c'; cx.fillRect(X - T * .45, Y - T * 1.25, T * .1, T * 1.3); cx.fillRect(X + T * .35, Y - T * 1.25, T * .1, T * 1.3); cx.fillStyle = '#7a5530'; cx.fillRect(X - T * .55, Y - T * 1.32, T * 1.1, T * .12);
+    cx.save(); cx.translate(X, Y - T * 1.2); cx.rotate(sw); const b = T * .3;
+    cx.fillStyle = cd ? '#8d8466' : '#e2b53c'; cx.strokeStyle = '#6a4a0c'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(-b * .35, b * .2); cx.quadraticCurveTo(-b * .45, b * 1.1, -b * 1.1, b * 1.75); cx.lineTo(b * 1.1, b * 1.75); cx.quadraticCurveTo(b * .45, b * 1.1, b * .35, b * .2); cx.quadraticCurveTo(0, -b * .15, -b * .35, b * .2); cx.closePath(); cx.fill(); cx.stroke();
+    cx.fillStyle = cd ? 'rgba(255,255,255,.12)' : 'rgba(255,245,200,.55)'; cx.beginPath(); cx.ellipse(-b * .35, b * .9, b * .14, b * .5, .25, 0, 7); cx.fill();
+    cx.fillStyle = '#4a3410'; cx.beginPath(); cx.arc(Math.sin(G.t * 30) * b * .3 * (o.anim > 0 ? 1 : 0), b * 1.85, b * .2, 0, 7); cx.fill(); cx.restore();
+    for (let q = 0; q < BELL_MAX; q++){ const px = X + (q - 1) * T * .26, py = Y - T * 1.6; cx.fillStyle = cd ? 'rgba(60,60,60,.7)' : q < n ? '#ffd23f' : 'rgba(30,20,10,.65)'; cx.strokeStyle = '#1a1206'; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(px, py, T * .09, 0, 7); cx.fill(); cx.stroke(); }
+    if (cd){ const f = 1 - o.down / BELL_CD; cx.strokeStyle = 'rgba(255,215,106,.8)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y - T * .75, T * .55, -Math.PI / 2, -Math.PI / 2 + f * 6.283); cx.stroke(); }
+    return; }
   if (o.k === 'cannon'){ const X = sx(o.x), Y = sy(o.y) - T * .1, rc = o.anim > 0 ? Math.min(1, o.anim / .4) * T * .15 : 0, now = performance.now() / 1000;
     if (o.anim > 0 && !o._af) o._fa = now; o._af = o.anim > 0;
     if (o._fa && now - o._fa < 1.6){ const d = now - o._fa, mx = X + Math.cos(o.face) * T * .65, my = Y - T * .1 + Math.sin(o.face) * T * .65;   // fumaça do disparo
@@ -2828,11 +2938,6 @@ function drawObstacle(o){
     cx.fillStyle = '#8a8478'; cx.beginPath(); cx.ellipse(x, y, r * 1.1, r * .85, 0, 0, 7); cx.fill();
     cx.fillStyle = '#a39d90'; cx.beginPath(); cx.ellipse(x - r * .25, y - r * .25, r * .55, r * .4, -.3, 0, 7); cx.fill();
     cx.strokeStyle = '#4e4a42'; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(x, y, r * 1.1, r * .85, 0, 0, 7); cx.stroke(); return; }
-  if (o.k === 'xmas'){ const x = sx(o.x), y = sy(o.y), u = T * o.r;
-    cx.fillStyle = '#6b4a2a'; cx.fillRect(x - u * .15, y - u * .35, u * .3, u * .4);
-    for (const [w, h, yy] of [[1.15, .8, -.3], [.9, .7, -.85], [.6, .6, -1.35]]){ cx.fillStyle = '#1f6b34'; cx.beginPath(); cx.moveTo(x - u * w, y + u * yy); cx.lineTo(x + u * w, y + u * yy); cx.lineTo(x, y + u * (yy - h * 1.2)); cx.closePath(); cx.fill(); cx.strokeStyle = '#e8f6ff'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(x - u * w, y + u * yy); cx.lineTo(x + u * w, y + u * yy); cx.stroke(); }
-    for (const [dx, dy, c] of [[-.4, -.5, '#ff4d4d'], [.35, -.65, '#ffd23f'], [-.15, -1.05, '#4dabff'], [.25, -1.25, '#ff4d4d'], [-.5, -.15, '#ffd23f'], [.55, -.2, '#4dabff']]){ cx.fillStyle = c; cx.beginPath(); cx.arc(x + dx * u, y + dy * u, u * .1, 0, 7); cx.fill(); }
-    cx.fillStyle = '#ffe066'; cx.font = `${u * .6}px system-ui`; cx.textAlign = 'center'; cx.fillText('★', x, y - u * 2.1); return; }
   if (o.k === 'volt'){ const sh = o.hitT > 0, f = Math.min(1, o.chg / VOLT_MAX), x = sx(o.x), y = sy(o.y) - T * .3, vr = o.r / OBR.volt;
     if (!(o.down > 0)){ const pu = .5 + .5 * Math.sin(G.t * (3 + f * 9)); glow(sx(o.x), sy(o.y) + T * .1, T * (.7 + f * .6) * vr, `rgba(255,230,90,${.12 + f * .3 * pu})`, `rgba(255,200,40,${.05 + f * .12 * pu})`);   // brilho no chão
       if (f > .45) for (const u of G.units){ if (!u.alive || Math.random() > .35) continue; const d = Math.hypot(u.x - o.x, u.y - o.y); if (d > 1.9 * vr + .4 || d < .2) continue;   // arcos até quem chega perto
@@ -2910,7 +3015,7 @@ function hudTop(){
   if (isZona()){ const ts = allTeams().sort((a, b) => zoneScore(b) - zoneScore(a)).slice(0, teamOn() ? 2 : 3);
     $('#top').innerHTML = `<span>Rodada ${G.round}</span>` + (G.phase === 'play' ? `<span class="${G.timer <= 10 ? 'warn' : ''}">⏱ ${Math.max(0, Math.ceil(G.timer))} s</span>` : '') + ts.map(t => `<span style="color:${teamCol(t)};font-weight:800">${teamOn() ? TEAMNAME[t] : teamLabel(t)} ${Math.round(zoneScore(t))}%${G.teamWins[t] ? ' · ' + '★'.repeat(G.teamWins[t]) : ''}</span>`).join('') + (G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">voltando…</span>' : '');
     $('#goldv').textContent = '🪙 ' + (G.me ? G.me.gold : 0); return; }
-  $('#top').innerHTML = `<span>Rodada ${G.round}</span>` + (G.map === 'gb' ? `<span style="font-weight:800">👥 ${G.units.filter(u => u.alive).length} vivos</span>` : '') + `<span class="sh">${platGone() ? 'sem chão' : G.map === 'gb' ? 'gás' : 'chão: ' + (PATSHORT[G.pat] || '')}</span>` + (!platGone() && G.phase === 'play' ? `<span class="${s <= WARN ? 'warn' : ''}">encolhe em ${s} s</span>` : '') + (G.me && G.me.out ? '<span class="warn">assistindo</span>' : G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">você caiu: assistindo</span>' : '');
+  $('#top').innerHTML = `<span>Rodada ${G.round}</span>` + (G.map === 'gb' ? `<span style="font-weight:800">👥 ${G.units.filter(u => u.alive).length} vivos</span>` : '') + `<span class="sh">${platGone() ? 'sem chão' : G.map === 'gb' ? 'gás' : 'chão: ' + (PATSHORT[G.pat] || '')}</span>` + (lastStage() && G.phase === 'play' ? (isShip() ? `<span style="color:#e0b878">⚓ a madeira do meio nunca cai</span>` : `<span style="color:#bff3ff">🧊 chão firme · o Lapras está ficando bravo</span>`) : !platGone() && G.phase === 'play' ? `<span class="${s <= WARN ? 'warn' : ''}">encolhe em ${s} s</span>` : '') + (G.me && G.me.out ? '<span class="warn">assistindo</span>' : G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">você caiu: assistindo</span>' : '');
   $('#goldv').textContent = '🪙 ' + (G.me ? G.me.gold : 0);
 }
 function buildEmotes(){ $('#emo').innerHTML = EMOTES.map((e, i) => `<button data-e="${i}" title="Tecla ${i + 1}">${e}</button>`).join(''); }
@@ -3030,7 +3135,7 @@ function renderMenu(){
   $('#botsRow').hidden = !!CFG.fmt || CFG.mode === 'pb'; $('#livesRow').hidden = CFG.mode === 'zn' || CFG.mode === 'pb';
   $('#ndif').innerHTML = [['easy','Fácil'],['normal','Normal'],['hard','Difícil']].map(([k, n]) => `<button class="chip" data-df="${k}" aria-pressed="${k === (CFG.diff || 'normal')}">${n}</button>`).join('');
   $('#nlives').innerHTML = [1,3,5].map(n => `<button class="chip" data-nl="${n}" aria-pressed="${n === CFG.lives}">${n}</button>`).join('');
-  $('#nmap').innerHTML = [['rand','🎲 Sorteado'],['sq','🏟️ Quadrado'],['rd','🧊 Redondo'],['vt','⚡ Voltorbs'],['fl','🌲 Floresta'],['pt','⛵ Navios'],['gb','🌿 Grande Batalha'],['ar','🏝️ Arquipélago'],['pn','🐸 Pântano'],['sn','😴 Snorlax']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
+  $('#nmap').innerHTML = [['rand','🎲 Sorteado'],['sq','🏟️ Quadrado'],['rd','🧊 Redondo'],['vt','⚡ Voltorbs'],['fl','🌲 Floresta'],['pt','⛵ Navios'],['ab','🏴‍☠️ Abordagem'],['gb','🌿 Grande Batalha'],['ar','🏝️ Arquipélago'],['pn','🐸 Pântano'],['sn','😴 Snorlax']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
 }
 $('#menu').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
