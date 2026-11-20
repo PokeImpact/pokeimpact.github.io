@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v51 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v52 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2410,6 +2410,7 @@ function draw(){
       const sp2 = tr.length > 2 ? Math.hypot(tr[0][0] - tr[2][0], tr[0][1] - tr[2][1]) : 0;
       if (sp2 > .32 && sp2 < 3 && !(u.air && u.air.sink) && alpha > 0){ for (let q = 5; q >= 2; q -= 1){ const p = tr[q]; if (!p) continue; drawSprite(u.sp, an, u.at, u.face, p[0], p[1], T / 28 * POKE[u.sp].sc, alpha * .12 * (6 - q), isShiny(u)); }
         cx.strokeStyle = 'rgba(255,255,255,.35)'; cx.lineWidth = 2; cx.beginPath(); for (let q = 0; q < 3; q++){ const o = (q - 1) * T * .18, dx = tr[0][0] - tr[2][0], dy = tr[0][1] - tr[2][1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l; cx.moveTo(sx(u.x) + nx * o, sy(u.y) - T * .3 + ny * o); cx.lineTo(sx(u.x - dx / l * 1.4) + nx * o, sy(u.y - dy / l * 1.4) - T * .3 + ny * o); } cx.stroke(); } }
+    if (an === 'Ball' && u._tr && u._tr.length > 4){ for (let q = 2; q < u._tr.length; q++){ const p = u._tr[q], k2 = 1 - q / 6; cx.fillStyle = `rgba(201,178,138,${.45 * k2})`; cx.beginPath(); cx.arc(sx(p[0]) + Math.sin(q * 3 + G.t * 9) * T * .1, sy(p[1]) + T * .12, T * (.12 + (6 - q) * .03), 0, 7); cx.fill(); } }   // poeira da Rolagem
     if (u.fuse){ const ft = Math.max(0, u.fuse.t), on = Math.sin(G.t * (12 + (1.5 - ft) * 26)) > 0, rr = (u.fuse.d.rad || SK.boom.rad) * T;   // pavio: pisca cada vez mais rápido e mostra o raio
       cx.save(); cx.setLineDash([6, 6]); cx.lineWidth = 2; cx.strokeStyle = on ? 'rgba(255,90,40,.85)' : 'rgba(255,200,80,.5)'; cx.beginPath(); cx.arc(sx(u.x), sy(u.y), rr, 0, 7); cx.stroke(); cx.restore();
       if (on){ const g = cx.createRadialGradient(sx(u.x), sy(u.y) - T * .3, 0, sx(u.x), sy(u.y) - T * .3, T * .9); g.addColorStop(0, 'rgba(255,80,30,.75)'); g.addColorStop(1, 'rgba(255,80,30,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(sx(u.x), sy(u.y) - T * .3, T * .9, 0, 7); cx.fill(); } }
@@ -2422,8 +2423,12 @@ function draw(){
     if (u.anim.n === 'Hurt' && u.anim.t < .14 && !sunk){ const q = 1 - u.anim.t / .14;   // clarão do golpe
       cx.globalCompositeOperation = 'lighter'; drawSprite(u.sp, an, u.anim.t, u.face, u.x, u.y - lift, T / 28 * POKE[u.sp].sc, .6 * q * alpha, isShiny(u)); cx.globalCompositeOperation = 'source-over';
       cx.strokeStyle = `rgba(255,255,255,${q})`; cx.lineWidth = 2; cx.beginPath(); for (let k2 = 0; k2 < 6; k2++){ const b = k2 * 1.047 + u.x * 5, r0 = T * (.35 + .3 * (1 - q)), r1 = r0 + T * .22 * q; cx.moveTo(sx(u.x) + Math.cos(b) * r0, sy(u.y - lift) - T * .3 + Math.sin(b) * r0); cx.lineTo(sx(u.x) + Math.cos(b) * r1, sy(u.y - lift) - T * .3 + Math.sin(b) * r1); } cx.stroke(); }
-    if (u.b.sleep > 0){ cx.font = `800 ${T * .3}px system-ui`; cx.fillStyle = '#c4b5fd'; for (let k = 0; k < 2; k++){ const ph = (G.t * .8 + k * .5) % 1; cx.fillText('z', sx(u.x) + T * (.25 + ph * .3), sy(u.y) - T * (.7 + ph * .6)); } }
-    if (u.b.fear > 0){ cx.font = `900 ${T * .45}px system-ui`; cx.fillStyle = '#efe6ff'; cx.fillText('!', sx(u.x) + Math.sin(G.t * 40) * 2, sy(u.y) - T * .95); }
+    if (u.b.sleep > 0){ cx.font = `800 ${T * .3}px system-ui`; cx.fillStyle = '#c4b5fd'; for (let k = 0; k < 2; k++){ const ph = (G.t * .8 + k * .5) % 1; cx.fillText('z', sx(u.x) + T * (.35 + ph * .3), sy(u.y) - T * (.8 + ph * .6)); }
+      const bp = (Math.sin(G.t * 2.5) + 1) / 2, br = T * (.06 + .14 * bp), bx2 = sx(u.x) + T * .16, by2 = sy(u.y) - T * .42;   // bolha de nariz
+      cx.fillStyle = 'rgba(190,230,255,.45)'; cx.strokeStyle = 'rgba(230,248,255,.9)'; cx.lineWidth = 1.2; cx.beginPath(); cx.arc(bx2 + br * .6, by2, br, 0, 7); cx.fill(); cx.stroke(); cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(bx2 + br * .3, by2 - br * .35, br * .22, 0, 7); cx.fill(); }
+    if (u.b.fear > 0){ glow(sx(u.x) + Math.sin(G.t * 40) * 2, sy(u.y) - T * .35, T * .75, 'rgba(120,60,200,.35)', 'rgba(60,20,110,.15)');   // medo: aura roxa tremendo
+      cx.font = `900 ${T * .45}px system-ui`; cx.fillStyle = '#efe6ff'; cx.strokeStyle = '#3b0764'; cx.lineWidth = 3; cx.strokeText('!', sx(u.x) + Math.sin(G.t * 40) * 2, sy(u.y) - T * .95); cx.fillText('!', sx(u.x) + Math.sin(G.t * 40) * 2, sy(u.y) - T * .95);
+      cx.strokeStyle = 'rgba(239,230,255,.7)'; cx.lineWidth = 1.5; cx.beginPath(); for (const s2 of [-1, 1]){ const x0 = sx(u.x) + s2 * T * .42; cx.moveTo(x0, sy(u.y) - T * .55); cx.lineTo(x0 + s2 * T * .08, sy(u.y) - T * .4); cx.lineTo(x0, sy(u.y) - T * .25); } cx.stroke(); }
     if (u.b.refl > 0 && !(u.b.shell > 0)){ const X = sx(u.x), Y = sy(u.y - lift) - T * .3, R = T * .66, a = G.t * .8; cx.beginPath(); for (let q = 0; q <= 6; q++){ const b = a + q * Math.PI / 3; if (q) cx.lineTo(X + Math.cos(b) * R, Y + Math.sin(b) * R); else cx.moveTo(X + Math.cos(b) * R, Y + Math.sin(b) * R); }
       cx.fillStyle = 'rgba(255,179,255,.14)'; cx.fill(); cx.strokeStyle = `rgba(255,200,255,${.7 + .3 * Math.sin(G.t * 20)})`; cx.lineWidth = 2.5; cx.stroke();
       const s = (G.t * 1.6) % 1; cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(X - R * .9 + s * R * 1.8, Y - R * .7); cx.lineTo(X - R * 1.2 + s * R * 1.8, Y + R * .7); cx.stroke(); }
@@ -2455,7 +2460,8 @@ function draw(){
     cosLabel(cx, u, sx(u.x), by, T, G.t);
     if (u.pow){ cx.font = `800 ${Math.max(10, T * .26)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'left'; cx.fillStyle = '#7fd8ff'; cx.fillText('🍬' + u.pow, sx(u.x) + bw / 2 + 3, by + 5); cx.textAlign = 'center'; }
     cx.font = `800 ${Math.max(10, T * .26)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = u.col;
-    if (u.b.conf > 0){ for (let k = 0; k < 3; k++){ const a = G.t * 5 + k * 2.1; cx.fillText('✦', sx(u.x) + Math.cos(a) * T * .3, by - T * .35 + Math.sin(a) * T * .1); } }   // confuso: estrelinhas girando
+    if (u.b.conf > 0){ cx.strokeStyle = 'rgba(224,123,255,.85)'; cx.lineWidth = 2; cx.beginPath(); for (let q = 0; q <= 24; q++){ const f = q / 24, a = -G.t * 7 + f * 12, rr = T * .32 * f; const px = sx(u.x) + Math.cos(a) * rr, py = by - T * .32 + Math.sin(a) * rr * .4; if (q) cx.lineTo(px, py); else cx.moveTo(px, py); } cx.stroke();   // espiral de confusão
+      for (let k = 0; k < 3; k++){ const a = G.t * 5 + k * 2.1; cx.fillText('✦', sx(u.x) + Math.cos(a) * T * .38, by - T * .35 + Math.sin(a) * T * .12); } }   // confuso: estrelinhas girando
     if (u.emo){ cx.font = `${T * .6}px system-ui`; cx.fillText(u.emo.e, sx(u.x) + T * .6, by - 2); }
   }
   drawCanopies(); drawTent(); drawBushes(); drawGas(); drawAmbient();
