@@ -136,6 +136,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 #tsk{position:fixed;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));width:190px;height:190px;z-index:7}
 #tsk .sl{position:absolute;width:54px;height:54px}
 @media (max-width:700px){#plist{width:auto;right:calc(8px + env(safe-area-inset-right,0px));flex-direction:row;flex-wrap:wrap;gap:3px}.pc{grid-template-columns:22px 34px;font-size:10px;padding:2px 4px}.pc img{width:22px;height:22px}.pc .nm>span:first-child{display:none}.pc .em{right:-6px;top:-10px;font-size:16px}#bar{display:none}#top{left:calc(8px + env(safe-area-inset-left,0px));transform:none;font-size:12px;gap:6px;padding:5px 10px}#emo{flex-direction:column;bottom:calc(215px + env(safe-area-inset-bottom,0px))}#emo button{width:34px;height:34px;font-size:17px}#feed{top:calc(100px + env(safe-area-inset-top,0px))}}
+@media (max-width:440px){#top{font-size:11px;gap:5px;padding:4px 9px;max-width:calc(100vw - 150px);overflow:hidden}#top .sh{display:none}#gold span{padding:4px 9px;font-size:13px}#emo{opacity:.8}#emo button{width:30px;height:30px;font-size:15px;border-radius:8px}#feed div{font-size:11px;max-width:calc(100vw - 24px);white-space:normal;text-align:right}}
 @media (prefers-reduced-motion:reduce){.pc .em{animation:none}}
 </style>
 
@@ -167,7 +168,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v58 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v59 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2093,6 +2094,11 @@ function nearMe(x, y, r){ const me = G.me; return me && me.alive && Math.hypot(m
 // ---------- enfeites de cada mapa ----------
 // no chão (antes dos Pokémon): emblema do ginásio, cabos dos Voltorbs, vitórias-régias do pântano
 function drawMapDecor(){ const c = SIZE / 2, t = G.t;
+  for (const o of G.obs) if (o.k === 'snor') for (let q = 0; q < 5; q++){ const h = hsh(q * 7 + 3, 11), a = q * 1.26 + h * .8, d = 1.5 + h * .6, x = o.x + Math.cos(a) * d, y = o.y + Math.sin(a) * d * .8 + .2; if (!onPlat(x, y)) continue;   // restos do lanche do Snorlax
+    const X = sx(x), Y = sy(y), k = q % 3; cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(X, Y + T * .08, T * .16, T * .05, 0, 0, 7); cx.fill();
+    if (k === 0){ cx.fillStyle = '#f3e6c4'; cx.fillRect(X - T * .05, Y - T * .12, T * .1, T * .2); cx.fillStyle = '#c8322b'; cx.beginPath(); cx.arc(X, Y - T * .14, T * .09, Math.PI, 0); cx.fill(); cx.beginPath(); cx.arc(X, Y + T * .09, T * .09, 0, Math.PI); cx.fill(); cx.fillStyle = '#5a3a1c'; cx.fillRect(X - T * .01, Y - T * .26, T * .02, T * .06); }   // miolo de maçã
+    else if (k === 1){ cx.fillStyle = '#3e7bd6'; for (let b = 0; b < 3; b++){ cx.beginPath(); cx.arc(X + (b - 1) * T * .08, Y + (b % 2) * T * .05, T * .06, 0, 7); cx.fill(); } cx.fillStyle = 'rgba(255,255,255,.5)'; cx.fillRect(X - T * .1, Y - T * .03, T * .03, T * .03); }   // frutinhas
+    else { cx.fillStyle = '#3f8a3a'; cx.beginPath(); cx.arc(X, Y, T * .15, Math.PI, 0); cx.fill(); cx.fillStyle = '#ff6b6b'; cx.beginPath(); cx.arc(X, Y, T * .12, Math.PI, 0); cx.fill(); cx.fillStyle = '#222'; for (let b = 0; b < 3; b++) cx.fillRect(X + (b - 1) * T * .05, Y - T * .06, T * .02, T * .03); } }   // fatia de melancia
   if ((G.map === 'sq' || G.map === 'sn' || G.map === 'gb') && onPlat(c, c)){ const X = sx(c), Y = sy(c), R = T * (G.map === 'gb' ? 3.4 : Math.min(2.4, SIZE * .16));   // Pokébola pintada no chão
     cx.strokeStyle = 'rgba(255,255,255,.2)'; cx.lineWidth = T * .12; cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.stroke(); cx.beginPath(); cx.moveTo(X - R, Y); cx.lineTo(X - R * .32, Y); cx.moveTo(X + R * .32, Y); cx.lineTo(X + R, Y); cx.stroke();
     cx.beginPath(); cx.arc(X, Y, R * .32, 0, 7); cx.stroke(); cx.fillStyle = 'rgba(232,50,47,.13)'; cx.beginPath(); cx.arc(X, Y, R, Math.PI, 0); cx.closePath(); cx.fill(); }
@@ -2613,7 +2619,14 @@ function drawObstacle(o){
     for (const [w, h, yy] of [[1.15, .8, -.3], [.9, .7, -.85], [.6, .6, -1.35]]){ cx.fillStyle = '#1f6b34'; cx.beginPath(); cx.moveTo(x - u * w, y + u * yy); cx.lineTo(x + u * w, y + u * yy); cx.lineTo(x, y + u * (yy - h * 1.2)); cx.closePath(); cx.fill(); cx.strokeStyle = '#e8f6ff'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(x - u * w, y + u * yy); cx.lineTo(x + u * w, y + u * yy); cx.stroke(); }
     for (const [dx, dy, c] of [[-.4, -.5, '#ff4d4d'], [.35, -.65, '#ffd23f'], [-.15, -1.05, '#4dabff'], [.25, -1.25, '#ff4d4d'], [-.5, -.15, '#ffd23f'], [.55, -.2, '#4dabff']]){ cx.fillStyle = c; cx.beginPath(); cx.arc(x + dx * u, y + dy * u, u * .1, 0, 7); cx.fill(); }
     cx.fillStyle = '#ffe066'; cx.font = `${u * .6}px system-ui`; cx.textAlign = 'center'; cx.fillText('★', x, y - u * 2.1); return; }
-  if (o.k === 'volt'){ const sh = o.hitT > 0, f = Math.min(1, o.chg / VOLT_MAX), x = sx(o.x), y = sy(o.y) - T * .3;
+  if (o.k === 'volt'){ const sh = o.hitT > 0, f = Math.min(1, o.chg / VOLT_MAX), x = sx(o.x), y = sy(o.y) - T * .3, vr = o.r / OBR.volt;
+    if (!(o.down > 0)){ const pu = .5 + .5 * Math.sin(G.t * (3 + f * 9)); glow(sx(o.x), sy(o.y) + T * .1, T * (.7 + f * .6) * vr, `rgba(255,230,90,${.12 + f * .3 * pu})`, `rgba(255,200,40,${.05 + f * .12 * pu})`);   // brilho no chão
+      if (f > .45) for (const u of G.units){ if (!u.alive || Math.random() > .35) continue; const d = Math.hypot(u.x - o.x, u.y - o.y); if (d > 1.9 * vr + .4 || d < .2) continue;   // arcos até quem chega perto
+        let px = x, py = y; const ex = sx(u.x), ey = sy(u.y) - T * .3; cx.strokeStyle = `rgba(255,246,160,${.5 + f * .4})`; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(px, py);
+        for (let q = 1; q <= 5; q++){ const k = q / 5; cx.lineTo(x + (ex - x) * k + (q < 5 ? (Math.random() - .5) * T * .35 : 0), y + (ey - y) * k + (q < 5 ? (Math.random() - .5) * T * .35 : 0)); } cx.stroke(); } }
+    if (o.down > 0){ for (let q = 0; q < 3; q++){ const a = G.t * 3 + q * 2.094, X2 = x + Math.cos(a) * T * .4 * vr, Y2 = y - T * .35 + Math.sin(a) * T * .14;   // tonto: estrelinhas girando e fumaça
+        cx.fillStyle = '#ffe066'; cx.beginPath(); for (let k = 0; k < 10; k++){ const b = k * .628 - Math.PI / 2, rr = k % 2 ? T * .05 : T * .12; cx.lineTo(X2 + Math.cos(b) * rr, Y2 + Math.sin(b) * rr); } cx.fill(); }
+      for (let q = 0; q < 3; q++){ const ph = (G.t * .6 + q / 3) % 1; cx.fillStyle = `rgba(90,90,100,${.35 * (1 - ph)})`; cx.beginPath(); cx.arc(x + Math.sin(q * 2 + G.t) * T * .15, y - T * (.2 + ph * .9), T * (.1 + ph * .2), 0, 7); cx.fill(); } }
     if (o.down > 0){ drawSprite(100, 'Hurt', 0, Math.PI / 2, o.x, o.y, T / 19 * o.r / OBR.volt, .35); cx.font = `800 ${Math.max(10, T * .26)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = '#ffe066'; cx.fillText(Math.ceil(o.down), x, y - T * .55); return; }
     drawSprite(100, sh || o.boom > 0 ? 'Hurt' : 'Idle', G.t, Math.PI / 2, o.x, o.y, T / 19 * o.r / OBR.volt, 1);
     const red = o.boom > 0 ? .45 + .4 * Math.sin(G.t * 30) : f * .55;
@@ -2629,6 +2642,13 @@ function drawObstacle(o){
     else if (o.frenzy > 0 && o.charge > 0) drawSprite(143, 'Stomp', Math.max(0, .9 - o.charge) * .55, o.face, o.x, o.y + .3, T / 26, 1);   // bravo: levanta e pisa
     else drawSprite(143, o.anim > .35 ? 'Hurt' : 'Idle', o.anim > .35 ? .1 : G.t, o.face, o.x + shake, o.y + .2, T / 20, 1);
     if (o.hitT > 0){ cx.strokeStyle = '#ffcf4a'; cx.lineWidth = 3; cx.beginPath(); cx.arc(sx(o.x), sy(o.y) - T * .2, T * .9, 0, 7); cx.stroke(); }
+    if (sleep){ const ph = ((G.t + o.x) % 3.2) / 3.2; if (ph < .45){ const k = ph / .45, mx = sx(o.x) + T * .1, my = sy(o.y) - T * .2;   // ronco: anel de ar saindo e folhinhas voando
+        cx.strokeStyle = `rgba(235,245,255,${.5 * (1 - k)})`; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(mx, my, T * (.4 + k * 1.6), T * (.2 + k * .8), 0, 0, 7); cx.stroke();
+        for (let q = 0; q < 4; q++){ const a = q * 1.57 + o.y, d = T * (.6 + k * 1.8); cx.save(); cx.translate(mx + Math.cos(a) * d, my + Math.sin(a) * d * .55); cx.rotate(k * 6 + q); cx.globalAlpha = 1 - k; cx.fillStyle = q % 2 ? '#7fbf4a' : '#a9c94a'; cx.beginPath(); cx.ellipse(0, 0, T * .1, T * .045, 0, 0, 7); cx.fill(); cx.restore(); } cx.globalAlpha = 1; } }
+    else if (o.charge > 0){ const X = sx(o.x), Y = sy(o.y) - T * 1.2;   // bufando: vapor saindo da cabeça e símbolo de raiva
+      for (const s2 of [-1, 1]) for (let q = 0; q < 3; q++){ const ph = (G.t * 2.2 + q / 3) % 1; cx.fillStyle = `rgba(245,245,250,${.6 * (1 - ph)})`; cx.beginPath(); cx.arc(X + s2 * T * (.35 + ph * .5), Y - ph * T * .5, T * (.08 + ph * .14), 0, 7); cx.fill(); }
+      const pz = 1 + .15 * Math.sin(G.t * 18), ax = X + T * .45, ay = Y - T * .1; cx.strokeStyle = '#ff3b3b'; cx.lineWidth = Math.max(2, T * .07) * pz; cx.lineCap = 'round'; cx.beginPath();
+      for (const [a, b] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]){ cx.moveTo(ax + a * T * .06, ay + b * T * .16 * pz); cx.quadraticCurveTo(ax + a * T * .06, ay + b * T * .06, ax + a * T * .16 * pz, ay + b * T * .06); } cx.stroke(); }
     if (sleep){ cx.textAlign = 'center'; for (let k = 0; k < 3; k++){ const ph = (G.t * .45 + k / 3) % 1; cx.globalAlpha = 1 - ph; cx.fillStyle = '#e8f0ff'; cx.font = `800 ${Math.max(9, T * (.22 + ph * .18))}px Nunito,system-ui,sans-serif`; cx.fillText('z', sx(o.x) + T * (.4 + ph * .5), sy(o.y) - T * (.5 + ph * .9)); } cx.globalAlpha = 1; }
     const x = sx(o.x), y = sy(o.y) - T * 1.3, f = o.frenzy > 0 ? 1 : Math.min(1, (o.chg || 0) / SNOR_MAX), bw = T * 1.2;
     cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(x - bw / 2 - 1, y - 1, bw + 2, 6); cx.fillStyle = f >= 1 ? '#ff5d5d' : '#ffcf4a'; cx.fillRect(x - bw / 2, y, bw * f, 4); return; }
