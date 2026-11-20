@@ -141,6 +141,20 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 </head>
 <body>
+<div id="gate" style="position:fixed;inset:0;z-index:999;background:#150f1c;display:flex;align-items:center;justify-content:center;padding:16px;font-family:Nunito,system-ui,sans-serif;color:#f1eaf7">
+<form id="gateF" style="background:#231a2e;border:1px solid #3b2d4a;border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:12px;width:min(340px,100%)">
+<b style="font-size:22px">🔒 Poke Impact · Teste</b>
+<small style="color:#a596b5;font-size:14px;line-height:1.4">Versão de testes com as novidades. Digite a senha que o Felipe mandou.</small>
+<input id="gateP" type="password" autocomplete="off" placeholder="senha" style="padding:11px 12px;border-radius:9px;border:1px solid #3b2d4a;background:#1a1323;color:#f1eaf7;font-size:16px">
+<button style="padding:11px;border-radius:9px;border:0;background:#9be36a;color:#150f1c;font-weight:800;font-size:16px;cursor:pointer">Entrar</button>
+<small id="gateM" style="color:#ff6a3d;min-height:1em"></small>
+</form></div>
+<script>(function(){ var H='cfca7f9de9d411247070bf5f4b6f9957c5e9b2baaf5762f9b92bd9ab011f4bbb', S='pokeimpact-teste:', K='pi-teste-senha', g=document.getElementById('gate');
+try { if (localStorage.getItem(K) === H){ g.remove(); return; } } catch(e){}
+function sha(s){ return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(function(b){ return Array.from(new Uint8Array(b)).map(function(x){ return x.toString(16).padStart(2, '0'); }).join(''); }); }
+document.getElementById('gateF').onsubmit = function(e){ e.preventDefault(); var v = document.getElementById('gateP').value.trim().toLowerCase();
+  sha(S + v).then(function(r){ if (r === H){ try { localStorage.setItem(K, H); } catch(x){} g.remove(); } else { document.getElementById('gateM').textContent = 'Senha errada.'; } }); };
+setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(); }, 60); })();</script>
 <canvas id="cv"></canvas>
 <div id="top" hidden></div>
 <div id="gold" hidden><span id="goldv">0</span><button class="ghost" id="cfgBtn" title="Teclas">⚙</button></div>
@@ -153,7 +167,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v33 · 19/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v34 · 19/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -935,7 +949,7 @@ function ughh(){   // voz robótica: um "ughh" curto com um golpe seco na frente
 function scare(){ if (!SUSTO_ON) return; ughh(); const el = $('#susto'); el.classList.remove('go'); void el.offsetWidth; el.classList.add('go'); }
 function die(e){
   e.alive = false; e.hp = 0; if (respawns()) e.resp = 3; else e.lives--;
-  if (e === G.me) scare(); e.b = {}; e.air = e.dash = e.wind = e.orbs = e.roll = e.fuse = null;
+  if (e === G.me && e.human) scare(); e.b = {}; e.air = e.dash = e.wind = e.orbs = e.roll = e.fuse = null;
   for (let k = 0; k < 22; k++) fx(e.x, e.y, rnd(-3, 3), rnd(-3, 3), rnd(.5, .9), pick(['#9be36a','#7d5aa6','#c9b8e0']), rnd(5, 10));
   const k = e.last && e.last.by !== e ? e.last.by : null;   // quem bateu por último leva a derrubada, mesmo se a névoa terminou o serviço
   if (k && G.kv){ const key = G.units.indexOf(k) + '>' + G.units.indexOf(e); G.kv[key] = (G.kv[key] || 0) + 1; }
