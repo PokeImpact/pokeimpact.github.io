@@ -170,7 +170,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v67 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v68 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2258,6 +2258,8 @@ function drawBushes(){ if (!G.bush) return; const me = G.me, S = platCells(), ne
     cx.stroke(); cx.lineCap = 'butt'; }
   cx.globalAlpha = 1; }
 function drawPicks(){ for (const p of G.picks){ const X = sx(p.x), Y = sy(p.y) - T * (.25 + .08 * Math.sin(G.t * 4 + p.x)), r = T * .2;   // Doce Raro
+  for (let q = 0; q < 3; q++){ const a = G.t * 2.2 + q * 2.094 + p.x, tw = .5 + .5 * Math.sin(G.t * 7 + q * 2 + p.y), sx2 = X + Math.cos(a) * r * 2.6, sy2 = Y + Math.sin(a) * r * 1.3, rr = r * (.25 + .3 * tw);   // brilhos girando
+    cx.fillStyle = p.k === 1 ? `rgba(200,255,200,${.5 + .5 * tw})` : `rgba(220,245,255,${.5 + .5 * tw})`; cx.beginPath(); cx.moveTo(sx2, sy2 - rr); cx.lineTo(sx2 + rr * .3, sy2); cx.lineTo(sx2, sy2 + rr); cx.lineTo(sx2 - rr * .3, sy2); cx.fill(); }
   cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(X, sy(p.y) + T * .05, r * 1.2, r * .4, 0, 0, 7); cx.fill();
   if (p.k === 1){ glow(X, Y, r * 2.4, 'rgba(160,255,160,.45)', 'rgba(60,180,60,.15)');   // Fruta Oran
     cx.fillStyle = '#2f9a3a'; cx.beginPath(); cx.ellipse(X - r * .5, Y - r * 1.05, r * .55, r * .25, -.5, 0, 7); cx.fill(); cx.beginPath(); cx.ellipse(X + r * .45, Y - r * 1.1, r * .5, r * .22, .5, 0, 7); cx.fill();
@@ -2643,6 +2645,9 @@ function draw(){
     cx.fillStyle = 'rgba(10,8,14,.55)'; for (let q = 25; q < u.maxhp; q += 25) cx.fillRect(bx + bw * q / u.maxhp - .5, by, 1, 4);   // marcas a cada 25 de vida
     if (u.sp === 94){ cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(sx(u.x) - bw / 2 - 1, by + 5, bw + 2, 4); cx.fillStyle = u.gshade ? '#ffffff' : 'rgba(220,210,255,.6)'; cx.fillRect(sx(u.x) - bw / 2, by + 6, bw * (u.gshade ? 1 : Math.min(1, (u.gshT || 0) / 10)), 2); }   // sombra do Gengar carregando
     cosLabel(cx, u, sx(u.x), by, T, G.t);
+    if (u.pow >= 2 && G.map === 'gb' && !G.units.some(o => o !== u && o.alive && (o.pow || 0) >= u.pow)){ const cxp = sx(u.x), cyp = by - T * .55 + Math.sin(G.t * 3) * T * .04, cw = T * .26;   // coroa do líder em Doces
+      cx.fillStyle = '#ffd23f'; cx.strokeStyle = '#7a5a00'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(cxp - cw, cyp + cw * .5); cx.lineTo(cxp - cw, cyp - cw * .3); cx.lineTo(cxp - cw * .5, cyp + cw * .1); cx.lineTo(cxp, cyp - cw * .6); cx.lineTo(cxp + cw * .5, cyp + cw * .1); cx.lineTo(cxp + cw, cyp - cw * .3); cx.lineTo(cxp + cw, cyp + cw * .5); cx.closePath(); cx.fill(); cx.stroke();
+      cx.fillStyle = '#4a8cff'; cx.beginPath(); cx.arc(cxp, cyp + cw * .15, cw * .16, 0, 7); cx.fill(); }
     if (u.pow){ cx.font = `800 ${Math.max(10, T * .26)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'left'; cx.fillStyle = '#7fd8ff'; cx.fillText('🍬' + u.pow, sx(u.x) + bw / 2 + 3, by + 5); cx.textAlign = 'center'; }
     cx.font = `800 ${Math.max(10, T * .26)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = u.col;
     if (u.b.conf > 0){ cx.strokeStyle = 'rgba(224,123,255,.85)'; cx.lineWidth = 2; cx.beginPath(); for (let q = 0; q <= 24; q++){ const f = q / 24, a = -G.t * 7 + f * 12, rr = T * .32 * f; const px = sx(u.x) + Math.cos(a) * rr, py = by - T * .32 + Math.sin(a) * rr * .4; if (q) cx.lineTo(px, py); else cx.moveTo(px, py); } cx.stroke();   // espiral de confusão
@@ -2662,6 +2667,8 @@ function draw(){
     cx.strokeStyle = `rgba(255,80,60,${.5 + .4 * Math.sin(G.t * 20)})`; cx.setLineDash([5, 4]); cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(b.tx), sy(b.ty), 1.4 * T, 0, 7); cx.stroke(); cx.setLineDash([]);
     cx.fillStyle = `rgba(255,80,60,${.12 + .2 * p})`; cx.beginPath(); cx.arc(sx(b.tx), sy(b.ty), 1.4 * T * p, 0, 7); cx.fill();
     cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(sx(x), sy(y), T * .2 * (1 - h / 6), T * .08, 0, 0, 7); cx.fill();
+    for (let q = 1; q <= 7; q++){ const pp = Math.max(0, p - q * .035), xx = b.sx + (b.tx - b.sx) * pp, yy = b.sy + (b.ty - b.sy) * pp, hh = Math.sin(pp * Math.PI) * 3; cx.fillStyle = `rgba(200,200,205,${.35 * (1 - q / 8)})`; cx.beginPath(); cx.arc(sx(xx), sy(yy - hh), T * (.12 + q * .03), 0, 7); cx.fill(); }   // rastro de fumaça
+    glow(sx(x), sy(y - h), T * .4, 'rgba(255,170,60,.5)', 'rgba(255,90,30,.15)');
     cx.fillStyle = '#1a1a1e'; cx.beginPath(); cx.arc(sx(x), sy(y - h), T * .2, 0, 7); cx.fill(); cx.fillStyle = 'rgba(255,255,255,.35)'; cx.beginPath(); cx.arc(sx(x) - T * .06, sy(y - h) - T * .06, T * .06, 0, 7); cx.fill(); }
   // projéteis
   for (const s of G.shots) if (s.lob){ const p = 1 - s.left / s.tot, h = Math.sin(p * Math.PI) * 1.6;
