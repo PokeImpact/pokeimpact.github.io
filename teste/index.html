@@ -168,7 +168,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v63 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v64 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2226,10 +2226,15 @@ function drawHulls(S){
 }
 // mato alto (por cima dos Pokémon): perto de você fica transparente
 const TUFT = [[.2, -.05, .36], [.8, -.05, .36], [.5, .2, .42], [.2, .55, .36], [.8, .55, .36]];
+const RUST = new Map(), LEAVES = [];
 function drawBushes(){ if (!G.bush) return; const me = G.me, S = platCells(), near = [], far = [];
+  RUST.clear(); const mark = (x, y, a) => { const i = Math.floor(x), j = Math.floor(y); if (G.bush.has(ck(i, j))) RUST.set(i * 1000 + j, Math.max(RUST.get(i * 1000 + j) || 0, a)); };
+  for (const u of G.units){ if (!u.alive || u.air) continue; const v = Math.hypot(u.rvx || 0, u.rvy || 0); if (v < .5) continue; if (u !== me && me && me.alive && gbHidden(u, me)) continue; mark(u.x, u.y, Math.min(1, v / 2)); }
+  for (const s2 of G.shots) if (!s2.lob) mark(s2.x, s2.y, 1);
+  for (const [k, a] of RUST) if (Math.random() < .06 * a && LEAVES.length < 40) LEAVES.push({ x:Math.floor(k / 1000) + Math.random(), y:k % 1000 + Math.random() * .5, t:0, r:Math.random() * 6 });
   for (const k of G.bush){ if (!S.has(k)) continue; const [i, j] = k.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T * 2 || X > W + T || Y < -T * 2 || Y > H + T) continue;
     (me && me.alive && Math.hypot(me.x - i - .5, me.y - j - .5) < 1.8 ? near : far).push([i, j, X, Y]); }
-  const layer = (L, col, dx, dy, k) => { cx.fillStyle = col; cx.beginPath(); for (const [i, j, X, Y] of L){ const sw = Math.sin(G.t * 2 + i * .7 + j) * T * .03; for (const [u, v, r] of TUFT){ const px = X + u * T + dx * T + sw, py = Y + v * T + dy * T; cx.moveTo(px + r * T * k, py); cx.arc(px, py, r * T * k, 0, 7); } } cx.fill(); };
+  const layer = (L, col, dx, dy, k) => { cx.fillStyle = col; cx.beginPath(); for (const [i, j, X, Y] of L){ const sw = Math.sin(G.t * 2 + i * .7 + j) * T * .03 + (RUST.get(i * 1000 + j) || 0) * Math.sin(G.t * 26 + i * 3) * T * .07; for (const [u, v, r] of TUFT){ const px = X + u * T + dx * T + sw, py = Y + v * T + dy * T; cx.moveTo(px + r * T * k, py); cx.arc(px, py, r * T * k, 0, 7); } } cx.fill(); };
   for (const [L, a] of [[far, .97], [near, .3]]){ if (!L.length) continue; cx.globalAlpha = a;
     layer(L, '#1f4d1b', 0, .05, 1.05); layer(L, '#2f7027', 0, 0, .92); layer(L, '#3f8e33', -.04, -.06, .66); layer(L, '#5cad46', -.08, -.12, .3);
     cx.strokeStyle = '#7cc45a'; cx.lineWidth = Math.max(1, T * .04); cx.lineCap = 'round'; cx.beginPath();
@@ -2260,7 +2265,11 @@ function drawMinimap(){ if (G.map !== 'gb' || G.phase === 'menu') return; const 
   for (const u of G.units){ if (!u.alive) continue; const mine = u === G.me, mate = teamOn() && G.me && u.team === G.me.team; if (!mine && !mate && (!G.me || !G.me.alive || gbHidden(u, G.me))) continue;
     cx.fillStyle = mine ? '#fff' : u.col; cx.beginPath(); cx.arc(x0 + u.x * m, y0 + u.y * m, mine ? 4 : 3, 0, 7); cx.fill(); } }
 // ---------- leitura: onde estou, estou na névoa, para onde ir ----------
-function drawMeHints(){ const me = G.me; if (!me || !me.alive) return; const X = sx(me.x), Y = sy(me.y);
+const HURT = { hp:0, t:-9, u:null };
+function drawHurt(me){ const now = performance.now() / 1000; if (HURT.u !== me){ HURT.u = me; HURT.hp = me.hp; } if (me.hp < HURT.hp - 1.2) HURT.t = now;   // névoa tira aos pouquinhos e não pisca HURT.hp = me.hp;
+  const hit = Math.max(0, 1 - (now - HURT.t) / .45), low = G.phase === 'play' && me.hp < me.maxhp * .25 ? .1 + .1 * Math.max(0, Math.sin(now * 7)) ** 4 : 0, a = Math.max(hit * .38, low); if (a <= .01) return;
+  const g = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .7); g.addColorStop(0, 'rgba(255,40,40,0)'); g.addColorStop(1, `rgba(220,20,30,${a})`); cx.fillStyle = g; cx.fillRect(0, 0, W, H); }
+function drawMeHints(){ const me = G.me; if (!me || !me.alive) return; const X = sx(me.x), Y = sy(me.y); drawHurt(me);
   if (G.phase === 'count' || (G.phase === 'play' && (G.playT || 0) < 1.5)){ const b = Math.sin(G.t * 8) * T * .12, ty = Y - T * 2 + b;
     cx.fillStyle = '#ffd23f'; cx.strokeStyle = '#1a1206'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(X, ty + T * .45); cx.lineTo(X - T * .25, ty); cx.lineTo(X + T * .25, ty); cx.closePath(); cx.fill(); cx.stroke();
     cx.font = `900 ${Math.max(12, T * .32)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.lineWidth = 4; cx.strokeText('VOCÊ', X, ty - T * .12); cx.fillText('VOCÊ', X, ty - T * .12); }
@@ -2589,7 +2598,9 @@ function draw(){
       for (let k = 0; k < 3; k++){ const a = G.t * 5 + k * 2.1; cx.fillText('✦', sx(u.x) + Math.cos(a) * T * .38, by - T * .35 + Math.sin(a) * T * .12); } }   // confuso: estrelinhas girando
     if (u.emo){ cx.font = `${T * .6}px system-ui`; cx.fillText(u.emo.e, sx(u.x) + T * .6, by - 2); }
   }
-  drawCanopies(); drawTent(); drawBushes(); drawHideTag(); drawGas(); drawWhale(1); drawBirds(); drawCrabs(); drawRopes(); drawClouds(); drawAmbient(); drawStorm(); drawSnow();
+  drawCanopies(); drawTent(); drawBushes(); { const now = performance.now() / 1000, dt = Math.min(.1, now - (LEAVES.at || now)); LEAVES.at = now;   // folhinhas caindo do mato mexido
+    for (let q = LEAVES.length - 1; q >= 0; q--){ const L = LEAVES[q]; L.t += dt; if (L.t > .9){ LEAVES.splice(q, 1); continue; } cx.save(); cx.translate(sx(L.x + Math.sin(L.t * 6 + L.r) * .15), sy(L.y + L.t * .6) - T * .3 * (1 - L.t)); cx.rotate(L.r + L.t * 5); cx.globalAlpha = 1 - L.t / .9; cx.fillStyle = L.r > 3 ? '#5cad46' : '#3f8e33'; cx.beginPath(); cx.ellipse(0, 0, T * .09, T * .04, 0, 0, 7); cx.fill(); cx.restore(); } cx.globalAlpha = 1; }
+  drawHideTag(); drawGas(); drawWhale(1); drawBirds(); drawCrabs(); drawRopes(); drawClouds(); drawAmbient(); drawStorm(); drawSnow();
   if (G.drop){ const D = G.drop, p = Math.min(1, D.t / D.dur), X = sx(D.x), Y = sy(D.y), h = (1 - p) * (1 - p) * 9, R = T * .55;   // Pokébola gigante caindo
     cx.fillStyle = `rgba(0,0,0,${.15 + .35 * p})`; cx.beginPath(); cx.ellipse(X, Y, R * (.4 + .8 * p), R * (.15 + .3 * p), 0, 0, 7); cx.fill();
     cx.strokeStyle = `rgba(255,210,63,${.5 + .4 * Math.sin(G.t * 14)})`; cx.setLineDash([6, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, T * 1.7, 0, 7); cx.stroke(); cx.setLineDash([]);
@@ -2666,7 +2677,11 @@ function drawObstacle(o){
   if (o.k === 'tree'){ const x = sx(o.x), y = sy(o.y), w = T * o.r * .75;   // só o tronco: a copa é desenhada por cima de todos (drawCanopies)
     cx.fillStyle = '#4a311a'; cx.beginPath(); cx.ellipse(x, y + T * .06, w * 1.5, w * .55, 0, 0, 7); cx.fill();
     cx.fillStyle = '#6b4a2a'; cx.fillRect(x - w * .6, y - T * .9, w * 1.2, T * .95); cx.fillStyle = '#8a6438'; cx.fillRect(x - w * .6, y - T * .9, w * .4, T * .95); return; }
-  if (o.k === 'cannon'){ const X = sx(o.x), Y = sy(o.y) - T * .1, rc = o.anim > 0 ? o.anim / .4 * T * .15 : 0;
+  if (o.k === 'cannon'){ const X = sx(o.x), Y = sy(o.y) - T * .1, rc = o.anim > 0 ? Math.min(1, o.anim / .4) * T * .15 : 0, now = performance.now() / 1000;
+    if (o.anim > 0 && !o._af) o._fa = now; o._af = o.anim > 0;
+    if (o._fa && now - o._fa < 1.6){ const d = now - o._fa, mx = X + Math.cos(o.face) * T * .65, my = Y - T * .1 + Math.sin(o.face) * T * .65;   // fumaça do disparo
+      for (let q = 0; q < 6; q++){ const f = Math.min(1, d / 1.6), a = o.face + (q - 2.5) * .25, dd = T * (.2 + d * (.6 + q % 3 * .2)); cx.fillStyle = `rgba(${200 - q * 8},${200 - q * 8},${205 - q * 8},${.55 * (1 - f)})`; cx.beginPath(); cx.arc(mx + Math.cos(a) * dd, my + Math.sin(a) * dd - d * T * .5, T * (.15 + d * .25), 0, 7); cx.fill(); }
+      if (d < .14) glow(mx, my, T * (1 - d / .14 * .5), 'rgba(255,250,200,.95)', 'rgba(255,150,40,.5)'); }
     cx.fillStyle = '#5a3a1c'; cx.fillRect(X - T * .32, Y - T * .12, T * .64, T * .3); cx.fillStyle = '#2a1a0c'; for (const s of [-1, 1]){ cx.beginPath(); cx.arc(X + s * T * .22, Y + T * .2, T * .12, 0, 7); cx.fill(); }
     cx.save(); cx.translate(X - Math.cos(o.face) * rc, Y - T * .1 - Math.sin(o.face) * rc); cx.rotate(o.face); cx.fillStyle = '#26272c'; cx.fillRect(-T * .2, -T * .13, T * .75, T * .26); cx.fillStyle = '#4b4d55'; cx.fillRect(-T * .2, -T * .13, T * .75, T * .07);
     cx.fillStyle = '#111'; cx.beginPath(); cx.arc(T * .55, 0, T * .1, 0, 7); cx.fill(); cx.restore(); return; }
