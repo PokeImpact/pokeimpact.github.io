@@ -315,7 +315,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
   <div class="box">
     <!-- 1. tela inicial -->
     <section class="scr" id="scHome">
-      <div class="mhead"><h1>Poke Impact <small>v83 · 20/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
+      <div class="mhead"><h1>Poke Impact <small>v84 · 20/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
       <p class="sub">Empurre todo mundo para a névoa tóxica e seja o último em pé na arena.</p>
       <div class="hero">
         <button class="heroPk" data-go="poke"><img id="heroImg" alt=""><span><small>Seu Pokémon</small><b id="heroName"></b><em>Trocar de Pokémon ›</em></span></button>
@@ -445,7 +445,7 @@ const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catc
 let SIZE = 16; const SHRINK = 15, WARN = 4, PUSH = .85, DMG = .4;   // golpe tira pouca vida: quem mata é a névoa
 const POKE = {
   94:  { n:'Gengar',    hp:95,  spd:2.2, kb:1.05, rad:.32, sc:1,   desc:'Fantasma: faz dormir, vira fantasma (os golpes atravessam), some no chão e arremessa com a língua. A cada 10 s ganha uma sombra: o próximo golpe de susto dá Medo. Leva menos dano da névoa.', kit:['sombra','mergulho','hipnose','fantasma','lingua'] },
-  51:  { n:'Dugtrio',   hp:100, spd:2.6, kb:1, rad:.3, sc:1,      desc:'Só desvia: um tiro e cai. Cava para sumir debaixo da terra.', kit:['cavar'] },
+  50:  { n:'Diglett',   hp:100, spd:2.6, kb:1, rad:.22, sc:.9,    desc:'Só desvia: um tiro e cai. Cava para sumir debaixo da terra.', kit:['cavar'] },
   129: { n:'Luquitarp', hp:100, spd:2.0, kb:1, rad:.3, sc:1,      desc:'Não ataca e não empurra ninguém: só pula, a cada 2 s, desviando de tudo. O Pokémon mais forte do mundo (só que não).', kit:['splash'] },
   6:   { n:'Charizard', hp:100, spd:2.1, kb:1, rad:.36, sc:1,    desc:'Alcance longo e queimaduras. Voa por cima dos golpes e ruge para afastar.', kit:['brasa','voo','rugido','turbilhao','explosao'] },
   9:   { n:'Blastoise', hp:120, spd:1.8, kb:.9, rad:.4, sc:1.05,  desc:'Pesado e lento. Deixa todo mundo lento com lama e joga para fora com a Hidro Bomba.', kit:['jato','concha','hidro','lama','surf'] },
@@ -477,7 +477,7 @@ const SK = {
   hidro:    { n:'Hidro Bomba', ic:'🌊', k:'beam', cd:9, price:10, windup:.7, len:8, w:.45, dmg:10, push:13, col:'#6cc6ff', desc:'Carrega e dispara um jato em linha reta que arremessa longe.' },
   giro:     { n:'Giro Rápido', ic:'🔄', k:'dash', cd:8, price:10, dist:4, spd:9, dmg:6, push:9, col:'#9fd8ff', desc:'Avança girando na concha e tira do caminho quem encostar.' },
   lama:     { n:'Bomba de Lama', ic:'🟤', k:'lob', cd:11, price:10, spd:6, range:7, rad:1.5, dur:2.5, dps:1.5, slow:.4, dmg:3, col:'#8a6a3e', zc:['rgba(110,80,40,.38)','rgba(160,120,70,.85)'], desc:'Arremessa uma bola de lama por cima de todos. Onde cai, faz uma poça que deixa lento quem pisar.' },
-  pedra:    { n:'Lançar Pedra', ic:'🪨', k:'lob', cd:2.5, price:0, spd:10, range:6.5, rad:.9, dmg:6, push:7, rock:1, col:'#9aa3ad', l3:{ frag:1 }, d3:'a pedra quebra em 3 pedaços que rolam para fora', desc:'Arremessa uma pedra por cima de tudo (passa por cima de árvores e não é anulada). Onde cai, empurra quem estiver em volta.' },
+  pedra:    { n:'Lançar Pedra', ic:'🪨', k:'lob', cd:2.5, price:0, spd:10, range:6.5, rad:.72, dmg:6, push:7, rock:1, col:'#9aa3ad', l3:{ frag:1 }, d3:'a pedra quebra em 3 pedaços que rolam para fora', desc:'Arremessa uma pedra por cima de tudo (passa por cima de árvores e não é anulada). Onde cai, empurra quem estiver em volta.' },
   pedra2:   { n:'Pedaço de Pedra', ic:'🪨', vis:'rock', k:'shot', spd:6, range:2.4, r:.2, dmg:2, push:4.5, col:'#9aa3ad' },
   rolagem:  { n:'Rolagem', ic:'🔘', k:'roll', cd:9, price:10, dur:1.2, v0:3, v1:6, acc:4, turn:2.2, push0:4, pushV:1.2, dmg:5, push:9, col:'#9aa3ad', l3:{ v1:7.2, acc:5 }, d3:'rola mais rápido e atropela mais forte', desc:'Vira bola e rola uns 6 a 7 casas, cada vez mais rápido. Curva devagar seguindo o mouse; quando passa do mouse, segue reto. Quanto mais rápido, mais forte o atropelo. Acertou alguém, continua rolando (boliche: cada um uma vez). Bateu em árvore ou Voltorb, para tonto. Aperte de novo para frear. Cuidado: golpes desviam a bola.' },
   magnitude:{ n:'Magnitude', ic:'🌋', k:'nova', cd:9, price:10, mag:1, windup:.5, rad:2.4, dmg:5, push:8.4, col:'#c9b28a', l3:{ magMin:6 }, d3:'nunca sai menos que 6', desc:'Faz o chão tremer em volta. A força é sorteada de 4 a 10 e aparece para todos no começo da carga (meio segundo para fugir). Quanto maior o número, maior o tremor e o empurrão.' },
@@ -517,6 +517,7 @@ for (const sp in (window.SPR || {})) {
   IMG[sp] = { por: SPR[sp].por, a: {} };
   for (const n in SPR[sp].a) { const a = SPR[sp].a[n], im = new Image(); im.src = a.png; IMG[sp].a[n] = { im, w:a.w, h:a.h, d:a.d, tot:a.d.reduce((x, y) => x + y, 0) }; }
 }
+if (IMG[50]) IMG[50].a.Walk = IMG[50].a.Idle;   // o "andar" do Diglett é um monte de terra: confunde com o Cavar
 function frameOf(sp, name, t){
   const S = IMG[sp]; if (!S) return null;
   const a = S.a[name] || S.a.Idle || S.a.Walk; if (!a || !a.im.complete) return null;
@@ -827,7 +828,7 @@ function safeSpot(x, y, m){ const S = platCells(), I = sInfo(S); if (!I.cells.le
   let best = null, bd = 1e9; for (const c of I.cells){ if (c.e < need - 1e-6) continue; const d = Math.hypot(c.x - x, c.y - y); if (d < bd){ bd = d; best = c; } }
   return best ? [best.x + rnd(-.15, .15), best.y + rnd(-.15, .15)] : [x, y]; }
 const MAPNAME = { dg:'do Desvie', sq:'quadrado', rd:'redondo', vt:'dos Voltorbs', fl:'floresta', flr:'floresta redonda', pt:'dos navios', ab:'da Abordagem', gb:'da Grande Batalha', ar:'arquipélago', pn:'pântano', sn:'do Snorlax' };
-const MAPLINE = { dg:['Um tiro e você cai. Cave (botão Q) para sumir debaixo da terra.', 'A cada pouco chega um Pokémon novo atirando mais difícil.', 'Linha piscando = tiro vindo por ali.'], gb:['Mato alto esconde. Atacar revela.', 'Quebre as caixas: cada Doce Raro deixa você mais forte.', 'Aqui o golpe dói 3 vezes mais. A névoa fecha devagar.'], pt:['A ponte nunca cai. A briga final é na roda do meio.', 'Acerte o mastro do meio do seu navio 3 vezes: os canhões atiram balas retas no outro navio.', 'Linha vermelha tracejada = bala de canhão vindo por ali. Sai da frente!'],
+const MAPLINE = { dg:['Um tiro e você cai. Cave (botão Q) para sumir debaixo da terra.', 'Caiu? Você vira atirador: mire e aperte Q para acertar quem sobrou.', 'Linha piscando = tiro vindo por ali.'], gb:['Mato alto esconde. Atacar revela.', 'Quebre as caixas: cada Doce Raro deixa você mais forte.', 'Aqui o golpe dói 3 vezes mais. A névoa fecha devagar.'], pt:['A ponte nunca cai. A briga final é na roda do meio.', 'Acerte o mastro do meio do seu navio 3 vezes: os canhões atiram balas retas no outro navio.', 'Linha vermelha tracejada = bala de canhão vindo por ali. Sai da frente!'],
   ab:['Sem ponte no começo: só dá para trocar tiro de um navio para o outro.', 'Acerte o mastro do meio do seu navio 3 vezes: os canhões atiram no outro.', 'As pranchas baixam com o tempo. Depois a briga é em cima delas.'],
   ar:['Pular de ilha em ilha custa um pouco de vida.', 'Fique de olho: a ilha que pisca é a próxima a afundar.', 'Voo, Teleporte e Portal valem ouro aqui.'],
   pn:['Lama deixa lento: quem fica na poça vira alvo fácil.', 'Bomba de Lama aqui é covardia.', 'Pântano: pise onde está seco.'],
@@ -1072,6 +1073,9 @@ function dgStep(dt){ if (G.map !== 'dg' || G.phase !== 'play') return; const c =
     G.obs.push({ k:'dsh', chg:sp, ang:a, x:c + Math.cos(a) * (R + 1.5), y:c + Math.sin(a) * (R + 1.5), r:.4, cd:G.dgN ? 1.2 : 1.6, charge:0, aim:0, dir:Math.random() < .5 ? 1 : -1, anim:0 });
     G.dgN++; if (t > 1) feed(`${K.n} chegou e começou a atirar!`, K.col === '#2b3550' ? '#9fb3d8' : K.col); }
   const al = G.units.filter(u => u.alive);
+  for (const u of G.units){ if (u.alive || !u.dgs) continue; const D = u.dgs; D.ang += D.dir * .1 * dt; u.x = c + Math.cos(D.ang) * (R + 2.3); u.y = c + Math.sin(D.ang) * (R + 2.3);
+    if (u.sk[0].cd > 0) u.sk[0].cd = Math.max(0, u.sk[0].cd - dt); if (u.anim && u.anim.n === 'Shoot'){ u.anim.t += dt; if (u.anim.t > .6) u.anim = { n:'Idle', t:0 }; }
+    if (!u.human && al.length && (D.cd -= dt) <= 0){ D.cd = rnd(2.4, 3.4); const e = pick(al); dgPlayerShot(u, e.x + (e.rvx || 0) * rnd(0, .5), e.y + (e.rvy || 0) * rnd(0, .5)); } }
   for (const o of G.obs){ if (o.k !== 'dsh') continue; const K = DGK[o.chg];
     o.ang += o.dir * .06 * dt; o.x = c + Math.cos(o.ang) * (R + 1.5); o.y = c + Math.sin(o.ang) * (R + 1.5); if (o.anim > 0) o.anim -= dt;
     if (o.charge > 0){ o.charge -= dt; if (o.charge <= 0){ o.charge = 0; dgFire(o, K); o.cd = rnd(...K.cd) * heat; } continue; }
@@ -1080,9 +1084,12 @@ function dgStep(dt){ if (G.map !== 'dg' || G.phase !== 'play') return; const c =
     o.aim = Math.atan2(ty - o.y, tx - o.x); o.charge = K.tel; }
   for (const b of G.dshots || []){ b.x += b.vx * dt; b.y += b.vy * dt; if (b.wait > 0){ b.wait -= dt; b.x -= b.vx * dt; b.y -= b.vy * dt; continue; }
     if (Math.hypot(b.x - c, b.y - c) > R + 4){ b.done = true; continue; }
-    for (const e of G.units){ if (!e.alive || e.air || e.b.intang > 0) continue; if (Math.hypot(e.x - b.x, e.y - b.y) < b.r + POKE[e.sp].rad){ b.done = true; e.last = null;
-      for (let k = 0; k < 14; k++) fx(b.x, b.y, rnd(-3, 3), rnd(-3, 3), .45, DGK[b.sp].col, 7); txt(e.x, e.y - 1.1, 'acertou!', '#ff8a6a'); die(e); break; } } }
+    for (const e of G.units){ if (!e.alive || e.air || e.b.intang > 0) continue; if (Math.hypot(e.x - b.x, e.y - b.y) < b.r + POKE[e.sp].rad){ b.done = true; e.last = b.by && b.by !== e ? { by:b.by, t:G.t } : null;
+      for (let k = 0; k < 14; k++) fx(b.x, b.y, rnd(-3, 3), rnd(-3, 3), .45, DGK[b.sp].col, 7); txt(e.x, e.y - 1.1, b.by ? b.by.name + ' acertou!' : 'acertou!', b.by ? b.by.col : '#ff8a6a'); die(e); break; } } }
   G.dshots = (G.dshots || []).filter(b => !b.done); }
+function dgPlayerShot(u, ax, ay){ const a = Math.atan2(ay - u.y, ax - u.x), sp = 4.4;
+  (G.dshots = G.dshots || []).push({ x:u.x + Math.cos(a) * .5, y:u.y + Math.sin(a) * .5, vx:Math.cos(a) * sp, vy:Math.sin(a) * sp, r:.24, sp:54, by:u });
+  u.face = a; u.anim = { n:'Shoot', t:0 }; for (let k = 0; k < 6; k++) fx(u.x + Math.cos(a) * .5, u.y + Math.sin(a) * .5, Math.cos(a) * rnd(1, 3), Math.sin(a) * rnd(1, 3), .35, u.col, 6); }
 function dgFire(o, K){ const a = o.aim, mk = (ang, w) => ({ x:o.x + Math.cos(ang) * .5, y:o.y + Math.sin(ang) * .5, vx:Math.cos(ang) * K.spd, vy:Math.sin(ang) * K.spd, r:K.r, sp:o.chg, wait:w || 0 });
   o.anim = .4; const S = G.dshots = G.dshots || [];
   if (K.pat === 'one' || K.pat === 'big') S.push(mk(a));
@@ -1372,6 +1379,7 @@ function cast(u, i, ax, ay){
     let dx = ax - u.x, dy = ay - u.y; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
     u.b.shell = 0; u.b.refl = 0; u.dash = { vx:dx * 9, vy:dy * 9, left:1.6, d:SHELL_DASH, L:lvMul(1), hit:new Set() }; u.anim = { n:'Rotate', t:0 }; u.face = Math.atan2(dy, dx);
     return true; }
+  if (G.map === 'dg' && !u.alive && u.dgs){ if (G.phase !== 'play' || u.sk[0].cd > 0) return false; dgPlayerShot(u, ax, ay); u.sk[0].cd = 2; return true; }   // atirador do Desvie
   if (s0 && u.roll){ if (s0.id === 'rolagem'){ u.roll.brake = 1; return true; } if (s0.id !== 'boom') return false; }   // rolando: só freia ou acende a Explosão
   if (s0 && u.fuse && s0.id !== 'rolagem') return false;   // pavio aceso: só dá para rolar
   const s = u.sk[i]; if (!s || !s.lvl || !canAct(u)) return false;
@@ -1398,7 +1406,8 @@ function cast(u, i, ax, ay){
       for (const e of fs){ const ex = e.x - u.x, ey = e.y - u.y, el = Math.hypot(ex, ey) || 1; const sh = mkShot(u, ex / el, ey / el, d, L, false, 1); sh.tg = e; G.shots.push(sh); }
       G.fx.push({ ring:1, x:u.x, y:u.y, r:1.2, t:0, life:.4, col:d.col }); break; }
     case 'orbit': u.orbs = { t:d.dur, d, L, a:0, alive:Array(d.cnt).fill(true) }; break;
-    case 'lob': { const r = Math.min(dl, d.range); G.shots.push({ o:u, lob:1, x:u.x, y:u.y, bx:u.x, by:u.y, sx0:u.x, sy0:u.y, tx:u.x + dx * r, ty:u.y + dy * r, vx:dx * d.spd, vy:dy * d.spd, left:r, tot:r, d, L, age:0, q:false, ph:1 }); break; }
+    case 'lob': { const r = Math.min(dl, d.range), lsp = d.rock ? r / (.75 + r * .04) : d.spd;   // pedra: no mínimo ~0,8 s no ar (de perto ela sobe devagar: dá para sair do círculo)
+      G.shots.push({ o:u, lob:1, x:u.x, y:u.y, bx:u.x, by:u.y, sx0:u.x, sy0:u.y, tx:u.x + dx * r, ty:u.y + dy * r, vx:dx * lsp, vy:dy * lsp, left:r, tot:r, d, L, age:0, q:false, ph:1 }); break; }
     case 'fan': for (let k = 0; k < d.cnt; k++){ const a = u.face + (k / (d.cnt - 1) - .5) * 2 * d.ang + rnd(-.04, .04), sh = mkShot(u, Math.cos(a), Math.sin(a), d, L, false, 1); sh.left = d.range * rnd(.85, 1); G.shots.push(sh); }
       for (let k = 0; k < 14; k++){ const a = u.face + rnd(-d.ang, d.ang); fx(u.x, u.y, Math.cos(a) * 5, Math.sin(a) * 5, .3, pick(['#ff6a1a','#ffd23f']), 6); } break;
     case 'sink': { const r = Math.min(dl, d.range), f = !!u.gshade; if (f){ u.gshade = false; u.gshT = 0; }
@@ -1525,7 +1534,8 @@ function die(e){
   e.alive = false; e.hp = 0; if (respawns()) e.resp = 3; else e.lives--;
   G.fx.push({ ring:1, x:e.x, y:e.y, r:1.1, t:0, life:.8, col:e.col, st:'ko' });
   if (e.pow > 0) for (let k = 0; k < e.pow; k++) G.picks.push({ x:e.x + rnd(-.7, .7), y:e.y + rnd(-.7, .7) });   // solta os doces
-  if (e === G.me && e.human && G.map !== 'dg') scare(); e.b = {}; e.air = e.dash = e.wind = e.orbs = e.roll = e.fuse = null;
+  if (e === G.me && e.human && G.map !== 'dg') scare();
+  if (G.map === 'dg'){ const c = SIZE / 2; e.dgs = { ang:Math.atan2(e.y - c, e.x - c), dir:Math.random() < .5 ? 1 : -1, cd:rnd(1.5, 2.5) }; e.sk[0].cd = 1.2; }   // vira atirador e.b = {}; e.air = e.dash = e.wind = e.orbs = e.roll = e.fuse = null;
   for (let k = 0; k < 22; k++) fx(e.x, e.y, rnd(-3, 3), rnd(-3, 3), rnd(.5, .9), pick(['#9be36a','#7d5aa6','#c9b8e0']), rnd(5, 10));
   const k = e.last && e.last.by !== e ? e.last.by : null;   // quem bateu por último leva a derrubada, mesmo se a névoa terminou o serviço
   if (k && G.kv){ const key = G.units.indexOf(k) + '>' + G.units.indexOf(e); G.kv[key] = (G.kv[key] || 0) + 1; }
@@ -1552,9 +1562,9 @@ function banner(h, s, dur = 1.6){ if (NET.on && NET.host && G.phase !== 'count')
 function newMatch(){
   if (NET.on && NET.host) waitMerge();
   G.units = []; $('#spec').hidden = true; G.mode = 'cl'; G.fmt = CFG.fmt || 0; G.teamWins = {}; G.caps = [];
-  G.me = makeUnit(CFG.map === 'dg' ? 51 : CFG.sp, NET.on ? NET.nick : 'Você', true, 0); G.me.skin = mySkin(); G.units.push(G.me);
-  if (NET.on) for (const c of NET.peers){ const u = makeUnit(CFG.map === 'dg' ? 51 : c.sp, c.nick, true, G.units.length); u.remote = c; c.u = u; u.skin = c.skin || null; G.units.push(u); }
-  const ids = Object.keys(POKE).map(Number).filter(n => n !== 129 && n !== 51), dgm = CFG.map === 'dg', spOf = sp => dgm ? 51 : sp;
+  G.me = makeUnit(CFG.map === 'dg' ? 50 : CFG.sp, NET.on ? NET.nick : 'Você', true, 0); G.me.skin = mySkin(); G.units.push(G.me);
+  if (NET.on) for (const c of NET.peers){ const u = makeUnit(CFG.map === 'dg' ? 50 : c.sp, c.nick, true, G.units.length); u.remote = c; c.u = u; u.skin = c.skin || null; G.units.push(u); }
+  const ids = Object.keys(POKE).map(Number).filter(n => n !== 129 && n !== 50), dgm = CFG.map === 'dg', spOf = sp => dgm ? 50 : sp;
   if (G.fmt){   // times: primeiro quem escolheu, depois os "automático" no time menor, e os bots completam
     G.me.pref = NET.on ? (NET.tm ?? -1) : -1; for (const c of NET.peers) if (c.u) c.u.pref = c.tm ?? -1;
     const n = [0, 0]; for (const u of G.units) if (u.pref === 0 || u.pref === 1){ u.team = u.pref; n[u.team]++; }
@@ -1576,7 +1586,7 @@ function newMatch(){
   $('#bar').hidden = false;
   buildBar(); buildEmotes(); startRound(); if (NET.on && NET.host) roomsTrack();
 }
-const MAPFEED = { dg:'Desvie: todo mundo de Dugtrio. Os Pokémon da água atiram em você: um tiro e você cai. Cavar te esconde, mas tem recarga longa.', gb:'Grande Batalha: mapa enorme, você só vê perto de você. Golpes tiram 3× mais vida, o mato esconde, caixas soltam Doce Raro e a névoa fecha devagar até o centro.', pt:'Navios: metade da sala em cada barco. Os barcos afundam por fora; a ponte e a roda do meio nunca caem. Mastro do meio acertado 3 vezes = os canhões atiram balas retas no outro navio.', ab:'Abordagem: os navios começam separados pelo mar. As pranchas baixam com o tempo; depois os navios afundam por fora.', ar:'Arquipélago: uma ilha afunda de cada vez (a que pisca é a próxima).', pn:'Pântano: poças de lama deixam lento.', sn:'Snorlax: ele se vira de vez em quando e esmaga quem estiver do lado. Muitos golpes nele o acordam.' };
+const MAPFEED = { dg:'Desvie: todo mundo de Diglett. Os Pokémon da água atiram em você: um tiro e você cai. Quem cai vira atirador até o fim da rodada.', gb:'Grande Batalha: mapa enorme, você só vê perto de você. Golpes tiram 3× mais vida, o mato esconde, caixas soltam Doce Raro e a névoa fecha devagar até o centro.', pt:'Navios: metade da sala em cada barco. Os barcos afundam por fora; a ponte e a roda do meio nunca caem. Mastro do meio acertado 3 vezes = os canhões atiram balas retas no outro navio.', ab:'Abordagem: os navios começam separados pelo mar. As pranchas baixam com o tempo; depois os navios afundam por fora.', ar:'Arquipélago: uma ilha afunda de cada vez (a que pisca é a próxima).', pn:'Pântano: poças de lama deixam lento.', sn:'Snorlax: ele se vira de vez em quando e esmaga quem estiver do lado. Muitos golpes nele o acordam.' };
 function startRound(){
   G.round++; G.map = G.matchMap || 'sq'; { const n = G.units.filter(u => !u.out).length; SIZE = G.map === 'gb' ? (n <= 4 ? 26 : n <= 6 ? 30 : 34) : sizeFor(n) + (isRd() ? 2 : 0) + (isShip() ? 8 : 0) - (G.map === 'dg' ? 2 : 0); } G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
   G.R = SIZE / 2 + .45; G.pat = isZona() || isPb() ? 'anel' : pickPat(G.map); G.seed = 1 + Math.floor(Math.random() * 1e9); buildStages(); G.decals = []; G.picks = []; G.oranT = 12; G.drop = null; G.dropN = 0; G.tent = null; G.tentCd = 12; G.sdT = 3; G.dmgMul = G.map === 'gb' ? 3 : 1; if (G.map === 'gb') G.shrinkIn = 30; makeObstacles();
@@ -3015,7 +3025,7 @@ function draw(){
     if (u.sp === 76){ if (u.roll) an = 'Ball'; else if (u.b.curl > 0) an = 'Curl'; else if (u.wind && u.wind.nova) an = 'Charge'; }
     { const tr = u._tr || (u._tr = []); tr.unshift([u.x, u.y - lift]); if (tr.length > 6) tr.length = 6;   // rastro-fantasma
       const sp2 = tr.length > 2 ? Math.hypot(tr[0][0] - tr[2][0], tr[0][1] - tr[2][1]) : 0;
-      if (sp2 > .32 && sp2 < 3 && !(u.air && u.air.sink) && alpha > 0){ for (let q = 5; q >= 2; q -= 1){ const p = tr[q]; if (!p) continue; drawSprite(u.sp, an, u.at, u.face, p[0], p[1], T / 28 * POKE[u.sp].sc, alpha * .12 * (6 - q), isShiny(u)); }
+      if (sp2 > .32 && sp2 < 3 && !(u.air && u.air.sink) && alpha > 0 && G.map !== 'dg'){ for (let q = 5; q >= 2; q -= 1){ const p = tr[q]; if (!p) continue; drawSprite(u.sp, an, u.at, u.face, p[0], p[1], T / 28 * POKE[u.sp].sc, alpha * .12 * (6 - q), isShiny(u)); }
         cx.strokeStyle = 'rgba(255,255,255,.35)'; cx.lineWidth = 2; cx.beginPath(); for (let q = 0; q < 3; q++){ const o = (q - 1) * T * .18, dx = tr[0][0] - tr[2][0], dy = tr[0][1] - tr[2][1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l; cx.moveTo(sx(u.x) + nx * o, sy(u.y) - T * .3 + ny * o); cx.lineTo(sx(u.x - dx / l * 1.4) + nx * o, sy(u.y - dy / l * 1.4) - T * .3 + ny * o); } cx.stroke(); } }
     if (an === 'Ball' && u._tr && u._tr.length > 4){ for (let q = 2; q < u._tr.length; q++){ const p = u._tr[q], k2 = 1 - q / 6; cx.fillStyle = `rgba(201,178,138,${.45 * k2})`; cx.beginPath(); cx.arc(sx(p[0]) + Math.sin(q * 3 + G.t * 9) * T * .1, sy(p[1]) + T * .12, T * (.12 + (6 - q) * .03), 0, 7); cx.fill(); } }   // poeira da Rolagem
     if (u.fuse){ const ft = Math.max(0, u.fuse.t), on = Math.sin(G.t * (12 + (1.5 - ft) * 26)) > 0, rr = (u.fuse.d.rad || SK.boom.rad) * T;   // pavio: pisca cada vez mais rápido e mostra o raio
@@ -3063,11 +3073,13 @@ function draw(){
     const hud = () => {
     const bw = T * .9, by = sy(u.y - lift) - T * 1.25;
     const hpp = Math.max(0, u.hp / u.maxhp), bx = sx(u.x) - bw / 2; u._lag = u._lag == null || u._lag < hpp ? hpp : u._lag + (hpp - u._lag) * .06;   // rastro branco: a vida perdida some devagar
+    if (G.map !== 'dg'){   // no Desvie um tiro derruba: barra de vida só polui
     cx.fillStyle = 'rgba(10,8,14,.75)'; cx.beginPath(); cx.roundRect(bx - 1.5, by - 1.5, bw + 3, 7, 3); cx.fill();
     if (u._lag > hpp){ cx.fillStyle = 'rgba(255,255,255,.85)'; cx.beginPath(); cx.roundRect(bx, by, bw * u._lag, 4, 2); cx.fill(); }
     cx.fillStyle = hpp > .5 ? '#7fe05a' : hpp > .25 ? '#ffcf4a' : '#ff5d5d'; cx.beginPath(); cx.roundRect(bx, by, Math.max(0, bw * hpp), 4, 2); cx.fill();
     cx.fillStyle = 'rgba(255,255,255,.3)'; cx.fillRect(bx + 1, by, Math.max(0, bw * hpp - 2), 1.2);
     cx.fillStyle = 'rgba(10,8,14,.55)'; for (let q = 25; q < u.maxhp; q += 25) cx.fillRect(bx + bw * q / u.maxhp - .5, by, 1, 4);   // marcas a cada 25 de vida
+    }
     if (u.sp === 94){ cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(sx(u.x) - bw / 2 - 1, by + 5, bw + 2, 4); cx.fillStyle = u.gshade ? '#ffffff' : 'rgba(220,210,255,.6)'; cx.fillRect(sx(u.x) - bw / 2, by + 6, bw * (u.gshade ? 1 : Math.min(1, (u.gshT || 0) / 10)), 2); }   // sombra do Gengar carregando
     cosLabel(cx, u, sx(u.x), by, T, G.t);
     if (u.pow >= 2 && G.map === 'gb' && !G.units.some(o => o !== u && o.alive && (o.pow || 0) >= u.pow)){ const cxp = sx(u.x), cyp = by - T * .55 + Math.sin(G.t * 3) * T * .04, cw = T * .26;   // coroa do líder em Doces
@@ -3108,6 +3120,11 @@ function draw(){
       for (const d of ds){ cx.beginPath(); cx.moveTo(X, Y); cx.lineTo(X + Math.cos(o.aim + d) * L, Y + Math.sin(o.aim + d) * L); cx.stroke(); } cx.setLineDash([]); }
     cx.strokeStyle = 'rgba(220,240,255,.5)'; cx.lineWidth = 2; for (let q = 0; q < 2; q++){ const ph = (G.t * 1.2 + q * .5) % 1; cx.globalAlpha = 1 - ph; cx.beginPath(); cx.ellipse(X, Y + T * .15, T * (.35 + ph * .5), T * (.14 + ph * .2), 0, 0, 7); cx.stroke(); } cx.globalAlpha = 1;
     drawSprite(o.chg, o.anim > 0 || o.charge > 0 ? 'Shoot' : 'Idle', o.charge > 0 ? (1 - o.charge / K.tel) * .9 : G.t, o.charge > 0 || o.anim > 0 ? o.aim : Math.atan2(SIZE / 2 - o.y, SIZE / 2 - o.x), o.x, o.y + .1, T / 24, 1); }
+  if (G.map === 'dg' && G.phase !== 'menu') for (const u of G.units){ if (u.alive || (!u.dgs && !isClient()) || u.x == null) continue; const X = sx(u.x), Y = sy(u.y);   // quem caiu, atirando da água
+    if (isClient() && Math.hypot(u.x - SIZE / 2, u.y - SIZE / 2) < dgR() + 1) continue;
+    cx.strokeStyle = u.col; cx.lineWidth = 2.5; cx.beginPath(); cx.ellipse(X, Y + T * .15, T * .42, T * .17, 0, 0, 7); cx.stroke();
+    drawSprite(54, u.anim && u.anim.n === 'Shoot' ? 'Shoot' : 'Idle', u.anim && u.anim.n === 'Shoot' ? u.anim.t : G.t, u.face || 0, u.x, u.y + .1, T / 26, .95);
+    cx.font = `800 ${Math.max(10, T * .3)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = u.col; cx.strokeStyle = 'rgba(0,0,0,.7)'; cx.lineWidth = 3; cx.strokeText(u.name, X, Y - T * .75); cx.fillText(u.name, X, Y - T * .75); }
   for (const b of G.dshots || []){ if (b.wait > 0) continue; const K = DGK[b.sp] || DGK[54], X = sx(b.x), Y = sy(b.y), r = b.r * T, sp = Math.hypot(b.vx, b.vy) || 1;
     shotTail(X, Y, b.vx / sp, b.vy / sp, r * 3, r * 1.1, K.col === '#2b3550' ? 'rgba(40,50,80,.6)' : K.col + '99');
     if (b.sp === 120){ cx.save(); cx.translate(X, Y); cx.rotate(G.t * 9); cx.fillStyle = K.col; cx.beginPath(); for (let q = 0; q < 10; q++){ const rr = q % 2 ? r * .45 : r * 1.25, a = q * Math.PI / 5; cx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } cx.closePath(); cx.fill(); cx.restore(); continue; }
@@ -3307,12 +3324,12 @@ function hudTop(){
   if (isZona()){ const ts = allTeams().sort((a, b) => zoneScore(b) - zoneScore(a)).slice(0, teamOn() ? 2 : 3);
     $('#top').innerHTML = `<span>Rodada ${G.round}</span>` + (G.phase === 'play' ? `<span class="${G.timer <= 10 ? 'warn' : ''}">⏱ ${Math.max(0, Math.ceil(G.timer))} s</span>` : '') + ts.map(t => `<span style="color:${teamCol(t)};font-weight:800">${teamOn() ? TEAMNAME[t] : teamLabel(t)} ${Math.round(zoneScore(t))}%${G.teamWins[t] ? ' · ' + '★'.repeat(G.teamWins[t]) : ''}</span>`).join('') + (G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">voltando…</span>' : '');
     $('#goldv').textContent = '🪙 ' + (G.me ? G.me.gold : 0); return; }
-  $('#top').innerHTML = `<span>Rodada ${G.round}</span>` + (G.map === 'gb' ? `<span style="font-weight:800">👥 ${G.units.filter(u => u.alive).length} vivos</span>` : '') + `<span class="sh">${platGone() ? 'sem chão' : G.map === 'gb' ? 'gás' : 'chão: ' + (PATSHORT[G.pat] || '')}</span>` + (G.map === 'dg' && G.phase === 'play' ? `<span style="color:#ffd76a">🎯 ${G.obs.filter(o => o.k === 'dsh').length} atirando · ${G.units.filter(u => u.alive).length} de pé</span>` : lastStage() && G.phase === 'play' ? (isShip() ? `<span style="color:#e0b878">⚓ a madeira do meio nunca cai</span>` : `<span style="color:#bff3ff">🧊 chão firme · o Lapras está ficando bravo</span>`) : !platGone() && G.phase === 'play' ? `<span class="${s <= WARN ? 'warn' : ''}">encolhe em ${s} s</span>` : '') + (G.me && G.me.out ? '<span class="warn">assistindo</span>' : G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">você caiu: assistindo</span>' : '');
+  $('#top').innerHTML = `<span>Rodada ${G.round}</span>` + (G.map === 'gb' ? `<span style="font-weight:800">👥 ${G.units.filter(u => u.alive).length} vivos</span>` : '') + `<span class="sh">${platGone() ? 'sem chão' : G.map === 'gb' ? 'gás' : 'chão: ' + (PATSHORT[G.pat] || '')}</span>` + (G.map === 'dg' && G.phase === 'play' ? `<span style="color:#ffd76a">🎯 ${G.obs.filter(o => o.k === 'dsh').length} atirando · ${G.units.filter(u => u.alive).length} de pé</span>` : lastStage() && G.phase === 'play' ? (isShip() ? `<span style="color:#e0b878">⚓ a madeira do meio nunca cai</span>` : `<span style="color:#bff3ff">🧊 chão firme · o Lapras está ficando bravo</span>`) : !platGone() && G.phase === 'play' ? `<span class="${s <= WARN ? 'warn' : ''}">encolhe em ${s} s</span>` : '') + (G.me && G.me.out && G.map !== 'dg' ? '<span class="warn">assistindo</span>' : G.me && !G.me.alive && G.phase === 'play' && G.map === 'dg' ? '<span style="color:#ffe066">você virou atirador: mire e aperte Q</span>' : G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">você caiu: assistindo</span>' : '');
   $('#goldv').textContent = '🪙 ' + (G.me ? G.me.gold : 0);
 }
 function buildEmotes(){ $('#emo').innerHTML = EMOTES.map((e, i) => `<button data-e="${i}" title="Tecla ${i + 1}">${e}</button>`).join(''); }
 function myEmote(e){ if (!G.me) return; if (isClient()) netSend({ t:'emo', e }); emote(G.me, e); }
-function myCast(i, x, y){ if (!G.me) return false; if (isClient()){ if (G.phase === 'play' && G.me.alive) netSend({ t:'c', i, x:+x.toFixed(2), y:+y.toFixed(2) }); return true; } return cast(G.me, i, x, y); }
+function myCast(i, x, y){ if (!G.me) return false; if (isClient()){ if (G.phase === 'play' && (G.me.alive || G.map === 'dg')) netSend({ t:'c', i, x:+x.toFixed(2), y:+y.toFixed(2) }); return true; } return cast(G.me, i, x, y); }
 $('#emo').addEventListener('click', e => { const b = e.target.closest('button'); if (b) myEmote(EMOTES[+b.dataset.e]); });
 
 /* ---------- entrada ---------- */
@@ -3424,7 +3441,7 @@ const POKE_ORDER = [6, 9, 65, 76, 94, 123];
 const MODES = [['nv','🌫️ Névoa','Empurre todo mundo para a névoa tóxica', ['sq','rd','vt','fl','ar','pn','sn']],
   ['nav','⚓ Batalha de navios','Melhor com 6 a 8 jogadores (ou em times)', ['pt','ab']],
   ['gb','🌿 Grande Batalha','Mapa enorme, mato, caixas e golpes mais fortes', ['gb']],
-  ['dv','🎯 Desvie','Minigame: todo mundo de Dugtrio. Um tiro e você cai; só dá para cavar.', ['dg']]];
+  ['dv','🎯 Desvie','Minigame: todo mundo de Diglett. Um tiro e você cai, e aí vira atirador.', ['dg']]];
 const modeOf = m => (MODES.find(M => M[3].includes(m)) || MODES[0])[0];
 const modePool = () => (MODES.find(M => M[0] === (CFG.cat || 'nv')) || MODES[0])[3];   // o Luquitarp saiu do menu (era só zoeira)
 const POKE_TAG = { 6:'Alcance', 9:'Controle', 65:'Truques', 76:'Tanque', 94:'Fantasma', 123:'Dano' };
