@@ -168,7 +168,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v61 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v62 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2044,6 +2044,8 @@ function drawRingFx(f){
     cx.strokeStyle = `rgba(255,179,255,${k})`; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(X, Y, R * (.5 + p), R * (.5 + p) * .4, 0, 0, 7); cx.stroke();
     cx.fillStyle = `rgba(255,240,255,${k})`; for (let q = 0; q < 6; q++){ const a = q * 1.05 + p * 4, rr = R * (.4 + p * .8); cx.fillRect(X + Math.cos(a) * rr - 1.5, Y - T * p * 1.5 + Math.sin(a) * rr * .4 - 1.5, 3, 3); } return; }
   if (f.st === 'surf'){ const rr = R * (.35 + .75 * p);
+    { const g = cx.createRadialGradient(X, Y, rr * .3, X, Y, rr); g.addColorStop(0, 'rgba(60,140,230,0)'); g.addColorStop(1, `rgba(90,170,240,${.35 * k})`); cx.fillStyle = g; cx.beginPath(); cx.arc(X, Y, rr, 0, 7); cx.fill(); }   // água por dentro da onda
+    for (let q = 0; q < 16; q++){ const b = q / 16 * 6.283 + f.x, w = rr + T * (.3 + p * 1.1) * (.6 + (q * 7 % 5) * .1), hy = T * .8 * Math.sin(p * Math.PI); cx.fillStyle = `rgba(210,240,255,${.8 * k})`; cx.beginPath(); cx.arc(X + Math.cos(b) * w, Y + Math.sin(b) * w - hy, T * .07 + 1, 0, 7); cx.fill(); }   // gotas jogadas para fora
     cx.strokeStyle = `rgba(40,120,220,${.8 * k})`; cx.lineWidth = T * .5 * k + 2; cx.beginPath(); cx.arc(X, Y, rr, 0, 7); cx.stroke();
     cx.strokeStyle = `rgba(120,200,255,${.9 * k})`; cx.lineWidth = T * .22 * k + 1; cx.beginPath(); cx.arc(X, Y, rr + T * .12, 0, 7); cx.stroke();
     cx.fillStyle = `rgba(255,255,255,${k})`; for (let q = 0; q < 28; q++){ const b = q / 28 * 6.283 + Math.sin(q * 2.3) * .1, w = rr + T * (.2 + .1 * Math.sin(q * 5 + p * 20)); cx.beginPath(); cx.arc(X + Math.cos(b) * w, Y + Math.sin(b) * w, T * .05 + 1, 0, 7); cx.fill(); } return; }
@@ -2071,6 +2073,9 @@ function drawBeamFx(f){ // Hidro Bomba / Raio de Gelo: bordas onduladas, miolo b
   cx.fillStyle = 'rgba(255,255,255,.55)'; path(W * .6, 2); cx.fill();
   cx.fillStyle = '#fff'; path(W * .25, 4); cx.fill();
   cx.fillStyle = 'rgba(255,255,255,.9)'; for (let q = 0; q < 14; q++){ const x = ((q * .137 + G.t * 2.5) % 1) * L, y = (q % 2 ? 1 : -1) * W * (1 + .15 * Math.sin(q)); cx.beginPath(); cx.arc(x, y, T * .05 + 1, 0, 7); cx.fill(); }
+  cx.strokeStyle = 'rgba(255,255,255,.8)'; cx.lineWidth = 2.5; cx.beginPath(); cx.ellipse(T * .15, 0, T * .12, W * 1.5 + 2, 0, 0, 7); cx.stroke();   // anel na boca
+  for (let q = 0; q < 10; q++){ const a = (q / 9 - .5) * 2.2, d = T * (.2 + ((q * 37 + G.t * 40) % 10) / 10 * .7); cx.fillStyle = q % 2 ? 'rgba(255,255,255,.9)' : f.col; cx.beginPath(); cx.arc(L + Math.cos(a) * d, Math.sin(a) * d * 1.3, T * .06 + 1, 0, 7); cx.fill(); }   // respingo na ponta
+  glow(L, 0, T * .7, 'rgba(255,255,255,.7)', 'rgba(200,235,255,.25)');
   cx.restore(); cx.globalAlpha = 1; }
 // áreas no chão
 function drawZone(z){ const X = sx(z.x), Y = sy(z.y), R = z.rad * T, t = G.t;
@@ -2573,7 +2578,11 @@ function draw(){
   for (const s of G.shots) if (s.lob){ const p = 1 - s.left / s.tot, h = Math.sin(p * Math.PI) * 1.6;
     cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(sx(s.x), sy(s.y), T * .25, T * .1, 0, 0, 7); cx.fill();
     cx.strokeStyle = 'rgba(160,120,70,.6)'; cx.setLineDash([4, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(s.tx), sy(s.ty), s.d.rad * T, 0, 7); cx.stroke(); cx.setLineDash([]);
+    { const rem = Math.max(.08, 1 - p); cx.strokeStyle = `rgba(255,${s.d.rock ? 220 : 190},140,${.35 + .5 * p})`; cx.lineWidth = 2.5; cx.beginPath(); cx.arc(sx(s.tx), sy(s.ty), s.d.rad * T * rem, 0, 7); cx.stroke();   // anel fechando: falta pouco para cair
+      const dx = s.tx - s.x, dy = s.ty - s.y; cx.fillStyle = 'rgba(255,240,210,.45)'; for (let q = 1; q <= 6; q++){ const f = q / 7, pp = p + (1 - p) * f, hh = Math.sin(pp * Math.PI) * 1.6; cx.beginPath(); cx.arc(sx(s.x + dx * f), sy(s.y + dy * f - hh), Math.max(1.5, T * .04), 0, 7); cx.fill(); } }   // rota que falta
+    cx.fillStyle = 'rgba(0,0,0,.22)'; cx.beginPath(); cx.ellipse(sx(s.x), sy(s.y), T * (.12 + .2 * p), T * (.05 + .08 * p), 0, 0, 7); cx.fill();
     const X = sx(s.x), Y = sy(s.y - h), r = T * (s.d.rock ? .3 : .28);
+    if (!s.d.rock) for (let q = 0; q < 3; q++){ const ph = (G.t * 3 + q / 3) % 1; cx.fillStyle = `rgba(110,78,42,${.7 * (1 - ph)})`; cx.beginPath(); cx.arc(X + Math.sin(q * 2.1 + s.x) * r * .5, Y + r + ph * T * .5, r * .18 * (1 - ph * .5), 0, 7); cx.fill(); }   // pingos de lama
     if (s.d.rock){ cx.save(); cx.translate(X, Y); cx.rotate(p * 8); cx.fillStyle = '#8d96a0'; cx.strokeStyle = '#3f454c'; cx.lineWidth = 2; cx.beginPath(); for (let q = 0; q < 7; q++){ const b = q / 7 * 6.283, rr = r * (.85 + ((q * 37) % 5) * .07); if (q) cx.lineTo(Math.cos(b) * rr, Math.sin(b) * rr); else cx.moveTo(rr, 0); } cx.closePath(); cx.fill(); cx.stroke();
       cx.fillStyle = '#b4bcc6'; cx.beginPath(); cx.ellipse(-r * .25, -r * .3, r * .35, r * .2, -.5, 0, 7); cx.fill(); cx.restore(); }
     else { cx.fillStyle = '#6e4e2a'; cx.beginPath(); cx.arc(X, Y, r, 0, 7); cx.fill(); for (let q = 0; q < 3; q++){ const b = q * 2.1 + p * 4; cx.beginPath(); cx.arc(X + Math.cos(b) * r * .8, Y + Math.sin(b) * r * .8, r * .35, 0, 7); cx.fill(); }
