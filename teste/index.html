@@ -177,7 +177,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v76 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v77 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado (Voltorb que rebate tudo), redondo (Lapras e gelo), Voltorbs, floresta, navios (canhões, barris e ventania), arquipélago, pântano, Snorlax e a Grande Batalha (mapa enorme com mato e caixas). Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2311,6 +2311,15 @@ const HURT = { hp:0, t:-9, u:null };
 function drawHurt(me){ const now = performance.now() / 1000; if (HURT.u !== me){ HURT.u = me; HURT.hp = me.hp; } if (me.hp < HURT.hp - 1.2) HURT.t = now;   // névoa tira aos pouquinhos e não pisca HURT.hp = me.hp;
   const hit = Math.max(0, 1 - (now - HURT.t) / .45), low = G.phase === 'play' && me.hp < me.maxhp * .25 ? .1 + .1 * Math.max(0, Math.sin(now * 7)) ** 4 : 0, a = Math.max(hit * .38, low); if (a <= .01) return;
   const g = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .7); g.addColorStop(0, 'rgba(255,40,40,0)'); g.addColorStop(1, `rgba(220,20,30,${a})`); cx.fillStyle = g; cx.fillRect(0, 0, W, H); }
+// Grande Batalha: setas na borda da tela para a Pokébola gigante caindo e para os aliados que estão fora da tela
+function edgeArrow(wx, wy, col, label){ const X = sx(wx), Y = sy(wy), m = 46; if (X > m && X < W - m && Y > m + 30 && Y < H - m - 60) return;
+  const cxm = W / 2, cym = H / 2, a = Math.atan2(Y - cym, X - cxm), k = Math.min((W / 2 - m) / Math.abs(Math.cos(a) || 1e-6), (H / 2 - m - 40) / Math.abs(Math.sin(a) || 1e-6)), ex = cxm + Math.cos(a) * k, ey = cym + Math.sin(a) * k;
+  cx.save(); cx.translate(ex, ey); cx.fillStyle = 'rgba(14,10,24,.8)'; cx.beginPath(); cx.arc(0, 0, 15, 0, 7); cx.fill(); cx.strokeStyle = col; cx.lineWidth = 2.5; cx.stroke();
+  cx.rotate(a); cx.fillStyle = col; cx.beginPath(); cx.moveTo(24, 0); cx.lineTo(15, -7); cx.lineTo(15, 7); cx.closePath(); cx.fill(); cx.rotate(-a);
+  cx.font = '800 12px Nunito,system-ui,sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = '#fff'; cx.fillText(label, 0, 1); cx.textBaseline = 'alphabetic'; cx.restore(); }
+function drawEdgeArrows(){ if (G.map !== 'gb' || G.phase !== 'play' || !G.me) return;
+  if (G.drop && Math.sin(G.t * 10) > -.5) edgeArrow(G.drop.x, G.drop.y, '#ffd23f', '⬤');
+  if (teamOn() && G.me.alive) for (const u of G.units) if (u !== G.me && u.alive && u.team === G.me.team) edgeArrow(u.x, u.y, u.col, (u.name || '?').slice(0, 1).toUpperCase()); }
 function drawMeHints(){ const me = G.me; if (!me || !me.alive) return; const X = sx(me.x), Y = sy(me.y); drawHurt(me);
   if (G.phase === 'count' || (G.phase === 'play' && (G.playT || 0) < 1.5)){ const b = Math.sin(G.t * 8) * T * .12, ty = Y - T * 2 + b;
     cx.fillStyle = '#ffd23f'; cx.strokeStyle = '#1a1206'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(X, ty + T * .45); cx.lineTo(X - T * .25, ty); cx.lineTo(X + T * .25, ty); cx.closePath(); cx.fill(); cx.stroke();
@@ -2749,7 +2758,7 @@ function draw(){
   cx.restore();
   if (G.phase !== 'menu'){ const vg = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75);
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(${8 + ms * 3},${20 + ms * 6},${10 + ms * 2},${.22 + ms * .05})`); cx.fillStyle = vg; cx.fillRect(0, 0, W, H); }
-  drawMeHints(); drawMinimap(); drawTransition();
+  drawMeHints(); drawEdgeArrows(); drawMinimap(); drawTransition();
   cx.textAlign = 'center';
   cx.lineJoin = 'round';
   for (const t of G.txt){ const num = /^\d+$/.test(t.s), v = num ? +t.s : 0, big = num ? Math.min(1.9, 1 + v / 25) : 1, pop = t.t < .12 ? 1 + (1 - t.t / .12) * .6 : 1, sz = Math.max(12, T * .32) * big * pop;
