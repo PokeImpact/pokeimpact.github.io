@@ -170,7 +170,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v68 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v69 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2242,7 +2242,7 @@ function drawHulls(S){
 }
 // mato alto (por cima dos Pokémon): perto de você fica transparente
 const TUFT = [[.2, -.05, .36], [.8, -.05, .36], [.5, .2, .42], [.2, .55, .36], [.8, .55, .36]];
-const RUST = new Map(), LEAVES = [];
+const RUST = new Map(), LEAVES = [], LATE = [];
 function drawBushes(){ if (!G.bush) return; const me = G.me, S = platCells(), near = [], far = [];
   RUST.clear(); const mark = (x, y, a) => { const i = Math.floor(x), j = Math.floor(y); if (G.bush.has(ck(i, j))) RUST.set(i * 1000 + j, Math.max(RUST.get(i * 1000 + j) || 0, a)); };
   for (const u of G.units){ if (!u.alive || u.air) continue; const v = Math.hypot(u.rvx || 0, u.rvy || 0); if (v < .5) continue; if (u !== me && me && me.alive && gbHidden(u, me)) continue; mark(u.x, u.y, Math.min(1, v / 2)); }
@@ -2635,7 +2635,8 @@ function draw(){
     if (u.b.burn > 0){ for (let q = 0; q < 3; q++){ const X = sx(u.x) + (q - 1) * T * .18, Y = sy(u.y - lift) - T * (.95 + (q === 1 ? .08 : 0)), h = T * (.22 + .07 * Math.sin(G.t * 18 + q * 2)), w = T * .08;   // queimando: chaminhas na cabeça
       cx.fillStyle = '#ff5a1a'; cx.beginPath(); cx.moveTo(X - w, Y); cx.quadraticCurveTo(X - w * .5, Y - h * .6, X, Y - h); cx.quadraticCurveTo(X + w * .5, Y - h * .6, X + w, Y); cx.closePath(); cx.fill();
       cx.fillStyle = '#ffd23f'; cx.beginPath(); cx.moveTo(X - w * .5, Y); cx.quadraticCurveTo(X, Y - h * .55, X + w * .5, Y); cx.closePath(); cx.fill(); } }
-    // barra de vida
+    // barra de vida, nome e selos: na Grande Batalha ficam para o fim, por cima do mato (senão a moita cobre a barra de quem está logo abaixo)
+    const hud = () => {
     const bw = T * .9, by = sy(u.y - lift) - T * 1.25;
     const hpp = Math.max(0, u.hp / u.maxhp), bx = sx(u.x) - bw / 2; u._lag = u._lag == null || u._lag < hpp ? hpp : u._lag + (hpp - u._lag) * .06;   // rastro branco: a vida perdida some devagar
     cx.fillStyle = 'rgba(10,8,14,.75)'; cx.beginPath(); cx.roundRect(bx - 1.5, by - 1.5, bw + 3, 7, 3); cx.fill();
@@ -2653,10 +2654,11 @@ function draw(){
     if (u.b.conf > 0){ cx.strokeStyle = 'rgba(224,123,255,.85)'; cx.lineWidth = 2; cx.beginPath(); for (let q = 0; q <= 24; q++){ const f = q / 24, a = -G.t * 7 + f * 12, rr = T * .32 * f; const px = sx(u.x) + Math.cos(a) * rr, py = by - T * .32 + Math.sin(a) * rr * .4; if (q) cx.lineTo(px, py); else cx.moveTo(px, py); } cx.stroke();   // espiral de confusão
       for (let k = 0; k < 3; k++){ const a = G.t * 5 + k * 2.1; cx.fillText('✦', sx(u.x) + Math.cos(a) * T * .38, by - T * .35 + Math.sin(a) * T * .12); } }   // confuso: estrelinhas girando
     if (u.emo){ cx.font = `${T * .6}px system-ui`; cx.fillText(u.emo.e, sx(u.x) + T * .6, by - 2); }
+    }; if (G.map === 'gb') LATE.push(hud); else hud();
   }
   drawCanopies(); drawTent(); drawBushes(); { const now = performance.now() / 1000, dt = Math.min(.1, now - (LEAVES.at || now)); LEAVES.at = now;   // folhinhas caindo do mato mexido
     for (let q = LEAVES.length - 1; q >= 0; q--){ const L = LEAVES[q]; L.t += dt; if (L.t > .9){ LEAVES.splice(q, 1); continue; } cx.save(); cx.translate(sx(L.x + Math.sin(L.t * 6 + L.r) * .15), sy(L.y + L.t * .6) - T * .3 * (1 - L.t)); cx.rotate(L.r + L.t * 5); cx.globalAlpha = 1 - L.t / .9; cx.fillStyle = L.r > 3 ? '#5cad46' : '#3f8e33'; cx.beginPath(); cx.ellipse(0, 0, T * .09, T * .04, 0, 0, 7); cx.fill(); cx.restore(); } cx.globalAlpha = 1; }
-  drawHideTag(); drawGas(); drawWhale(1); drawBirds(); drawCrabs(); drawRopes(); drawClouds(); drawLights(); drawAmbient(); drawStorm(); drawSnow();
+  for (const f of LATE) f(); LATE.length = 0; drawHideTag(); drawGas(); drawWhale(1); drawBirds(); drawCrabs(); drawRopes(); drawClouds(); drawLights(); drawAmbient(); drawStorm(); drawSnow();
   if (G.drop){ const D = G.drop, p = Math.min(1, D.t / D.dur), X = sx(D.x), Y = sy(D.y), h = (1 - p) * (1 - p) * 9, R = T * .55;   // Pokébola gigante caindo
     cx.fillStyle = `rgba(0,0,0,${.15 + .35 * p})`; cx.beginPath(); cx.ellipse(X, Y, R * (.4 + .8 * p), R * (.15 + .3 * p), 0, 0, 7); cx.fill();
     cx.strokeStyle = `rgba(255,210,63,${.5 + .4 * Math.sin(G.t * 14)})`; cx.setLineDash([6, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, T * 1.7, 0, 7); cx.stroke(); cx.setLineDash([]);
