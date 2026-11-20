@@ -83,6 +83,10 @@ h2{font-family:var(--font-d);font-weight:400;font-size:24px;margin:0;color:var(-
 .sl .cd{position:absolute;inset:0;pointer-events:none}
 .sl .ct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;text-shadow:0 1px 3px #000}
 .sl.lock{opacity:.35;filter:grayscale(1)}
+.sl.ult.rdy{box-shadow:0 0 0 1px var(--gold),0 0 14px rgba(255,207,74,.6);animation:ultGlow 1.6s ease-in-out infinite}
+@keyframes ultGlow{50%{box-shadow:0 0 0 1px var(--gold),0 0 22px rgba(255,207,74,.95)}}
+.sl.pop::after{content:'';position:absolute;inset:0;border-radius:8px;background:rgba(255,255,255,.6);animation:slPop .4s ease-out forwards;pointer-events:none}
+@keyframes slPop{from{opacity:1;transform:scale(.6)}to{opacity:0;transform:scale(1.15)}}
 #gold{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));top:calc(8px + env(safe-area-inset-top,0px));z-index:5;display:flex;gap:6px}
 #gold span{background:rgba(21,15,28,.82);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
 #emo{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;gap:4px}
@@ -139,7 +143,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 #shopOv .box>.row:last-child{position:sticky;bottom:-20px;margin-bottom:-20px;padding:14px 0 20px;background:linear-gradient(rgba(35,26,46,0),var(--panel) 40%)}
 #shopTime:empty{display:none}
 @media (max-width:440px){.podc{flex-basis:120px;padding:8px}.podc canvas{width:96px;height:84px}.podc .tt{font-size:17px}.podc .nm{font-size:15px}.podc small{font-size:11px}#top{font-size:11px;gap:5px;padding:4px 9px;max-width:calc(100vw - 150px);overflow:hidden}#top .sh{display:none}#gold span{padding:4px 9px;font-size:13px}#emo{opacity:.8}#emo button{width:30px;height:30px;font-size:15px;border-radius:8px}#feed div{font-size:11px;max-width:calc(100vw - 24px);white-space:normal;text-align:right}}
-@media (prefers-reduced-motion:reduce){.pc .em{animation:none}}
+@media (prefers-reduced-motion:reduce){.pc .em,.sl.ult.rdy,.sl.pop::after{animation:none}}
 </style>
 
 </head>
@@ -170,7 +174,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v69 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v70 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2837,7 +2841,8 @@ function hudBar(){
       el.querySelector('.lv').textContent = s.lvl > 1 ? 'nv' + s.lvl : (!s.lvl ? '🔒' : '');
       const f = s.cd > 0 ? s.cd / (d.cd * lvMul(s.lvl).cd * stat(u).cd) : 0;
       const deg = Math.min(1, f) * 360; el.querySelector('.cd').style.background = deg > 0 ? `conic-gradient(rgba(0,0,0,.66) ${deg}deg, transparent ${deg}deg)` : 'none';   // relógio
-      el.querySelector('.ct').textContent = s.cd > 0 && s.lvl ? Math.ceil(s.cd) : ''; });
+      el.querySelector('.ct').textContent = s.cd > 0 && s.lvl ? Math.ceil(s.cd) : '';
+      const rdy = !!s.lvl && u.alive && !(s.cd > 0); el.classList.toggle('rdy', rdy); if (rdy && el._cd > .05 && G.phase === 'play'){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } el._cd = s.cd || 0; });   // golpe pronto: brilho rápido; ult pronta fica brilhando
   }
 }
 function hudList(force){
