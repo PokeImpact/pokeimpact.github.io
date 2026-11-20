@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v34 · 19/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v35 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -259,7 +259,7 @@ const pick = a => a[Math.floor(Math.random() * a.length)];
 const store = { get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} } };
 
 /* ---------- dados ---------- */
-let SIZE = 16; const SHRINK = 15, WARN = 3, PUSH = .85, DMG = .4;   // golpe tira pouca vida: quem mata é a névoa
+let SIZE = 16; const SHRINK = 15, WARN = 4, PUSH = .85, DMG = .4;   // golpe tira pouca vida: quem mata é a névoa
 const POKE = {
   94:  { n:'Gengar',    hp:95,  spd:2.2, kb:1.05, rad:.32, sc:1,   desc:'Fantasma: faz dormir, acorrenta, some no chão e arremessa com a língua. A cada 10 s ganha uma sombra: o próximo golpe de susto dá Medo. Leva menos dano da névoa.', kit:['sombra','mergulho','hipnose','correntes','lingua'] },
   129: { n:'Luquitarp', hp:100, spd:2.0, kb:1, rad:.3, sc:1,      desc:'Não ataca e não empurra ninguém: só pula, a cada 2 s, desviando de tudo. O Pokémon mais forte do mundo (só que não).', kit:['splash'] },
@@ -485,7 +485,7 @@ const CFG = Object.assign({ sp:6, bots:5, lives:5, map:'rand' }, store.get('nt-c
 const keyName = c => !c ? '—' : c === 'M0' ? 'Clique esq.' : c === 'M2' ? 'Clique dir.' : c === 'M1' ? 'Rodinha' : c === 'Space' ? 'Espaço' : c.replace(/^Key|^Digit/, '').replace(/Left$|Right$/, '');
 
 /* ---------- estado ---------- */
-const G = { phase:'menu', t:0, round:0, units:[], shots:[], zones:[], marks:[], waves:[], decoys:[], portals:[], chains:[], caps:[], teamWins:{}, mode:'cl', fmt:0, obs:[], ice:[], map:'sq', R:8, fx:[], txt:[], falling:[], P:{x0:0,y0:0,x1:SIZE,y1:SIZE}, shrinkIn:SHRINK, step:0, paused:false, timer:0, me:null };
+const G = { phase:'menu', t:0, round:0, units:[], shots:[], zones:[], marks:[], waves:[], decoys:[], portals:[], chains:[], caps:[], teamWins:{}, mode:'cl', fmt:0, obs:[], ice:[], mud:[], gust:null, decals:[], stages:[], pat:'anel', seed:1, map:'sq', R:8, fx:[], txt:[], falling:[], shrinkIn:SHRINK, step:0, paused:false, timer:0, me:null };
 const NET = { on:false, host:false, peer:null, conn:null, peers:[], code:'', nick:'', ev:[], sendT:0, inT:0 };
 const isClient = () => NET.on && !NET.host;
 const mouse = { x:0, y:0, wx:5, wy:5, rdown:false };
@@ -515,24 +515,104 @@ const sizeFor = n => n <= 2 ? 10 : n <= 4 ? 12 : n <= 6 ? 14 : 16;   // arena cr
 resize();
 
 /* ---------- plataforma ---------- */
-// mapa redondo: a casa entra inteira (4 cantos dentro do círculo) ou cortada na diagonal (3 cantos), como no Warlock
+// O chão é um conjunto de casas ('i,j' → máscara dos 4 cantos: 15 = casa inteira; 3 cantos = cortada na diagonal, como no Warlock).
+// No começo da rodada o jogo já monta todas as fases do encolhimento (G.stages); G.step diz em qual estamos.
+// Assim qualquer formato funciona: quadrado, redondo, ilhas, ponte, buracos, chão que cai por um lado…
 const CORN = [[0,0],[1,0],[1,1],[0,1]];
-function cellMask(i, j, Rr){ const c = SIZE / 2; let m = 0; CORN.forEach(([a, b], k) => { if (Math.hypot(i + a - c, j + b - c) <= Rr + 1e-6) m |= 1 << k; }); return m; }
+function cellMask(i, j, Rr, c0 = SIZE / 2, c1 = SIZE / 2){ let m = 0; CORN.forEach(([a, b], k) => { if (Math.hypot(i + a - c0, j + b - c1) <= Rr + 1e-6) m |= 1 << k; }); return m; }
 const bits = m => (m & 1) + (m >> 1 & 1) + (m >> 2 & 1) + (m >> 3 & 1);
 const cellOn = m => m === 15 || bits(m) === 3;
 function inCell(m, fx, fy){ if (m === 15) return true; if (bits(m) !== 3) return false;
   const out = [0,1,2,3].find(k => !(m >> k & 1));
   return out === 0 ? fx + fy >= 1 : out === 1 ? fy >= fx : out === 2 ? fx + fy <= 1 : fx >= fy; }
 const isRd = (m = G.map) => m === 'rd' || m === 'flr';
-function onPlat(x, y){
-  if (!isRd()) return x >= G.P.x0 && x < G.P.x1 && y >= G.P.y0 && y < G.P.y1;
-  const i = Math.floor(x), j = Math.floor(y); if (i < 0 || j < 0 || i >= SIZE || j >= SIZE) return false;
-  return inCell(cellMask(i, j, G.R), x - i, y - j);
+const ck = (i, j) => i + ',' + j;
+const EMPTY = new Map();
+const platCells = () => (G.stages && G.stages[Math.min(G.step, G.stages.length - 1)]) || EMPTY;
+const nextCells = () => (G.stages && G.stages[G.step + 1]) || EMPTY;
+function onPlat(x, y){ const i = Math.floor(x), j = Math.floor(y), m = platCells().get(ck(i, j)); return !!m && inCell(m, x - i, y - j); }
+// cada fase guarda (uma vez só): as casas da borda (sem chão, vizinhas do chão) e a distância até a névoa do meio de cada casa
+const SINFO = new WeakMap();
+function sInfo(S){ let I = SINFO.get(S); if (I) return I;
+  const bd = [], seen = new Set();
+  for (const k of S.keys()){ const [i, j] = k.split(',').map(Number);
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++){ const kk = ck(i + a, j + b); if (seen.has(kk) || S.get(kk) === 15) continue; seen.add(kk); bd.push([i + a, j + b]); } }
+  I = { bd, cells:[], max:0 }; SINFO.set(S, I);
+  for (const [k, m] of S){ if (m !== 15) continue; const [i, j] = k.split(',').map(Number), e = edgeIn(S, i + .5, j + .5); I.cells.push({ x:i + .5, y:j + .5, e }); if (e > I.max) I.max = e; }
+  return I; }
+// distância até a névoa (negativa = já está na névoa)
+function edgeIn(S, x, y){ const I = sInfo(S); if (!S.size) return -9;
+  const i0 = Math.floor(x), j0 = Math.floor(y), m0 = S.get(ck(i0, j0));
+  if (!m0 || !inCell(m0, x - i0, y - j0)){ let d = 1e9; for (const c of I.cells) d = Math.min(d, Math.hypot(c.x - x, c.y - y) - .5); return -Math.max(0, d); }
+  let d = 1e9; for (const [i, j] of I.bd){ const dx = Math.max(i - x, 0, x - i - 1), dy = Math.max(j - y, 0, y - j - 1), v = dx * dx + dy * dy; if (v < d) d = v; }
+  return Math.sqrt(d); }
+// o lugar mais seguro (longe da névoa); com (x, y) prefere um que fique perto de você (no Arquipélago: a sua ilha)
+function platCenter(x, y, S = platCells()){ const I = sInfo(S); if (!I.cells.length) return { x:SIZE / 2, y:SIZE / 2 };
+  let best = I.cells[0], bs = -1e9;
+  for (const c of I.cells){ const s = c.e - (x == null ? Math.hypot(c.x - SIZE / 2, c.y - SIZE / 2) * .05 : Math.hypot(c.x - x, c.y - y) * .3); if (s > bs){ bs = s; best = c; } }
+  return best; }
+// ---------- formas de encolher ----------
+const PATS = { sq:['anel','lado','buraco'], rd:['anel','lado','buraco'], vt:['anel','lado','buraco'], fl:['anel','lado','buraco'], flr:['anel','lado','buraco'], pt:['ponte'], ar:['ilha'], pn:['anel','lado'], sn:['anel','buraco'] };
+const PATNAME = { anel:'a borda cai toda de uma vez', lado:'cai um lado de cada vez: o meio vai andando!', buraco:'a borda cai e abrem buracos no meio', ponte:'as pontas caem primeiro; a ponte cai por último', ilha:'uma ilha afunda de cada vez' };
+const PATSHORT = { anel:'borda', lado:'por lados', buraco:'buracos', ponte:'ponte', ilha:'ilhas' };
+function rng32(s){ return () => { s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// monta todas as fases da rodada. Usa um sorteio com semente: o anfitrião manda só (forma, semente) e todo mundo monta igual.
+function buildStages(){
+  const N = SIZE, R = rng32(G.seed || 1), pat = G.pat || 'anel', st = [], holes = new Set();
+  G.bridge = null;
+  const rect = (x0, y0, x1, y1, m = new Map()) => { for (let i = Math.max(0, x0); i < Math.min(N, x1); i++) for (let j = Math.max(0, y0); j < Math.min(N, y1); j++) m.set(ck(i, j), 15); return m; };
+  const pickHole = m => { const c = [];   // buraco 2×2 só no miolo (com chão em volta)
+    for (let i = 1; i < N - 2; i++) for (let j = 1; j < N - 2; j++){ let ok = true;
+      for (let a = -1; a <= 2 && ok; a++) for (let b = -1; b <= 2; b++) if (m.get(ck(i + a, j + b)) !== 15){ ok = false; break; }
+      if (ok) c.push([i, j]); }
+    if (!c.length) return; const [i, j] = c[Math.floor(R() * c.length)]; for (const [a, b] of [[0,0],[1,0],[0,1],[1,1]]) holes.add(ck(i + a, j + b)); };
+  const add = m => { for (const h of holes) m.delete(h); if (pat === 'buraco' && st.length >= 1 && st.length <= 3) pickHole(m); for (const h of holes) m.delete(h); st.push(m); return m.size; };
+  if (pat === 'ilha'){
+    const k = N >= 14 ? 3 : 2, g = k === 2 ? 2 : (N >= 16 ? 2 : 1), s = Math.floor((N - (k - 1) * g) / k), off = Math.floor((N - (k * s + (k - 1) * g)) / 2);
+    let isl = [];
+    for (let a = 0; a < k; a++) for (let b = 0; b < k; b++){ const x0 = off + a * (s + g), y0 = off + b * (s + g); isl.push({ x0, y0, x1:x0 + s, y1:y0 + s, mid:k === 3 && a === 1 && b === 1 }); }
+    isl = isl.filter(q => !q.mid).map(q => [R(), q]).sort((a, b) => a[0] - b[0]).map(a => a[1]).concat(isl.filter(q => q.mid));   // a do meio afunda por último
+    const draw = L => L.reduce((m, q) => rect(q.x0, q.y0, q.x1, q.y1, m), new Map());
+    let alive = isl.slice(); add(draw(alive));
+    while (alive.length > 1){ alive = alive.slice(alive.length > 5 ? 2 : 1); add(draw(alive)); }
+    let q = alive[0]; for (let n = 0; n < 20; n++){ q = { x0:q.x0 + 1, y0:q.y0 + 1, x1:q.x1 - 1, y1:q.y1 - 1 }; if (!add(draw([q]))) break; }
+  } else if (pat === 'ponte'){
+    const gap = N >= 14 ? 4 : 2, pw = (N - gap) / 2, by = N / 2 - 1;
+    G.bridge = { x0:pw, x1:N - pw, y0:by, y1:by + 2 };
+    for (let k = 0; k < 40; k++){ const m = new Map();
+      if (pw - k > 0 && N - 2 * k > 0){ rect(k, k, pw, N - k, m); rect(N - pw, k, N - k, N - k, m); }   // as duas plataformas encolhem por fora (e por cima e por baixo)
+      if (N - 2 * k > 0) rect(k, by, N - k, by + 2, m);   // a ponte é a última a cair, das pontas para o meio
+      if (!add(m)) break; }
+  } else if (isRd()){
+    let r = N / 2 + .45, c0 = N / 2, c1 = N / 2, ang = R() * 6.283;
+    for (let n = 0; n < 40; n++){ const m = new Map();
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++){ const mk = cellMask(i, j, r, c0, c1); if (cellOn(mk)) m.set(ck(i, j), mk); }
+      if (!add(m)) break;
+      r -= 1; if (pat === 'lado'){ ang += (R() - .5) * 1.4; c0 += Math.cos(ang) * .9; c1 += Math.sin(ang) * .9; } }   // o círculo novo sempre cabe dentro do anterior
+  } else if (pat === 'lado'){
+    let x0 = 0, y0 = 0, x1 = N, y1 = N, hs = R() < .5, vs = R() < .5;
+    for (let n = 0; n < 40; n++){
+      if (!add(rect(x0, y0, x1, y1))) break;
+      if (R() < .35) hs = !hs; if (R() < .35) vs = !vs;
+      if (x1 - x0 <= 2) x0 = x1; else if (hs) x0 += 2; else x1 -= 2;
+      if (y1 - y0 <= 2) y0 = y1; else if (vs) y0 += 2; else y1 -= 2; }
+  } else {
+    for (let k = 0; k < 40; k++) if (!add(rect(k, k, N - k, N - k))) break;
+  }
+  if (st[st.length - 1].size) st.push(new Map());
+  G.stages = st;
 }
-const platCenter = () => isRd() ? { x:SIZE / 2, y:SIZE / 2 } : { x:(G.P.x0 + G.P.x1) / 2, y:(G.P.y0 + G.P.y1) / 2 };
-// casas que existem agora (chave i,j → máscara)
-const PCACHE = {};
-const MAPNAME = { sq:'quadrado', rd:'redondo', vt:'dos Voltorbs', fl:'floresta', flr:'floresta redonda' };
+const pickPat = m => pick(PATS[m] || ['anel']);
+// ponto de nascer: se cair na névoa (ilhas, ponte), vai para o chão mais perto
+function safeSpot(x, y, m){ const S = platCells(), I = sInfo(S); if (!I.cells.length) return [x, y]; const need = Math.min(m, I.max);
+  if (edgeIn(S, x, y) >= need) return [x, y];
+  let best = null, bd = 1e9; for (const c of I.cells){ if (c.e < need - 1e-6) continue; const d = Math.hypot(c.x - x, c.y - y); if (d < bd){ bd = d; best = c; } }
+  return best ? [best.x + rnd(-.15, .15), best.y + rnd(-.15, .15)] : [x, y]; }
+const MAPNAME = { sq:'quadrado', rd:'redondo', vt:'dos Voltorbs', fl:'floresta', flr:'floresta redonda', pt:'da ponte', ar:'arquipélago', pn:'pântano', sn:'do Snorlax' };
+const MAPLINE = { pt:['A ponte é o último lugar a cair. Briga boa acontece lá.', 'Empurrão de lado na ponte = banho de névoa.', 'Quem chega primeiro na ponte escolhe a briga.'],
+  ar:['Pular de ilha em ilha custa um pouco de vida.', 'Fique de olho: a ilha que pisca é a próxima a afundar.', 'Voo, Teleporte e Portal valem ouro aqui.'],
+  pn:['Lama deixa lento. O vento empurra todo mundo para o mesmo lado.', 'Quando vier o vento, fique de costas para o meio.', 'Ventania + beira do mapa = combinação perigosa.'],
+  sn:['O Snorlax está dormindo… por enquanto.', 'Quando ele se vira, esmaga quem estiver do lado.', 'Bater muito nele acorda ele de mau humor.'] };
 const FLLINE = ['Árvores, pedras e um pinheiro de Natal escorregadio.', 'O Alakazam pode trocar de lugar com árvores e pedras.', 'Esconder atrás da árvore de Natal? Cuidado com o gelo.', 'Cada rodada a floresta muda de lugar.'];
 const VOLTLINE = { 1:['Esta rodada terá 1 Voltorb', 'Um só… mas ele não perdoa.'], 2:['Esta rodada terá 2 Voltorbs', 'Cuidado com a tabelinha dupla!'],
   3:['Esta rodada terá 3 Voltorbs', 'Ninguém vai saber de onde veio a bola.'], 4:['⚠ ESTA RODADA TERÁ 4 VOLTORBS ⚠', 'Que os deuses do pinball tenham piedade de vocês.'] };
@@ -546,7 +626,8 @@ const SQLINE = ['O Voltorb no meio não é decoração.', 'Árvores: ótimas par
 // texto embaixo da contagem: no mapa dos Voltorbs anuncia quantos vieram (4 = vermelho e maior)
 function countSub(){
   if (G.mode === 'pb') return `Rodada ${G.round} · Pokébol: ${PBGOALS} gols ou 2 minutos<br><span>Empurre a bola com os golpes e com o corpo. O Time Azul ataca para a direita.</span>`;
-  const base = `Rodada ${G.round} · mapa ${MAPNAME[G.map] || 'quadrado'}`;
+  const base = `Rodada ${G.round} · mapa ${MAPNAME[G.map] || 'quadrado'}` + (isZona() ? '' : `<br><span style="color:#9be36a">Chão: ${PATNAME[G.pat] || ''}</span>`);
+  if (MAPLINE[G.map]) return `${base}<br><span>${MAPLINE[G.map][(G.round - 1) % MAPLINE[G.map].length]}</span>`;
   if (G.map === 'rd'){ const L = LAPLINE[(G.round - 1) % LAPLINE.length]; return `${base}<br><b style="color:#bff3ff">${L[0]}</b><br><span>${L[1]}</span>`; }
   if (G.map === 'fl' || G.map === 'flr') return `${base}<br><span>${FLLINE[(G.round - 1) % FLLINE.length]}</span>`;
   if (G.map !== 'vt'){ const L = SQLINE[(G.round - 1) % SQLINE.length]; return `${base}<br><span>${L}</span>`; }
@@ -554,46 +635,42 @@ function countSub(){
   return n >= 4 ? `${base}<br><b style="color:#ff4040;font-size:1.5em;text-shadow:0 0 12px rgba(255,0,0,.7)">${L[0]}</b><br><span style="color:#ff8080">${L[1]}</span>`
     : `${base}<br><b style="color:#ffe066">${L[0]}</b><br><span>${L[1]}</span>`;
 }
-function platCells(map = G.map, Rr = G.R, P = G.P){ const key = map + '|' + Rr + '|' + SIZE + '|' + P.x0 + ',' + P.x1; if (PCACHE.k === key) return PCACHE.v; const out = new Map(); PCACHE.k = key; PCACHE.v = out;
-  if (isRd(map)){ for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE; j++){ const m = cellMask(i, j, Rr); if (cellOn(m)) out.set(i + ',' + j, m); } }
-  else for (let i = P.x0; i < P.x1; i++) for (let j = P.y0; j < P.y1; j++) out.set(i + ',' + j, 15);
-  return out; }
-const platGone = () => isRd() ? platCells().size === 0 : G.P.x1 <= G.P.x0;
+const platGone = () => platCells().size === 0;
 // distância até a borda (para os bots) e ponto seguro dentro da plataforma (a próxima, se vai encolher logo)
-function edgeDist(x, y){ if (isRd()) return G.R - .5 - Math.hypot(x - SIZE / 2, y - SIZE / 2); return Math.min(x - G.P.x0, G.P.x1 - x, y - G.P.y0, G.P.y1 - y); }
+const edgeDist = (x, y) => edgeIn(platCells(), x, y);
+const soonCells = () => G.shrinkIn <= WARN + 1 && nextCells().size ? nextCells() : platCells();
 function clampSafe(x, y, m){
-  const soon = G.shrinkIn <= WARN + 1;
-  if (isRd()){ const c = SIZE / 2, rr = Math.max(.2, (soon ? G.R - 1 : G.R) - .6 - m * .6), dx = x - c, dy = y - c, d = Math.hypot(dx, dy); return d <= rr ? [x, y] : [c + dx / d * rr, c + dy / d * rr]; }
-  const N = soon ? nextP() : G.P; return [clamp(x, N.x0 + m, Math.max(N.x0 + m, N.x1 - m)), clamp(y, N.y0 + m, Math.max(N.y0 + m, N.y1 - m))];
+  const S = soonCells(), I = sInfo(S); if (!I.cells.length) return [x, y];
+  const need = Math.min(m, I.max); if (edgeIn(S, x, y) >= need) return [x, y];
+  let best = null, bd = 1e9; for (const c of I.cells){ if (c.e < need - 1e-6) continue; const d = Math.hypot(c.x - x, c.y - y); if (d < bd){ bd = d; best = c; } }
+  return best ? [best.x, best.y] : [x, y];
 }
-function platWidth(){ return isRd() ? Math.max(0, Math.round(G.R * 2)) : G.P.x1 - G.P.x0; }
-function nextP(){ // a cada passo some o anel inteiro da borda: 10×10 vira 8×8
-  const P = Object.assign({}, G.P);
-  if (P.x1 - P.x0 <= 0) return P;
-  P.x0++; P.y0++; P.x1--; P.y1--;
-  if (P.x1 < P.x0) P.x1 = P.x0; if (P.y1 < P.y0) P.y1 = P.y0;
-  return P;
-}
-function willFall(i, j, m){ if (G.shrinkIn > WARN) return false;
-  if (isRd()) return cellMask(i, j, G.R - 1) !== m;
-  const N = nextP(); return (i >= G.P.x0 && i < G.P.x1 && j >= G.P.y0 && j < G.P.y1) && !(i >= N.x0 && i < N.x1 && j >= N.y0 && j < N.y1); }
+function platWidth(){ const I = sInfo(platCells()); return I.cells.length ? Math.round(2 * I.max + 1) : 0; }
+const willFall = (i, j, m) => G.shrinkIn <= WARN && !!G.stages && G.step + 1 < G.stages.length && nextCells().get(ck(i, j)) !== m;
 function doShrink(){
   const before = platCells();
-  if (isRd()) G.R -= 1; else G.P = nextP();
-  addFalling(before, platCells());
-  G.step++; G.shrinkIn = SHRINK;
-  // os objetos (Voltorbs, árvores, pedras, Lapras) ficam no lugar mesmo quando o chão some embaixo deles
-  feed(platGone() ? 'A plataforma sumiu! Só resta a névoa.' : 'A plataforma encolheu', '#9be36a');
+  G.step++; addFalling(before, platCells()); G.shrinkIn = SHRINK;
+  // os objetos (Voltorbs, árvores, pedras, Lapras, Snorlax) ficam no lugar mesmo quando o chão some embaixo deles
+  feed(platGone() ? 'A plataforma sumiu! Só resta a névoa.' : G.pat === 'ilha' ? 'Uma ilha afundou' : 'A plataforma encolheu', '#9be36a');
 }
-function addFalling(before, after){ for (const [k, m] of before) if (after.get(k) !== m){ const [i, j] = k.split(',').map(Number); G.falling.push({ i, j, t:0, m }); } }
+function addFalling(before, after){ for (const [k, m] of before) if (after.get(k) !== m){ const [i, j] = k.split(',').map(Number), c = tileRGB(i, j, m, before);
+  G.falling.push({ i, j, t:0, m, c, rot:rnd(-1.2, 1.2) });
+  if (Math.random() < .6) fx(i + .5, j + .5, rnd(-1, 1), rnd(.5, 2), rnd(.4, .7), `rgb(${c[0] - 30},${c[1] - 30},${c[2] - 30})`, rnd(4, 7)); } }
 const mistDps = () => (platGone() ? 12 : 4 + G.step * .7);   // fraca no começo, piora a cada encolhida
 
 /* ---------- obstáculos e gelo ---------- */
 // tree: Árvore de Corte (bloqueia e segura quem bate) · volt: Voltorb (rebate projéteis e Pokémon, como no Pokémon Pinball) · lapras: centro do mapa redondo
-const OBR = { tree:.42, volt:.38, lapras:.85, rock:.38, xmas:.62 };
+const OBR = { tree:.42, volt:.38, lapras:.85, rock:.38, xmas:.62, snor:1 };
 const VOLT_BIG = .57;   // Voltorb sozinho: 1,5× maior, mais fácil de mirar a tabela
 function makeObstacles(){
-  const c = SIZE / 2; G.obs = []; G.ice = [];
+  const c = SIZE / 2; G.obs = []; G.ice = []; G.mud = []; G.gust = null;
+  if (G.map === 'pt' || G.map === 'ar') return;   // ponte e ilhas: o próprio chão é o obstáculo
+  if (G.map === 'pn'){   // pântano: poças de lama (deixam lento) e ventania de tempos em tempos
+    const n = 3 + Math.round(SIZE / 4);
+    for (let k = 0; k < n; k++) for (let t = 0; t < 200; t++){ const x = rnd(2, SIZE - 2), y = rnd(2, SIZE - 2), r = rnd(1, 1.6);
+      if (G.mud.some(p => Math.hypot(p.x - x, p.y - y) < p.r + r + .6)) continue; G.mud.push({ x, y, r }); break; }
+    G.gust = { cd:rnd(7, 10), warn:0, t:0, dx:1, dy:0 }; return; }
+  if (G.map === 'sn'){ G.obs.push({ k:'snor', x:c, y:c, r:OBR.snor, face:Math.PI / 2, cd:rnd(5, 7), charge:0, aim:0, chg:0, anim:0, frenzy:0 }); return; }
   if (G.map === 'rd'){
     G.obs.push({ k:'lapras', x:c, y:c, r:OBR.lapras, face:Math.PI / 2, cd:rnd(4, 6), charge:0, aim:0 });
     G.ice.push({ x:c, y:c, r:2.5, t:1e9 });
@@ -626,6 +703,35 @@ function makeObstacles(){
   }
 }
 const onIce = (x, y) => G.ice.some(p => Math.hypot(x - p.x, y - p.y) < p.r) && onPlat(x, y);
+const onMud = (x, y) => G.mud.length > 0 && G.mud.some(p => Math.hypot(x - p.x, y - p.y) < p.r) && onPlat(x, y);
+// Pântano: aviso de 2 s (setas) e depois 2,2 s de vento empurrando todo mundo para o mesmo lado
+const GUSTA = 4.2;
+function gustStep(dt){ const g = G.gust; if (!g) return;
+  if (g.t > 0){ g.t -= dt; for (const u of G.units){ if (!u.alive || u.air || u.b.shell > 0) continue; const k = (u.b.curl > 0 ? .3 : 1) * (u.sp === 76 ? .6 : 1); u.vx += g.dx * GUSTA * k * dt; u.vy += g.dy * GUSTA * k * dt; }
+    if (g.t <= 0) g.cd = rnd(9, 13); return; }
+  if (g.warn > 0){ if ((g.warn -= dt) <= 0){ g.t = 2.2; feed('Ventania!', '#cfe8ff'); } return; }
+  if ((g.cd -= dt) <= 0){ const a = Math.floor(Math.random() * 8) * Math.PI / 4; g.dx = Math.cos(a); g.dy = Math.sin(a); g.warn = 2; txt(SIZE / 2, SIZE / 2 - 2, 'vem vento!', '#cfe8ff'); } }
+// Snorlax: dorme no meio; de tempos em tempos se vira para um lado e esmaga quem estiver ali (e anda um pouco).
+// Golpes nele enchem a barra: cheia, ele acorda bravo e pisa forte em volta de si.
+const SNOR_MAX = 16, SNOR_RAD = 2.4;
+function snorHit(o){ if (o.frenzy > 0) return; o.chg = (o.chg || 0) + 1; o.hitT = .3;
+  if (o.chg >= SNOR_MAX){ o.chg = 0; o.frenzy = 1; o.charge = .9; feed('O Snorlax acordou bravo!', '#ffcf4a'); txt(o.x, o.y - 1.6, 'acordou!', '#ffcf4a'); } }
+function snorAim(o){ // vira para o lado com mais gente perto, mas sem sair do chão
+  const dirs = [0, Math.PI / 2, Math.PI, -Math.PI / 2].filter(a => edgeDist(o.x + Math.cos(a) * 1.3, o.y + Math.sin(a) * 1.3) >= 2.2);
+  const L = dirs.length ? dirs : [0, Math.PI / 2, Math.PI, -Math.PI / 2];
+  const sc = a => G.units.filter(u => u.alive && Math.hypot(u.x - o.x - Math.cos(a) * 1.3, u.y - o.y - Math.sin(a) * 1.3) < SNOR_RAD + 1).length + Math.random() * .9;
+  return L.sort((a, b) => sc(b) - sc(a))[0]; }
+function snorGo(o){
+  const full = o.frenzy > 0, dx = Math.cos(o.aim), dy = Math.sin(o.aim), cx0 = full ? o.x : o.x + dx * 1.3, cy0 = full ? o.y : o.y + dy * 1.3, rad = full ? 3 : SNOR_RAD;
+  for (const e of G.units){ if (!e.alive || e.air || e.b.intang > 0) continue; const ex = e.x - cx0, ey = e.y - cy0, el = Math.hypot(ex, ey); if (el > rad + POKE[e.sp].rad) continue;
+    let px = full ? ex : dx + ex * .6, py = full ? ey : dy + ey * .6; const pl = Math.hypot(px, py) || 1;
+    damage(e, (full ? 5 : 3) * DMG, null); push(e, px / pl, py / pl, full ? 12 : 9); }
+  G.fx.push({ ring:1, x:cx0, y:cy0, r:rad, t:0, life:.5, col:full ? '#ffcf4a' : '#d7c9a6' });
+  for (let k = 0; k < 24; k++) fx(cx0 + rnd(-1, 1), cy0 + rnd(-1, 1), rnd(-4, 4), rnd(-4, 4), .5, pick(['#c9b28a','#8a7a5a','#fff']), 7);
+  txt(cx0, cy0 - 1, full ? 'PISÃO!' : 'esmagou!', full ? '#ffcf4a' : '#e8dcc0');
+  if (!full){ o.mv = { sx:o.x, sy:o.y, ex:o.x + dx * 1.2, ey:o.y + dy * 1.2, t:0 }; o.face = o.aim; }
+  o.frenzy = 0; o.anim = .7; o.cd = rnd(8, 12); }
+
 const LAP_MAX = 20;   // golpes no Lapras até ele ficar furioso
 function lapRage(o){ if (o.frenzy > 0) return; o.chg = (o.chg || 0) + 1;
   if (o.chg >= LAP_MAX){ o.chg = 0; o.frenzy = 5; o.charge = .6; o.aim = lapAim(o); feed('O Lapras ficou furioso!', '#bff3ff'); txt(o.x, o.y - 1.3, 'furioso!', '#bff3ff'); } }
@@ -646,6 +752,11 @@ function obstacleStep(dt){
   for (const o of G.obs){
     if (o.hitT > 0) o.hitT -= dt;
     if (o.k === 'volt'){ if (o.boom > 0 && (o.boom -= dt) <= 0) voltExplode(o); if (o.down > 0 && (o.down -= dt) <= 0){ o.down = 0; G.fx.push({ ring:1, x:o.x, y:o.y, r:.8, t:0, life:.4, col:'#ffe066' }); } continue; }
+    if (o.k === 'snor'){
+      if (o.mv){ o.mv.t += dt / .45; const p = Math.min(1, o.mv.t); o.x = o.mv.sx + (o.mv.ex - o.mv.sx) * p; o.y = o.mv.sy + (o.mv.ey - o.mv.sy) * p; if (p >= 1) o.mv = null; }
+      if (o.charge > 0){ if ((o.charge -= dt) <= 0) snorGo(o); }
+      else if ((o.cd -= dt) <= 0){ o.aim = snorAim(o); o.charge = 1.6; }
+      if (o.anim > 0) o.anim -= dt; continue; }
     if (o.k !== 'lapras') continue;
     // Lapras: de tempos em tempos gira e solta um Raio de Gelo que deixa rastro de gelo
     if (o.charge > 0){
@@ -675,7 +786,7 @@ function obstacleUnits(){
       if (vn < 0){
         if (o.k === 'volt'){ const k = Math.max(2.5, -vn * 1.15); u.vx += nx * (k - vn); u.vy += ny * (k - vn); o.hitT = .3;   // quica longe
           if (-vn > 1.5){ G.fx.push({ ring:1, x:o.x, y:o.y, r:.7, t:0, life:.3, col:'#ffe066' }); txt(o.x, o.y - .8, 'boing!', '#ffe066'); } }
-        else if (o.k === 'lapras'){ const k = Math.max(1.2, -vn * .75); u.vx += nx * (k - vn); u.vy += ny * (k - vn); }
+        else if (o.k === 'lapras' || o.k === 'snor'){ const k = Math.max(1.2, -vn * .75); u.vx += nx * (k - vn); u.vy += ny * (k - vn); }
         else { u.vx = (u.vx - vn * nx) * .5; u.vy = (u.vy - vn * ny) * .5; if (-vn > 3) for (let k = 0; k < 6; k++) fx(u.x - nx * .3, u.y - ny * .3, rnd(-2, 2), rnd(-2, 2), .3, '#c9b28a', 5); }
       }
     }
@@ -688,9 +799,9 @@ function obstacleShot(s){
     if (o.k === 'volt'){ const vn = s.vx * nx + s.vy * ny; if (vn < 0){ s.vx -= 2 * vn * nx; s.vy -= 2 * vn * ny; }
       s.x = s.bx = o.x + nx * (o.r + s.d.r + .02); s.y = s.by = o.y + ny * (o.r + s.d.r + .02); o.hitT = .3; voltCharge(o, s.o);
       G.fx.push({ ring:1, x:o.x, y:o.y, r:.6, t:0, life:.3, col:'#ffe066' }); return false; }
-    if (o.k === 'lapras') lapRage(o);
+    if (o.k === 'lapras') lapRage(o); else if (o.k === 'snor') snorHit(o);
     if (s.d.tele){
-      if (o.k === 'lapras'){ teleTo(s.o, o.x + nx * (o.r + .45), o.y + ny * (o.r + .45)); return true; }
+      if (o.k === 'lapras' || o.k === 'snor'){ teleTo(s.o, o.x + nx * (o.r + .45), o.y + ny * (o.r + .45)); return true; }
       const u = s.o, ux = u.x, uy = u.y; teleTo(u, o.x, o.y); o.x = ux; o.y = uy; if (o.ice){ o.ice.x = ux; o.ice.y = uy; }
       G.fx.push({ ring:1, x:ux, y:uy, r:o.r + .4, t:0, life:.4, col:'#ffb3ff' }); txt(ux, uy - 1, 'trocou!', '#ffb3ff');
       if (!onPlat(ux, uy)){ o.gone = true; G.obs = G.obs.filter(q => !q.gone); G.ice = G.ice.filter(p => !p.o || !p.o.gone); feed(`${u.name} jogou ${o.k === 'volt' ? 'o Voltorb' : o.k === 'rock' ? 'uma pedra' : 'uma árvore'} na névoa`, '#ffb3ff'); }
@@ -780,8 +891,8 @@ function capStep(dt){
 }
 function spawnAt(u, k, n){
   const c = SIZE / 2;
-  if (teamOn()){ const side = u.team ? 1 : -1, x = c + side * SIZE * .3, y = c + (k - (n - 1) / 2) * 1.5; return [x, y]; }
-  const a = (G.spawnOff || 0) + k / Math.max(1, n) * Math.PI * 2; return [c + Math.cos(a) * SIZE * .34, c + Math.sin(a) * SIZE * .34];
+  if (teamOn()){ const side = u.team ? 1 : -1, x = c + side * SIZE * .3, y = c + (k - (n - 1) / 2) * 1.5; return safeSpot(x, y, 1.3); }
+  const a = (G.spawnOff || 0) + k / Math.max(1, n) * Math.PI * 2; return safeSpot(c + Math.cos(a) * SIZE * .34, c + Math.sin(a) * SIZE * .34, 1.3);
 }
 function respawnStep(dt){
   for (const u of G.units){ if (u.alive || u.out || !(u.resp > 0)) continue; u.resp -= dt; if (u.resp > 0) continue;
@@ -992,16 +1103,17 @@ function newMatch(){
   if (NET.on) netStartMsg();
   G.round = 0; G.t = 0; G.kv = {}; G.rv = {}; G.diff = CFG.diff || 'normal'; G.ranked = NET.on && CFG.ranked !== false;
   G.me.uid = AUTH.user ? AUTH.user.id : null; if (NET.on) for (const c of NET.peers) if (c.u) c.u.uid = c.uid || null;
-  const pm = CFG.map === 'rand' ? pick(['sq','rd','vt','fl']) : CFG.map;
+  const pm = CFG.map === 'rand' ? pick(['sq','rd','vt','fl','pt','ar','pn','sn']) : CFG.map;
   G.matchMap = G.mode === 'pb' ? 'sq' : pm === 'fl' ? pick(['fl','flr']) : pm;   // floresta: quadrada ou redonda   // o mesmo mapa a partida inteira
   for (const id of ['menu','endOv','shopOv']) $('#' + id).hidden = true;
   for (const id of ['top','gold','plist','emo']) $('#' + id).hidden = false;
   $('#bar').hidden = false;
   buildBar(); buildEmotes(); startRound();
 }
+const MAPFEED = { pt:'Ponte: as plataformas encolhem por fora e a ponte do meio é a última a cair.', ar:'Arquipélago: uma ilha afunda de cada vez (a que pisca é a próxima).', pn:'Pântano: lama deixa lento e de tempos em tempos vem uma ventania.', sn:'Snorlax: ele se vira de vez em quando e esmaga quem estiver do lado. Muitos golpes nele o acordam.' };
 function startRound(){
-  G.round++; G.map = G.matchMap || 'sq'; SIZE = sizeFor(G.units.filter(u => !u.out).length) + (isRd() ? 2 : 0); G.P = { x0:0, y0:0, x1:SIZE, y1:SIZE }; G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
-  G.R = SIZE / 2 + .45; makeObstacles();
+  G.round++; G.map = G.matchMap || 'sq'; SIZE = sizeFor(G.units.filter(u => !u.out).length) + (isRd() ? 2 : 0); G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
+  G.R = SIZE / 2 + .45; G.pat = isZona() || isPb() ? 'anel' : pickPat(G.map); G.seed = 1 + Math.floor(Math.random() * 1e9); buildStages(); G.decals = []; makeObstacles();
   G.shots = []; G.zones = []; G.marks = []; G.waves = []; G.decoys = []; G.portals = []; G.chains = []; G.falling = []; G.fx = []; G.txt = [];
   const live = G.units.filter(u => !u.out), n = live.length, off = Math.random() * Math.PI * 2;
   for (const u of live){ u.rounds = (u.rounds || 0) + 1; u._w0 = u.wins; } G.inRound = live.slice(); G.playT = 0;
@@ -1018,6 +1130,7 @@ function startRound(){
   G.phase = 'count'; G.timer = 3;
   if (G.round === 1 && (G.map === 'fl' || G.map === 'flr')) feed('Floresta: árvores e pedras mudam de lugar a cada rodada. O Alakazam troca de lugar com elas.', '#7fd36a');
   else if (G.round === 1 && isPb()) feed('Pokébol: empurre a bola até o gol do outro time com golpes e com o corpo!', '#ffd23f');
+  else if (G.round === 1 && MAPFEED[G.map]) feed(MAPFEED[G.map], '#9fd8ff');
   else if (G.round === 1) feed(G.map === 'rd' ? 'Mapa redondo: cuidado com o gelo do Lapras (golpes nele o deixam furioso)' : G.map === 'vt' ? 'Mapa dos Voltorbs: 1 a 4 por rodada, rebatem tudo' : 'Mapa quadrado: o Voltorb rebate tudo e explode quando enche', '#9fd8ff');
   if (G.map === 'vt') feed(VOLTLINE[G.nvolt][0], G.nvolt === 4 ? '#ff5d5d' : '#ffe066');
   hudList(true);
@@ -1178,7 +1291,7 @@ function botThink(u, dt){
   if (u.ai.t > 0) return;
   u.ai.t = rnd(...D.think);
   if (!u.ai.pers) botInit(u);
-  const P = u.ai.pers, C = platCenter(), w = platWidth(), myEdge = edgeDist(u.x, u.y), lowHp = u.hp < u.maxhp * .35;
+  const P = u.ai.pers, C = platCenter(u.x, u.y, soonCells()), w = platWidth(), myEdge = edgeDist(u.x, u.y), lowHp = u.hp < u.maxhp * .35;
   const foes = foesOf(u).filter(e => !(e.b.inv > 0)).concat(G.decoys.filter(c => c.o !== u && !(teamOn() && c.o.team === u.team)));   // bots não sabem quem é o clone
   // escolher o alvo: perto, fraco (agressivo), perto da névoa (caçador); evita todo mundo no mesmo alvo
   let tgt = null, best = 1e9, bestSc = 1e9;
@@ -1377,7 +1490,7 @@ function updateWorld(dt){
         G.fx.push({ beam:1, x:u.x, y:u.y, dx, dy, len:d.len, w:d.w, t:0, life:.3, col:d.col });
       }
     } else {
-      const sp = u.b.shell > 0 ? 0 : POKE[u.sp].spd * st.spd, kn = Math.hypot(u.vx, u.vy), ctl = kn > 2 ? .25 : 1, cf = u.b.conf > 0 ? -1 : 1; let mvx = u.mvx, mvy = u.mvy;
+      const sp = u.b.shell > 0 ? 0 : POKE[u.sp].spd * st.spd * (onMud(u.x, u.y) ? .55 : 1), kn = Math.hypot(u.vx, u.vy), ctl = kn > 2 ? .25 : 1, cf = u.b.conf > 0 ? -1 : 1; let mvx = u.mvx, mvy = u.mvy;
       if (u.b.sleep > 0 || u.b.stun > 0) mvx = mvy = 0; else if (u.b.fear > 0){ const ax = u.x - u.b.fx, ay = u.y - u.b.fy, al = Math.hypot(ax, ay) || 1; mvx = ax / al; mvy = ay / al; }
       const tx = mvx * sp * ctl * cf, ty = mvy * sp * ctl * cf;   // confuso: anda ao contrário
       if (onIce(u.x, u.y)){ const k = Math.min(1, dt * 1.3); u.slx = (u.slx || 0) + (tx - (u.slx || 0)) * k; u.sly = (u.sly || 0) + (ty - (u.sly || 0)) * k; }   // no gelo o corpo continua indo
@@ -1393,7 +1506,7 @@ function updateWorld(dt){
     u.x = clamp(u.x, -3, SIZE + 3); u.y = clamp(u.y, -3, SIZE + 3);
     u.rvx = (u.x - ox) / dt; u.rvy = (u.y - oy) / dt;
   }
-  obstacleStep(dt); obstacleUnits();
+  obstacleStep(dt); gustStep(dt); obstacleUnits();
   // separação entre Pokémon
   const al = G.units.filter(u => u.alive && !u.air && !u.whip && !(u.b.nocol > 0));
   for (let i = 0; i < al.length; i++) for (let j = i + 1; j < al.length; j++){
@@ -1592,7 +1705,7 @@ function rollStep(u, dt){
     R.v *= .6; txt(u.x, u.y - 1.35, R.n >= 2 ? 'STRIKE!' : 'pow!', R.n >= 2 ? '#ffcf4a' : '#f1eaf7');
     G.fx.push({ ring:1, x:e.x, y:e.y, r:.7, t:0, life:.3, col:'#c9d2dc' }); }
   for (const o of G.obs){ if (o.down > 0) continue; if (Math.hypot(u.x - o.x, u.y - o.y) < o.r + ur + .02){
-    if (o.k === 'volt') voltCharge(o, u); else if (o.k === 'lapras') lapRage(o);
+    if (o.k === 'volt') voltCharge(o, u); else if (o.k === 'lapras') lapRage(o); else if (o.k === 'snor') snorHit(o);
     endRoll(u); u.b.stun = .6; txt(u.x, u.y - 1.3, 'tonto!', '#c9b28a'); G.fx.push({ ring:1, x:u.x, y:u.y, r:.6, t:0, life:.3, col:'#fff' });
     for (let k = 0; k < 10; k++) fx(u.x, u.y, rnd(-3, 3), rnd(-3, 3), .35, pick(['#8d96a0','#c9b28a']), 6); return; } }
   if (G.ball){ const ex = G.ball.x - u.x, ey = G.ball.y - u.y, el = Math.hypot(ex, ey); if (el < ur + G.ball.r) ballPush(ex / (el || 1), ey / (el || 1), d.push0 + d.pushV * R.v); }
@@ -1635,12 +1748,57 @@ function avalanche(u){
 const PUFFS = Array.from({ length:44 }, () => ({ x:rnd(-6, 22), y:rnd(-6, 22), r:rnd(1.6, 3.6), vx:rnd(-.25, .25), vy:rnd(-.2, .2), g:Math.random() < .5 }));
 const KOFF = [[-1,-1,110],[1,-1,109],[1,1,110],[-1,1,109],[0,-1,109],[0,1,110],[-1,0,110],[1,0,109]];   // direção; a posição depende do tamanho da arena
 const tileShade = (i, j) => ((i * 7 + j * 13) % 5) * 3;
+// ---------- visual de cada arena ----------
+const hsh = (i, j) => { let h = (i * 374761393 + j * 668265263) | 0; h = Math.imul(h ^ h >>> 13, 1274126177); return ((h ^ h >>> 16) >>> 0) / 4294967296; };
+const isEdgeCell = (S, i, j) => !S.has(ck(i - 1, j)) || !S.has(ck(i + 1, j)) || !S.has(ck(i, j - 1)) || !S.has(ck(i, j + 1));
+const onBridge = (i, j) => !!G.bridge && i >= G.bridge.x0 && i < G.bridge.x1 && j >= G.bridge.y0 && j < G.bridge.y1;
+function tileRGB(i, j, m, S){ const s = tileShade(i, j), h = hsh(i, j); let c;
+  switch (G.map){
+    case 'rd': c = [150 + s, 196 + s, 222 + s * .6]; break;
+    case 'fl': case 'flr': c = [64 + s + h * 10, 120 + s * 1.5 + h * 14, 58 + s]; break;
+    case 'sn': c = [96 + s + h * 8, 156 + s + h * 10, 82 + s]; break;
+    case 'vt': c = [100 + s, 108 + s, 120 + s]; break;
+    case 'pn': c = [84 + s + h * 10, 96 + s + h * 8, 60 + s]; break;
+    case 'ar': c = S && isEdgeCell(S, i, j) ? [214 + s * .6, 192 + s * .6, 138 + s] : [80 + s, 146 + s + h * 10, 78 + s]; break;
+    case 'pt': c = onBridge(i, j) ? [146 + s, 104 + s, 62 + s] : [118 + s, 108 + s, 94 + s]; break;
+    default: c = [118 + s, 108 + s, 94 + s]; }
+  return c.map(Math.round); }
+function grassDeco(i, j, X, Y, h){
+  cx.strokeStyle = 'rgba(30,70,25,.5)'; cx.lineWidth = 1.5; cx.beginPath(); const a = X + T * (.2 + h * .5), b = Y + T * (.45 + (h * 7 % 1) * .35);
+  cx.moveTo(a, b); cx.lineTo(a - T * .05, b - T * .15); cx.moveTo(a + T * .08, b); cx.lineTo(a + T * .1, b - T * .17); cx.stroke();
+  if (h > .9 || (G.map === 'sn' && h > .8)){ cx.fillStyle = ['#ffd23f','#ff7bc0','#ffffff'][Math.floor(h * 30) % 3]; cx.beginPath(); cx.arc(X + T * .7, Y + T * .3, T * .07, 0, 7); cx.fill(); } }
+function stoneDeco(i, j, X, Y, h){
+  cx.fillStyle = 'rgba(255,255,255,.07)'; cx.fillRect(X + 1, Y + 1, T - 2, T * .12);
+  if (h < .12){ cx.strokeStyle = 'rgba(40,30,20,.35)'; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(X + T * .25, Y + T * .3); cx.lineTo(X + T * .45, Y + T * .5); cx.lineTo(X + T * .4, Y + T * .75); cx.stroke(); } }
+const THEME = {
+  sq:{ cliff:'#3c3229', edge:'rgba(40,30,20,.55)', deco:stoneDeco },
+  rd:{ cliff:'#4f7891', edge:'rgba(255,255,255,.55)', deco(i, j, X, Y, h){ cx.fillStyle = 'rgba(255,255,255,.12)'; cx.fillRect(X + 1, Y + 1, T - 2, T * .1);
+    if (h < .3){ cx.strokeStyle = 'rgba(255,255,255,.4)'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(X + T * (.2 + h), Y + T * .7); cx.lineTo(X + T * (.45 + h), Y + T * .35); cx.stroke(); } } },
+  fl:{ cliff:'#4a3a26', edge:'rgba(25,45,20,.6)', deco:grassDeco },
+  sn:{ cliff:'#4a3a26', edge:'rgba(25,45,20,.6)', deco:grassDeco },
+  vt:{ cliff:'#353a44', edge:'#ffd23f', deco(i, j, X, Y, h, S){
+    cx.fillStyle = 'rgba(30,34,42,.55)'; const r = Math.max(1.5, T * .05); for (const [a, b] of [[.15,.15],[.85,.15],[.15,.85],[.85,.85]]) cx.fillRect(X + T * a - r / 2, Y + T * b - r / 2, r, r);
+    if (isEdgeCell(S, i, j)){ cx.save(); cx.beginPath(); cx.rect(X + 1, Y + 1, T - 2, T - 2); cx.clip(); cx.strokeStyle = 'rgba(255,210,63,.45)'; cx.lineWidth = T * .12;
+      for (let q = -1; q < 3; q++){ cx.beginPath(); cx.moveTo(X + q * T * .5, Y + T); cx.lineTo(X + q * T * .5 + T, Y); cx.stroke(); } cx.restore(); } } },
+  pn:{ cliff:'#3b3424', edge:'rgba(30,30,15,.6)', deco(i, j, X, Y, h){
+    if (h < .16){ cx.fillStyle = 'rgba(45,58,38,.55)'; cx.beginPath(); cx.ellipse(X + T * .5, Y + T * .55, T * .3, T * .16, 0, 0, 7); cx.fill(); }
+    else if (h > .84){ cx.strokeStyle = 'rgba(60,80,30,.75)'; cx.lineWidth = 1.5; cx.beginPath(); for (const a of [.35, .5, .62]){ cx.moveTo(X + T * a, Y + T * .8); cx.lineTo(X + T * (a + .04), Y + T * .35); } cx.stroke(); } } },
+  ar:{ cliff:'#8a6a3c', edge:'rgba(255,240,200,.6)', deco(i, j, X, Y, h, S){
+    if (isEdgeCell(S, i, j)){ cx.fillStyle = 'rgba(160,130,80,.45)'; for (let q = 0; q < 3; q++) cx.fillRect(X + T * ((h * (q + 3)) % .8 + .1), Y + T * ((h * (q + 7)) % .8 + .1), 2, 2); }
+    else grassDeco(i, j, X, Y, h); } },
+  pt:{ cliff:'#3c3229', edge:'rgba(40,30,20,.55)', deco(i, j, X, Y, h){
+    if (!onBridge(i, j)) return stoneDeco(i, j, X, Y, h);
+    cx.strokeStyle = 'rgba(60,35,15,.6)'; cx.lineWidth = 1.5; cx.beginPath(); for (let q = 1; q < 3; q++){ cx.moveTo(X + q * T / 3, Y + 1); cx.lineTo(X + q * T / 3, Y + T - 1); } cx.stroke();
+    cx.strokeStyle = '#d9c08a'; cx.lineWidth = Math.max(2, T * .07); cx.beginPath();
+    if (j === G.bridge.y0){ cx.moveTo(X, Y + 2); cx.lineTo(X + T, Y + 2); } if (j === G.bridge.y1 - 1){ cx.moveTo(X, Y + T - 2); cx.lineTo(X + T, Y + T - 2); } cx.stroke(); } },
+};
+THEME.flr = THEME.fl;
 function draw(){
-  cx.fillStyle = '#150f1c'; cx.fillRect(0, 0, W, H);
+  const ms = Math.min(8, G.step || 0); cx.fillStyle = `rgb(${21 - ms},${15 + ms * 2},${Math.round(28 - ms * 1.2)})`; cx.fillRect(0, 0, W, H);   // a névoa fica mais verde a cada encolhida
   for (const p of PUFFS){
     p.x += p.vx / 60; p.y += p.vy / 60; if (p.x < -7) p.x = SIZE + 7; if (p.x > SIZE + 7) p.x = -7; if (p.y < -7) p.y = SIZE + 7; if (p.y > SIZE + 7) p.y = -7;
     const g = cx.createRadialGradient(sx(p.x), sy(p.y), 0, sx(p.x), sy(p.y), p.r * T);
-    g.addColorStop(0, p.g ? 'rgba(130,200,90,.16)' : 'rgba(150,100,190,.2)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    g.addColorStop(0, p.g ? `rgba(130,200,90,${.16 + ms * .025})` : `rgba(150,100,190,${.2 - ms * .012})`); g.addColorStop(1, 'rgba(0,0,0,0)');
     cx.fillStyle = g; cx.fillRect(sx(p.x - p.r), sy(p.y - p.r), p.r * 2 * T, p.r * 2 * T);
   }
   // Koffings e Weezings ao redor soltando gás
@@ -1649,28 +1807,41 @@ function draw(){
     drawSprite(sp, 'Idle', G.t + k, Math.atan2(c - y, c - x), x, y + bob, T / 19, .9);
     if (Math.random() < .05) fx(x, y, (c - x) * .1, (c - y) * .1, 1.2, 'rgba(155,227,106,.5)', 9);
   }
-  // plataforma
-  const P = G.P;
-  if (isRd()){
-    for (const [key, m] of platCells()){ const [i, j] = key.split(',').map(Number), s = tileShade(i, j);
-      cellPath(i, j, m, 1); cx.fillStyle = `rgb(${118 + s},${108 + s},${94 + s})`; cx.fill();
-      if (willFall(i, j, m)){ cellPath(i, j, m, 1); cx.fillStyle = `rgba(155,227,106,${.25 + .25 * Math.sin(G.t * 14)})`; cx.fill(); } }
-  } else if (P.x1 > P.x0 && P.y1 > P.y0){
-    cx.fillStyle = '#3c3229'; cx.fillRect(sx(P.x0), sy(P.y1), (P.x1 - P.x0) * T, T * .35);
-    for (let i = P.x0; i < P.x1; i++) for (let j = P.y0; j < P.y1; j++){
-      const s = tileShade(i, j); cx.fillStyle = `rgb(${118 + s},${108 + s},${94 + s})`;
-      cx.fillRect(sx(i) + 1, sy(j) + 1, T - 2, T - 2);
-      cx.fillStyle = 'rgba(255,255,255,.07)'; cx.fillRect(sx(i) + 1, sy(j) + 1, T - 2, T * .12);
-      if (willFall(i, j, 15)){ const a = .25 + .25 * Math.sin(G.t * 14); cx.fillStyle = `rgba(155,227,106,${a})`; cx.fillRect(sx(i) + 1, sy(j) + 1, T - 2, T - 2);
-        cx.strokeStyle = 'rgba(30,20,10,.7)'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(sx(i) + T * .2, sy(j) + T * .3); cx.lineTo(sx(i) + T * .5, sy(j) + T * .55); cx.lineTo(sx(i) + T * .8, sy(j) + T * .4); cx.stroke(); }
-    }
-  }
-  for (const f of G.falling){ const k = 1 - f.t / .8, s = tileShade(f.i, f.j);
-    cx.globalAlpha = k; cx.fillStyle = `rgb(${100 + s},${92 + s},${80 + s})`; const m = (1 - k) * T * .3; cx.fillRect(sx(f.i) + m, sy(f.j) + m + (1 - k) * T * .5, T - 2 * m, T - 2 * m); cx.globalAlpha = 1; }
+  // plataforma: cada mapa tem o seu chão; a beira tem paredão e contorno para dar para ler onde o chão acaba
+  const S = platCells(), TH = THEME[G.map] || THEME.sq, play = G.phase === 'play', pulse = .25 + .25 * Math.sin(G.t * 14);
+  for (const [key, m] of S){ if (m !== 15) continue; const [i, j] = key.split(',').map(Number); if (S.get(ck(i, j + 1)) === 15) continue;
+    cx.fillStyle = TH.cliff; cx.fillRect(sx(i), sy(j + 1) - 1, T, T * .38); cx.fillStyle = 'rgba(0,0,0,.28)'; cx.fillRect(sx(i), sy(j + 1) + T * .24, T, T * .14); }
+  for (const [key, m] of S){ const [i, j] = key.split(',').map(Number), c = tileRGB(i, j, m, S), X = sx(i), Y = sy(j);
+    cx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
+    if (m === 15){ cx.fillRect(X + 1, Y + 1, T - 2, T - 2); TH.deco(i, j, X, Y, hsh(i, j), S); } else { cellPath(i, j, m, 1); cx.fill(); }
+    if (play && willFall(i, j, m)){ cx.fillStyle = `rgba(155,227,106,${pulse})`; if (m === 15) cx.fillRect(X + 1, Y + 1, T - 2, T - 2); else { cellPath(i, j, m, 1); cx.fill(); }
+      cx.strokeStyle = 'rgba(30,20,10,.7)'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(X + T * .2, Y + T * .3); cx.lineTo(X + T * .5, Y + T * .55); cx.lineTo(X + T * .8, Y + T * .4); cx.stroke(); } }
+  cx.strokeStyle = TH.edge; cx.lineWidth = Math.max(1.5, T * .05); cx.beginPath();
+  for (const [key, m] of S){ if (m !== 15) continue; const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j);
+    if (!S.has(ck(i, j - 1))){ cx.moveTo(X, Y); cx.lineTo(X + T, Y); } if (!S.has(ck(i, j + 1))){ cx.moveTo(X, Y + T); cx.lineTo(X + T, Y + T); }
+    if (!S.has(ck(i - 1, j))){ cx.moveTo(X, Y); cx.lineTo(X, Y + T); } if (!S.has(ck(i + 1, j))){ cx.moveTo(X + T, Y); cx.lineTo(X + T, Y + T); } }
+  cx.stroke();
+  // casas caindo: giram, encolhem e afundam na névoa
+  for (const f of G.falling){ const k = Math.max(0, 1 - f.t / .8), c = f.c || [100, 92, 80], s = T * (.35 + .65 * k);
+    cx.save(); cx.globalAlpha = k; cx.translate(sx(f.i + .5), sy(f.j + .5) + (1 - k) * T * .7); cx.rotate((f.rot || 0) * (1 - k));
+    cx.fillStyle = `rgb(${c[0] - 18},${c[1] - 18},${c[2] - 18})`; cx.fillRect(-s / 2, -s / 2, s, s); cx.fillStyle = 'rgba(0,0,0,.3)'; cx.fillRect(-s / 2, s * .3, s, s * .2); cx.restore(); }
+  cx.globalAlpha = 1;
+  // marcas no chão (explosões e golpes grandes): somem em 14 s
+  { const now = performance.now() / 1000; G.decals = (G.decals || []).filter(d => now - d.t0 < 14);
+    for (const d of G.decals){ if (!onPlat(d.x, d.y)) continue; const a = .3 * (1 - (now - d.t0) / 14), X = sx(d.x), Y = sy(d.y), g = cx.createRadialGradient(X, Y, 0, X, Y, d.r * T);
+      g.addColorStop(0, `rgba(25,15,10,${a})`); g.addColorStop(.7, `rgba(25,15,10,${a * .6})`); g.addColorStop(1, 'rgba(25,15,10,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(X, Y, d.r * T, 0, 7); cx.fill(); } }
   // gelo
   for (const p of G.ice){ const a = Math.min(1, p.t / 1.5); cx.fillStyle = `rgba(190,240,255,${.42 * a})`; cx.beginPath(); cx.arc(sx(p.x), sy(p.y), p.r * T, 0, 7); cx.fill(); }
   for (const p of G.ice) if (p.r > 1){ cx.strokeStyle = 'rgba(255,255,255,.55)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(p.x), sy(p.y), p.r * T, 0, 7); cx.stroke();
     cx.strokeStyle = 'rgba(255,255,255,.35)'; for (let k = 0; k < 5; k++){ const a = k * 1.3 + .4; cx.beginPath(); cx.moveTo(sx(p.x + Math.cos(a) * p.r * .3), sy(p.y + Math.sin(a) * p.r * .3)); cx.lineTo(sx(p.x + Math.cos(a) * p.r * .8), sy(p.y + Math.sin(a) * p.r * .8)); cx.stroke(); } }
+  // lama do Pântano
+  for (const p of G.mud){ if (!onPlat(p.x, p.y)) continue; const X = sx(p.x), Y = sy(p.y), r = p.r * T;
+    cx.fillStyle = 'rgba(70,52,30,.75)'; cx.beginPath(); cx.ellipse(X, Y, r, r * .92, 0, 0, 7); cx.fill(); cx.fillStyle = 'rgba(110,84,50,.5)'; cx.beginPath(); cx.ellipse(X - r * .2, Y - r * .2, r * .5, r * .35, -.4, 0, 7); cx.fill();
+    for (let k = 0; k < 3; k++){ const ph = (G.t * .7 + k / 3 + p.x) % 1; cx.strokeStyle = `rgba(170,140,95,${.6 * (1 - ph)})`; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(X + Math.cos(k * 2.1 + p.y) * r * .5, Y + Math.sin(k * 2.1 + p.y) * r * .4, ph * T * .18 + 1, 0, 7); cx.stroke(); } }
+  // aviso do Snorlax: a área que ele vai esmagar
+  for (const o of G.obs) if (o.k === 'snor' && o.charge > 0){ const full = o.frenzy > 0, x0 = full ? o.x : o.x + Math.cos(o.aim) * 1.3, y0 = full ? o.y : o.y + Math.sin(o.aim) * 1.3;
+    cx.fillStyle = `rgba(255,${full ? 150 : 205},80,${.14 + .12 * Math.sin(G.t * 16)})`; cx.strokeStyle = 'rgba(255,220,140,.85)'; cx.lineWidth = 2; cx.setLineDash([6, 5]);
+    cx.beginPath(); cx.arc(sx(x0), sy(y0), (full ? 3 : SNOR_RAD) * T, 0, 7); cx.fill(); cx.stroke(); cx.setLineDash([]); }
   // aviso do Raio de Gelo do Lapras
   for (const o of G.obs) if (o.k === 'lapras' && o.charge > 0){ cx.save(); cx.translate(sx(o.x), sy(o.y)); cx.rotate(o.aim); cx.fillStyle = `rgba(191,243,255,${.15 + .15 * Math.sin(G.t * 16)})`; cx.fillRect(0, -.55 * T, 7.5 * T, 1.1 * T); cx.restore(); }
   // zonas
@@ -1795,11 +1966,22 @@ function draw(){
       cx.strokeStyle = `rgba(196,181,253,${.8 * k})`; cx.lineWidth = 2; for (let q = 0; q < 3; q++){ cx.beginPath(); cx.ellipse(X, Y, r * (.4 + q * .3), r * (.28 + q * .2), 0, a + q, a + q + 4); cx.stroke(); } } }
   for (const s of G.shots){ if (s.lob) continue; const r = s.d.r * T * 1.1 * (s.d.fade && s.left != null ? .4 + .6 * clamp(s.left / s.d.range, 0, 1) : 1), g = cx.createRadialGradient(sx(s.x), sy(s.y), 0, sx(s.x), sy(s.y), r * 1.8);
     g.addColorStop(0, '#fff'); g.addColorStop(.35, s.d.col); g.addColorStop(1, 'rgba(0,0,0,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(sx(s.x), sy(s.y), r * 1.8, 0, 7); cx.fill(); }
+  // ventania do Pântano: riscos andando na direção do vento (fracos no aviso, fortes durante)
+  if (G.gust && (G.gust.warn > 0 || G.gust.t > 0)){ const g = G.gust, on = g.t > 0, sp = on ? 7 : 2, c = SIZE / 2;
+    cx.strokeStyle = on ? 'rgba(225,242,255,.6)' : `rgba(225,242,255,${.25 + .2 * Math.sin(G.t * 10)})`; cx.lineWidth = on ? 2.5 : 2; cx.beginPath();
+    for (let k = 0; k < 34; k++){ const a = (k * 7.13) % (SIZE + 4) - 2, ph = (G.t * sp + k * 1.7) % (SIZE + 6) - 3, L = on ? 1.3 : .7;
+      const x = c + g.dx * (ph - c) - g.dy * (a - c), y = c + g.dy * (ph - c) + g.dx * (a - c), ex = x + g.dx * L, ey = y + g.dy * L;
+      cx.moveTo(sx(x), sy(y)); cx.lineTo(sx(ex), sy(ey));
+      if (!on){ cx.moveTo(sx(ex), sy(ey)); cx.lineTo(sx(ex - g.dx * .25 - g.dy * .2), sy(ey - g.dy * .25 + g.dx * .2)); cx.moveTo(sx(ex), sy(ey)); cx.lineTo(sx(ex - g.dx * .25 + g.dy * .2), sy(ey - g.dy * .25 - g.dx * .2)); } }
+    cx.stroke(); }
   // efeitos
   for (const f of G.fx){ const k = 1 - f.t / f.life;
+    if (f.ring && !f.dec && f.r >= 1.6 && G.phase === 'play'){ f.dec = 1; if (!G.decals) G.decals = []; if (G.decals.length < 30) G.decals.push({ x:f.x, y:f.y, r:f.r * .6, t0:performance.now() / 1000 }); }
     if (f.ring){ cx.strokeStyle = f.col; cx.globalAlpha = k; cx.lineWidth = 4 * k + 1; cx.beginPath(); cx.arc(sx(f.x), sy(f.y), f.r * T * (.3 + .7 * (f.t / f.life)), 0, 7); cx.stroke(); cx.globalAlpha = 1; continue; }
     if (f.beam){ cx.save(); cx.translate(sx(f.x), sy(f.y)); cx.rotate(Math.atan2(f.dy, f.dx)); cx.globalAlpha = k; cx.fillStyle = f.col; cx.fillRect(0, -f.w * T * k, f.len * T, f.w * 2 * T * k); cx.fillStyle = '#fff'; cx.fillRect(0, -f.w * T * k * .35, f.len * T, f.w * T * k * .7); cx.restore(); cx.globalAlpha = 1; continue; }
     cx.globalAlpha = k * .9; cx.fillStyle = f.col; cx.beginPath(); cx.arc(sx(f.x), sy(f.y), Math.max(1.5, f.size * k * .5), 0, 7); cx.fill(); cx.globalAlpha = 1; }
+  if (G.phase !== 'menu'){ const vg = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75);
+    vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(${8 + ms * 3},${20 + ms * 6},${10 + ms * 2},${.22 + ms * .05})`); cx.fillStyle = vg; cx.fillRect(0, 0, W, H); }
   cx.textAlign = 'center';
   for (const t of G.txt){ cx.globalAlpha = 1 - t.t; cx.font = `800 ${Math.max(12, T * .32)}px Nunito,system-ui,sans-serif`; cx.fillStyle = '#000'; cx.fillText(t.s, sx(t.x) + 1, sy(t.y - t.t * .8) + 1); cx.fillStyle = t.col; cx.fillText(t.s, sx(t.x), sy(t.y - t.t * .8)); }
   cx.globalAlpha = 1;
@@ -1831,6 +2013,13 @@ function drawObstacle(o){
     if (sh){ cx.strokeStyle = '#ffe066'; cx.lineWidth = 3; cx.beginPath(); cx.arc(x, y, T * .55, 0, 7); cx.stroke(); }
     const bw = T * .8; cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(x - bw / 2 - 1, y - T * .62, bw + 2, 6); cx.fillStyle = f >= 1 ? '#ff5d5d' : '#ffb03a'; cx.fillRect(x - bw / 2, y - T * .62 + 1, bw * f, 4);
     return; }
+  if (o.k === 'snor'){ const sleep = !(o.frenzy > 0) && !(o.anim > 0), shake = o.charge > 0 ? Math.sin(G.t * 40) * .05 : 0;
+    if (sleep) drawSprite(143, 'Sleep', G.t, o.face, o.x + shake, o.y + .25, T / 15, 1);
+    else drawSprite(143, o.anim > .35 ? 'Hurt' : 'Idle', o.anim > .35 ? .1 : G.t, o.face, o.x + shake, o.y + .2, T / 20, 1);
+    if (o.hitT > 0){ cx.strokeStyle = '#ffcf4a'; cx.lineWidth = 3; cx.beginPath(); cx.arc(sx(o.x), sy(o.y) - T * .2, T * .9, 0, 7); cx.stroke(); }
+    if (sleep){ cx.textAlign = 'center'; for (let k = 0; k < 3; k++){ const ph = (G.t * .45 + k / 3) % 1; cx.globalAlpha = 1 - ph; cx.fillStyle = '#e8f0ff'; cx.font = `800 ${Math.max(9, T * (.22 + ph * .18))}px Nunito,system-ui,sans-serif`; cx.fillText('z', sx(o.x) + T * (.4 + ph * .5), sy(o.y) - T * (.5 + ph * .9)); } cx.globalAlpha = 1; }
+    const x = sx(o.x), y = sy(o.y) - T * 1.3, f = o.frenzy > 0 ? 1 : Math.min(1, (o.chg || 0) / SNOR_MAX), bw = T * 1.2;
+    cx.fillStyle = 'rgba(0,0,0,.6)'; cx.fillRect(x - bw / 2 - 1, y - 1, bw + 2, 6); cx.fillStyle = f >= 1 ? '#ff5d5d' : '#ffcf4a'; cx.fillRect(x - bw / 2, y, bw * f, 4); return; }
   if (o.k === 'lapras'){ drawSprite(131, o.charge > 0 ? 'Charge' : o.anim > 0 ? 'Shoot' : 'Idle', G.t, o.face, o.x, o.y, T / 21, 1);
     const x = sx(o.x), y = sy(o.y) - T * 1.35, f = o.frenzy > 0 ? 1 : Math.min(1, (o.chg || 0) / LAP_MAX), bw = T * 1.1;
     if (o.frenzy > 0){ cx.strokeStyle = `rgba(191,243,255,${.6 + .4 * Math.sin(G.t * 24)})`; cx.lineWidth = 3; cx.beginPath(); cx.arc(sx(o.x), sy(o.y) - T * .4, T * 1.05, 0, 7); cx.stroke(); }
@@ -1874,7 +2063,7 @@ function hudTop(){
   if (isZona()){ const ts = allTeams().sort((a, b) => zoneScore(b) - zoneScore(a)).slice(0, teamOn() ? 2 : 3);
     $('#top').innerHTML = `<span>Rodada ${G.round}</span>` + (G.phase === 'play' ? `<span class="${G.timer <= 10 ? 'warn' : ''}">⏱ ${Math.max(0, Math.ceil(G.timer))} s</span>` : '') + ts.map(t => `<span style="color:${teamCol(t)};font-weight:800">${teamOn() ? TEAMNAME[t] : teamLabel(t)} ${Math.round(zoneScore(t))}%${G.teamWins[t] ? ' · ' + '★'.repeat(G.teamWins[t]) : ''}</span>`).join('') + (G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">voltando…</span>' : '');
     $('#goldv').textContent = '🪙 ' + (G.me ? G.me.gold : 0); return; }
-  $('#top').innerHTML = `<span>Rodada ${G.round}</span><span class="sh">${platGone() ? 'sem chão' : isRd() ? 'redondo' : w + '×' + w}</span>` + (!platGone() && G.phase === 'play' ? `<span class="${s <= WARN ? 'warn' : ''}">encolhe em ${s} s</span>` : '') + (G.me && G.me.out ? '<span class="warn">assistindo</span>' : G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">você caiu: assistindo</span>' : '');
+  $('#top').innerHTML = `<span>Rodada ${G.round}</span><span class="sh">${platGone() ? 'sem chão' : 'chão: ' + (PATSHORT[G.pat] || '')}</span>` + (!platGone() && G.phase === 'play' ? `<span class="${s <= WARN ? 'warn' : ''}">encolhe em ${s} s</span>` : '') + (G.me && G.me.out ? '<span class="warn">assistindo</span>' : G.me && !G.me.alive && G.phase === 'play' ? '<span class="warn">você caiu: assistindo</span>' : '');
   $('#goldv').textContent = '🪙 ' + (G.me ? G.me.gold : 0);
 }
 function buildEmotes(){ $('#emo').innerHTML = EMOTES.map((e, i) => `<button data-e="${i}" title="Tecla ${i + 1}">${e}</button>`).join(''); }
@@ -1993,7 +2182,7 @@ function renderMenu(){
   $('#botsRow').hidden = !!CFG.fmt || CFG.mode === 'pb'; $('#livesRow').hidden = CFG.mode === 'zn' || CFG.mode === 'pb';
   $('#ndif').innerHTML = [['easy','Fácil'],['normal','Normal'],['hard','Difícil']].map(([k, n]) => `<button class="chip" data-df="${k}" aria-pressed="${k === (CFG.diff || 'normal')}">${n}</button>`).join('');
   $('#nlives').innerHTML = [1,3,5].map(n => `<button class="chip" data-nl="${n}" aria-pressed="${n === CFG.lives}">${n}</button>`).join('');
-  $('#nmap').innerHTML = [['rand','Sorteado'],['sq','Quadrado'],['rd','Redondo'],['vt','Voltorbs'],['fl','Floresta']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
+  $('#nmap').innerHTML = [['rand','Sorteado'],['sq','Quadrado'],['rd','Redondo'],['vt','Voltorbs'],['fl','Floresta'],['pt','Ponte'],['ar','Arquipélago'],['pn','Pântano'],['sn','Snorlax']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
 }
 $('#menu').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
@@ -2296,7 +2485,7 @@ function netBroadcast(){
   const fxs = [];
   for (const f of G.fx) if ((f.ring || f.beam) && !f.sent){ f.sent = 1; fxs.push(f.ring ? ['r', r2(f.x), r2(f.y), r2(f.r), f.life, f.col] : ['b', r2(f.x), r2(f.y), r2(f.dx), r2(f.dy), f.len, f.w, f.life, f.col]); }
   const S = {
-    t:'s', ph:G.phase, tm:r2(G.timer), rd:G.round, si:r2(G.shrinkIn), st:G.step, P:G.P, SZ:SIZE,
+    t:'s', ph:G.phase, tm:r2(G.timer), rd:G.round, si:r2(G.shrinkIn), st:G.step, pa:[G.pat, G.seed], SZ:SIZE,
     u:G.units.map(u => { const b = u.b, fl = (b.inv > 0 ? 1 : 0) | (b.shell > 0 ? 2 : 0) | (b.refl > 0 ? 4 : 0) | (b.sd > 0 ? 8 : 0) | (b.slow > 0 ? 16 : 0) | (b.burn > 0 ? 32 : 0) | (Math.hypot(u.rvx, u.rvy) > .3 ? 64 : 0) | (b.conf > 0 ? 128 : 0) | (b.sleep > 0 ? 256 : 0) | (b.fear > 0 ? 512 : 0) | (u.gshade ? 1024 : 0) | (u.roll ? 2048 : 0) | (b.curl > 0 ? 4096 : 0);
       return [r2(u.x), r2(u.y), r2(u.face), Math.round(u.hp * 10) / 10, u.maxhp, u.alive ? 1 : 0, u.out ? 1 : 0, u.lives, ANIMS.indexOf(u.anim.n), r2(u.anim.t), fl,
         u.air ? r2(Math.min(1, u.air.t / u.air.dur)) : -1, u.emo ? u.emo.e : '', u.wins, u.kills, Math.round(u.dmg), u.place,
@@ -2311,6 +2500,7 @@ function netBroadcast(){
     mo:G.mode, fm:G.fmt, tw:G.teamWins, bl:G.ball ? [r2(G.ball.x), r2(G.ball.y), r2(G.ball.vx), r2(G.ball.vy)] : 0, gl:G.goals || [0, 0], pt:r2(G.pbT || 0), cp:G.caps.map(z => [r2(z.x), r2(z.y), z.r, z.cap, Object.entries(z.acc).map(([k, v]) => [+k, r2(v)]), z.full ? 1 : 0]),
     mp:G.map, R:G.R, ob:G.obs.map(o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0, o.chg || 0, r2(o.boom || 0), r2(o.down || 0), o.frenzy || 0, o.r, o.dr || 0]),
     ic:G.ice.map(p => [r2(p.x), r2(p.y), p.r, r2(Math.min(p.t, 99))]),
+    md:G.mud.map(p => [r2(p.x), r2(p.y), r2(p.r)]), gu:G.gust ? [r2(G.gust.dx), r2(G.gust.dy), r2(G.gust.warn), r2(G.gust.t)] : 0,
     ev:NET.ev.concat(fxs)
   };
   NET.ev = [];
@@ -2363,8 +2553,10 @@ function applySnap(S){
   const prev = G.phase;
   if (S.SZ !== SIZE){ SIZE = S.SZ; camera(true); }
   // plataforma encolheu: anima as casas caindo
-  if (S.rd === G.round && S.mp === G.map && (S.R !== G.R || S.P.x0 !== G.P.x0)) addFalling(platCells(), platCells(S.mp, S.R, S.P));
-  Object.assign(G, { phase:S.ph, timer:S.tm, round:S.rd, shrinkIn:S.si, step:S.st, P:S.P, map:S.mp, R:S.R });
+  if (S.rd !== G.round || S.mp !== G.map || !G.pa || G.pa[0] !== S.pa[0] || G.pa[1] !== S.pa[1] || G.pa[2] !== SIZE){ G.map = S.mp; G.pat = S.pa[0]; G.seed = S.pa[1]; G.pa = [S.pa[0], S.pa[1], SIZE]; G.step = S.st; buildStages(); G.decals = []; }
+  else if (S.st !== G.step){ const b = platCells(); G.step = S.st; addFalling(b, platCells()); }
+  Object.assign(G, { phase:S.ph, timer:S.tm, round:S.rd, shrinkIn:S.si, step:S.st, map:S.mp, R:S.R });
+  G.mud = (S.md || []).map(a => ({ x:a[0], y:a[1], r:a[2] })); G.gust = S.gu ? { dx:S.gu[0], dy:S.gu[1], warn:S.gu[2], t:S.gu[3] } : null;
   G.obs = S.ob.map(a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0, chg:a[8], boom:a[9], down:a[10], frenzy:a[11], r:a[12] || OBR[a[0]], dr:a[13] || 0 }));
   G.ice = S.ic.map(a => ({ x:a[0], y:a[1], r:a[2], t:a[3] }));
   G.mode = S.mo || 'cl'; G.fmt = S.fm || 0; G.teamWins = S.tw || {}; G.goals = S.gl; G.pbT = S.pt;
