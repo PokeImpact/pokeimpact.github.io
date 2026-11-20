@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v44 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v45 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -1231,6 +1231,7 @@ function startRound(){
 function endRound(){
   G.phase = 'roundEnd'; G.timer = 2.8;
   const alive = G.units.filter(u => u.alive);
+  if (!isZona() && !isPb()) for (const u of alive) G.fx.push({ ring:1, x:u.x, y:u.y, r:1.5, t:0, life:2.4, col:u.col, st:'win' });
   for (const u of G.units) if (!u.out){ u.gold += 8; if (!u.alive) u.gold += 3; }
   const top = G.units.filter(u => !u.out && u.rdmg > 0).sort((a, b) => b.rdmg - a.rdmg)[0];
   if (top){ top.gold += 4; feed(`${top.name} deu mais dano na rodada: +4 de ouro`, top.col); }
@@ -1979,6 +1980,10 @@ function drawRingFx(f){
   if (typeof f.st === 'string' && f.st.startsWith('slash')){ const [, a, w] = f.st.split(':').map(Number), rr = R * (.75 + .25 * p), a0 = a - w * 1.1, a1 = a0 + w * 2.2 * Math.min(1, p * 2.5);
     cx.lineCap = 'round'; cx.strokeStyle = `rgba(184,245,122,${.8 * k})`; cx.lineWidth = T * .32 * k + 1; cx.beginPath(); cx.arc(X, Y, rr - T * .1, a0, a1); cx.stroke();
     cx.strokeStyle = `rgba(255,255,255,${k})`; cx.lineWidth = T * .12 * k + 1; cx.beginPath(); cx.arc(X, Y, rr, a0 + .1, a1); cx.stroke(); cx.lineCap = 'butt'; return; }
+  if (f.st === 'win'){ const C = ['#ffd23f','#ff5d5d','#4dabff','#9be36a','#ff7bc0','#ffffff'];
+    for (let q = 0; q < 46; q++){ const a = (q * 2.399) % 6.283, v = T * (2 + (q * 37 % 11) * .35), x = X + Math.cos(a) * v * Math.min(1, p * 3), y = Y - T * 1 + Math.sin(a) * v * .6 * Math.min(1, p * 3) - T * 2.5 * Math.sin(Math.min(1, p * 2) * Math.PI / 2) + T * 4 * p * p, rot = p * 12 + q;
+      cx.save(); cx.globalAlpha = Math.min(1, k * 2); cx.translate(x, y); cx.rotate(rot); cx.fillStyle = C[q % C.length]; cx.fillRect(-T * .07, -T * .035 * Math.abs(Math.cos(rot * 2)) - 1, T * .14, T * .07 * Math.abs(Math.cos(rot * 2)) + 2); cx.restore(); }
+    cx.globalAlpha = 1; if (p < .5){ glow(X, Y - T * .4, T * 1.4 * (1 - p), `rgba(255,240,150,${.5 * (1 - p * 2)})`, 'rgba(255,210,63,.15)'); } return; }
   if (f.st === 'ko'){ for (let q = 0; q < 9; q++){ const a = q / 9 * 6.283 + f.x, rr = R * (.2 + .8 * p), X2 = X + Math.cos(a) * rr, Y2 = Y + Math.sin(a) * rr * .6 - T * p * .6, s = T * (.32 - .18 * p);
       cx.fillStyle = `rgba(200,205,215,${.75 * k})`; cx.beginPath(); cx.arc(X2, Y2, s, 0, 7); cx.fill(); cx.fillStyle = `rgba(255,255,255,${.5 * k})`; cx.beginPath(); cx.arc(X2 - s * .3, Y2 - s * .3, s * .45, 0, 7); cx.fill(); }
     cx.fillStyle = `rgba(255,220,90,${k})`; cx.font = `900 ${T * .4}px system-ui`; cx.textAlign = 'center'; for (let q = 0; q < 3; q++){ const a = G.t * 5 + q * 2.1; cx.fillText('★', X + Math.cos(a) * T * .45, Y - T * (.8 + p * .6) + Math.sin(a) * T * .15); } return; }
@@ -2177,6 +2182,17 @@ function drawMinimap(){ if (G.map !== 'gb' || G.phase === 'menu') return; const 
   if (G.drop){ cx.fillStyle = Math.sin(G.t * 12) > 0 ? '#ffd23f' : '#e8322f'; cx.beginPath(); cx.arc(x0 + G.drop.x * m, y0 + G.drop.y * m, 4, 0, 7); cx.fill(); }
   for (const u of G.units){ if (!u.alive) continue; const mine = u === G.me, mate = teamOn() && G.me && u.team === G.me.team; if (!mine && !mate && (!G.me || !G.me.alive || gbHidden(u, G.me))) continue;
     cx.fillStyle = mine ? '#fff' : u.col; cx.beginPath(); cx.arc(x0 + u.x * m, y0 + u.y * m, mine ? 4 : 3, 0, 7); cx.fill(); } }
+// ---------- leitura: onde estou, estou na névoa, para onde ir ----------
+function drawMeHints(){ const me = G.me; if (!me || !me.alive) return; const X = sx(me.x), Y = sy(me.y);
+  if (G.phase === 'count' || (G.phase === 'play' && (G.playT || 0) < 1.5)){ const b = Math.sin(G.t * 8) * T * .12, ty = Y - T * 2 + b;
+    cx.fillStyle = '#ffd23f'; cx.strokeStyle = '#1a1206'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(X, ty + T * .45); cx.lineTo(X - T * .25, ty); cx.lineTo(X + T * .25, ty); cx.closePath(); cx.fill(); cx.stroke();
+    cx.font = `900 ${Math.max(12, T * .32)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.lineWidth = 4; cx.strokeText('VOCÊ', X, ty - T * .12); cx.fillText('VOCÊ', X, ty - T * .12); }
+  const inMist = G.phase === 'play' && !me.air && !onPlat(me.x, me.y);
+  if (inMist){ const a = .25 + .15 * Math.sin(G.t * 9), g = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .3, W / 2, H / 2, Math.max(W, H) * .7); g.addColorStop(0, 'rgba(120,220,80,0)'); g.addColorStop(1, `rgba(120,220,80,${a})`); cx.fillStyle = g; cx.fillRect(0, 0, W, H); }
+  if (G.map === 'gb' && G.phase === 'play'){ const S = soonCells(), I = sInfo(S); if (!I.cells.length) return; const C = platCenter(me.x, me.y, S), tx = sx(C.x), ty = sy(C.y);
+    if (inMist || edgeIn(S, me.x, me.y) < .5 || tx < 0 || tx > W || ty < 0 || ty > H){ const a = Math.atan2(ty - Y, tx - X), m = 60, ex = clamp(X + Math.cos(a) * 1e4, m, W - m), ey = clamp(Y + Math.sin(a) * 1e4, m + 40, H - m - 60);
+      const px = clamp(X + Math.cos(a) * T * 2.2, m, W - m), py = clamp(Y + Math.sin(a) * T * 2.2, m, H - m), qx = inMist ? px : (tx < 0 || tx > W || ty < 0 || ty > H ? ex : px), qy = inMist ? py : (tx < 0 || tx > W || ty < 0 || ty > H ? ey : py);
+      cx.save(); cx.translate(qx, qy); cx.rotate(a); cx.fillStyle = `rgba(155,227,106,${.75 + .25 * Math.sin(G.t * 10)})`; cx.strokeStyle = '#13240c'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(T * .45, 0); cx.lineTo(-T * .25, -T * .3); cx.lineTo(-T * .1, 0); cx.lineTo(-T * .25, T * .3); cx.closePath(); cx.fill(); cx.stroke(); cx.restore(); } } }
 function drawMist(ms){
   if (!fogPat){ fogPat = cx.createPattern(FOG, 'repeat'); seaPat = cx.createPattern(SEA, 'repeat'); }
   const t = G.t;
@@ -2425,7 +2441,7 @@ function draw(){
   cx.restore();
   if (G.phase !== 'menu'){ const vg = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75);
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(${8 + ms * 3},${20 + ms * 6},${10 + ms * 2},${.22 + ms * .05})`); cx.fillStyle = vg; cx.fillRect(0, 0, W, H); }
-  drawMinimap();
+  drawMeHints(); drawMinimap();
   cx.textAlign = 'center';
   cx.lineJoin = 'round';
   for (const t of G.txt){ const num = /^\d+$/.test(t.s), v = num ? +t.s : 0, big = num ? Math.min(1.9, 1 + v / 25) : 1, pop = t.t < .12 ? 1 + (1 - t.t / .12) * .6 : 1, sz = Math.max(12, T * .32) * big * pop;
