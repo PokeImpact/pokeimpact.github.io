@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v43 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v44 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2947,6 +2947,11 @@ function netStartMsg(){
   const units = G.units.map(u => [u.sp, u.name, u.col, u.human ? 1 : 0, u.team, u.skin || 0]);
   NET.peers.forEach(c => { c.seen = performance.now(); if (c.open) c.send({ t:'start', you:G.units.indexOf(c.u), units, lives:CFG.lives, mo:G.mode, fm:G.fmt }); });
 }
+// objetos parados (paredes, árvores, mastros, pedras) vão só 1×/s ou quando mudam: no mapa grande são mais de 100
+const OB_STATIC = new Set(['tree','rock','xmas','wall','mast']);
+const obSer = o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0, o.chg || 0, r2(o.boom || 0), r2(o.down || 0), o.frenzy || 0, o.r, o.dr || 0];
+function obStaticMsg(){ const st = G.obs.filter(o => OB_STATIC.has(o.k)), sig = G.round + ':' + G.map + ':' + st.length; NET.osT = (NET.osT || 0) + 1;
+  if (sig !== NET.osSig || NET.osT >= 20){ NET.osSig = sig; NET.osT = 0; return st.map(obSer); } return undefined; }
 function netBroadcast(){
   const fxs = [];
   for (const f of G.fx) if ((f.ring || f.beam) && !f.sent){ f.sent = 1; fxs.push(f.ring ? ['r', r2(f.x), r2(f.y), r2(f.r), f.life, f.col, f.st || 0] : ['b', r2(f.x), r2(f.y), r2(f.dx), r2(f.dy), f.len, f.w, f.life, f.col]); }
@@ -2964,7 +2969,7 @@ function netBroadcast(){
     pr:G.portals.map(P => [r2(P.ax), r2(P.ay), r2(P.bx), r2(P.by), r2(P.t), P.r]),
     d:G.decoys.map(c => [G.units.indexOf(c.o), r2(c.x), r2(c.y), r2(c.face)]),
     mo:G.mode, fm:G.fmt, tw:G.teamWins, bl:G.ball ? [r2(G.ball.x), r2(G.ball.y), r2(G.ball.vx), r2(G.ball.vy)] : 0, gl:G.goals || [0, 0], pt:r2(G.pbT || 0), cp:G.caps.map(z => [r2(z.x), r2(z.y), z.r, z.cap, Object.entries(z.acc).map(([k, v]) => [+k, r2(v)]), z.full ? 1 : 0]),
-    mp:G.map, R:G.R, ob:G.obs.map(o => [o.k, r2(o.x), r2(o.y), r2(o.face || 0), r2(o.charge || 0), r2(o.aim || 0), o.hitT > 0 ? 1 : 0, o.anim > 0 ? 1 : 0, o.chg || 0, r2(o.boom || 0), r2(o.down || 0), o.frenzy || 0, o.r, o.dr || 0]),
+    mp:G.map, R:G.R, ob:G.obs.filter(o => !OB_STATIC.has(o.k)).map(obSer), os:obStaticMsg(),
     ic:G.ice.map(p => [r2(p.x), r2(p.y), p.r, r2(Math.min(p.t, 99))]),
     md:G.mud.map(p => [r2(p.x), r2(p.y), r2(p.r)]), pk:G.picks.map(p => [r2(p.x), r2(p.y), p.k || 0]), dp:G.drop ? [r2(G.drop.x), r2(G.drop.y), r2(G.drop.t), G.drop.dur] : 0, cb:(G.cballs || []).map(b => [r2(b.sx), r2(b.sy), r2(b.tx), r2(b.ty), r2(b.t), b.dur]), gu:G.gust ? [r2(G.gust.dx), r2(G.gust.dy), r2(G.gust.warn), r2(G.gust.t)] : 0,
     ev:NET.ev.concat(fxs)
@@ -3023,7 +3028,9 @@ function applySnap(S){
   else if (S.st !== G.step){ const b = platCells(); G.step = S.st; addFalling(b, platCells()); }
   Object.assign(G, { phase:S.ph, timer:S.tm, round:S.rd, shrinkIn:S.si, step:S.st, map:S.mp, R:S.R });
   G.mud = (S.md || []).map(a => ({ x:a[0], y:a[1], r:a[2] })); G.picks = (S.pk || []).map(a => ({ x:a[0], y:a[1], k:a[2] || 0 })); G.drop = S.dp ? { x:S.dp[0], y:S.dp[1], t:S.dp[2], dur:S.dp[3] } : null; G.cballs = (S.cb || []).map(a => ({ sx:a[0], sy:a[1], tx:a[2], ty:a[3], t:a[4], dur:a[5] })); G.gust = S.gu ? { dx:S.gu[0], dy:S.gu[1], warn:S.gu[2], t:S.gu[3] } : null;
-  G.obs = S.ob.map(a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0, chg:a[8], boom:a[9], down:a[10], frenzy:a[11], r:a[12] || OBR[a[0]], dr:a[13] || 0, main:a[0] === 'mast' && !a[13] ? 1 : 0 }));
+  const obPar = a => ({ k:a[0], x:a[1], y:a[2], r:OBR[a[0]], face:a[3], charge:a[4], aim:a[5], hitT:a[6] ? .3 : 0, anim:a[7] ? .3 : 0, chg:a[8], boom:a[9], down:a[10], frenzy:a[11], r:a[12] || OBR[a[0]], dr:a[13] || 0, main:a[0] === 'mast' && !a[13] ? 1 : 0 });
+  if (S.os) G.obsStatic = S.os.map(obPar);
+  G.obs = (G.obsStatic || []).concat(S.ob.map(obPar));
   G.ice = S.ic.map(a => ({ x:a[0], y:a[1], r:a[2], t:a[3] }));
   G.mode = S.mo || 'cl'; G.fmt = S.fm || 0; G.teamWins = S.tw || {}; G.goals = S.gl; G.pbT = S.pt;
   if (S.bl){ const o = G.ball; G.ball = { x:S.bl[0], y:S.bl[1], vx:S.bl[2], vy:S.bl[3], r:.42, rot:o ? o.rot : 0 }; } else G.ball = null; G.caps = (S.cp || []).map(a => ({ x:a[0], y:a[1], r:a[2], cap:a[3], acc:Object.fromEntries(a[4]), full:!!a[5] }));
