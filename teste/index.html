@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v45 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v46 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -1849,6 +1849,7 @@ const KOFF = [[-1,-1,110],[1,-1,109],[1,1,110],[-1,1,109],[0,-1,109],[0,1,110],[
 const tileShade = (i, j) => ((i * 7 + j * 13) % 5) * 3;
 // ---------- visual de cada arena ----------
 const hsh = (i, j) => { let h = (i * 374761393 + j * 668265263) | 0; h = Math.imul(h ^ h >>> 13, 1274126177); return ((h ^ h >>> 16) >>> 0) / 4294967296; };
+const NATMAP = new Set(['fl', 'flr', 'sn', 'ar', 'gb', 'pn']);
 const isEdgeCell = (S, i, j) => !S.has(ck(i - 1, j)) || !S.has(ck(i + 1, j)) || !S.has(ck(i, j - 1)) || !S.has(ck(i, j + 1));
 const onBridge = (i, j) => !!G.bridge && i >= G.bridge.x0 && i < G.bridge.x1 && j >= G.bridge.y0 && j < G.bridge.y1;
 function tileRGB(i, j, m, S){ const s = tileShade(i, j), h = hsh(i, j); let c;
@@ -1856,16 +1857,17 @@ function tileRGB(i, j, m, S){ const s = tileShade(i, j), h = hsh(i, j); let c;
     case 'rd': c = [150 + s, 196 + s, 222 + s * .6]; break;
     case 'fl': case 'flr': c = [64 + s + h * 10, 120 + s * 1.5 + h * 14, 58 + s]; break;
     case 'sn': c = [96 + s + h * 8, 156 + s + h * 10, 82 + s]; break;
-    case 'gb': c = (i + j) % 2 ? [112 + s + h * 6, 150 + s + h * 8, 84 + s] : [104 + s + h * 6, 142 + s + h * 8, 78 + s]; break;
+    case 'gb': c = [106 + s + h * 6, 146 + s + h * 8, 80 + s]; break;
     case 'vt': c = [100 + s, 108 + s, 120 + s]; break;
     case 'pn': c = [84 + s + h * 10, 96 + s + h * 8, 60 + s]; break;
     case 'ar': c = S && isEdgeCell(S, i, j) ? [214 + s * .6, 192 + s * .6, 138 + s] : [80 + s, 146 + s + h * 10, 78 + s]; break;
     case 'pt': c = onBridge(i, j) ? [120 + s, 84 + s, 50 + s] : [168 + s + h * 8, 124 + s + h * 6, 78 + s]; break;
     default: c = [118 + s, 108 + s, 94 + s]; }
+  if (NATMAP.has(G.map)){ const n = Math.sin(i * .45 + j * .2) * 5 + Math.cos(j * .38 - i * .15) * 5; c[0] += n * .5; c[1] += n; c[2] += n * .4; }   // manchas grandes: o campo não fica uniforme
   return c.map(Math.round); }
 function grassDeco(i, j, X, Y, h){
-  cx.strokeStyle = 'rgba(30,70,25,.5)'; cx.lineWidth = 1.5; cx.beginPath(); const a = X + T * (.2 + h * .5), b = Y + T * (.45 + (h * 7 % 1) * .35);
-  cx.moveTo(a, b); cx.lineTo(a - T * .05, b - T * .15); cx.moveTo(a + T * .08, b); cx.lineTo(a + T * .1, b - T * .17); cx.stroke();
+  if (h > .35){ cx.strokeStyle = 'rgba(28,72,24,.45)'; cx.lineWidth = Math.max(1, T * .045); cx.lineCap = 'round'; cx.beginPath(); const a = X + T * (.2 + (h * 3 % 1) * .6), b = Y + T * (.5 + (h * 7 % 1) * .35), L = T * (.14 + h * .08);
+    for (const d of [-.5, -.15, .2, .5]){ cx.moveTo(a, b); cx.quadraticCurveTo(a + d * L * .4, b - L * .6, a + d * L, b - L * (1 - Math.abs(d) * .4)); } cx.stroke(); cx.lineCap = 'butt'; }
   if (h > .9 || (G.map === 'sn' && h > .8)){ cx.fillStyle = ['#ffd23f','#ff7bc0','#ffffff'][Math.floor(h * 30) % 3]; cx.beginPath(); cx.arc(X + T * .7, Y + T * .3, T * .07, 0, 7); cx.fill(); } }
 function stoneDeco(i, j, X, Y, h){
   cx.fillStyle = 'rgba(255,255,255,.07)'; cx.fillRect(X + 1, Y + 1, T - 2, T * .12);
@@ -1893,7 +1895,8 @@ const THEME = {
     cx.strokeStyle = '#d9c08a'; cx.lineWidth = Math.max(2, T * .07); cx.beginPath();
     if (j === G.bridge.y0){ cx.moveTo(X, Y + 2); cx.lineTo(X + T, Y + 2); } if (j === G.bridge.y1 - 1){ cx.moveTo(X, Y + T - 2); cx.lineTo(X + T, Y + T - 2); } cx.stroke(); } },
 };
-THEME.flr = THEME.fl; THEME.gb = { cliff:'#4a3a26', edge:'rgba(25,45,20,.6)', deco(i, j, X, Y, h){ if (h > .85) grassDeco(i, j, X, Y, h); } };
+for (const k of ['fl','sn','ar','pn']) THEME[k].nat = 1;
+THEME.flr = THEME.fl; THEME.gb = { nat:1, cliff:'#4a3a26', edge:'rgba(25,45,20,.6)', deco(i, j, X, Y, h){ if (h > .6) grassDeco(i, j, X, Y, h); } };
 // ---------- efeitos das habilidades ----------
 // corrente de elos (de (x0,y0) a (x1,y1), em pixels), com barriga "sag" para baixo quando está frouxa
 function chainLine(x0, y0, x1, y1, s, sag = 0){
@@ -2196,9 +2199,9 @@ function drawMeHints(){ const me = G.me; if (!me || !me.alive) return; const X =
 function drawMist(ms){
   if (!fogPat){ fogPat = cx.createPattern(FOG, 'repeat'); seaPat = cx.createPattern(SEA, 'repeat'); }
   const t = G.t;
-  if (G.map === 'pt' || G.map === 'ar' || isRd()){ patLayer(seaPat, SEA, OX * .9 + t * 6, OY * .9 + Math.sin(t * .5) * 8, T / 40, 1);   // mar (navios e ilhas) ou lago gelado (redondo)
-    if (isRd()){ cx.fillStyle = 'rgba(170,215,240,.28)'; cx.fillRect(0, 0, W, H); }
-    if (!isRd() && G.phase !== 'menu'){ if (Math.random() < .012){ const a = Math.random() * 6.283, d = SIZE * (.55 + Math.random() * .2), x = SIZE / 2 + Math.cos(a) * d, y = SIZE / 2 + Math.sin(a) * d; if (!onPlat(x, y)) KARPS.push({ x, y, t:0, f:Math.random() < .5 ? 0 : Math.PI }); }
+  if (G.map === 'pt' || G.map === 'ar' || G.map === 'rd'){ patLayer(seaPat, SEA, OX * .9 + t * 6, OY * .9 + Math.sin(t * .5) * 8, T / 40, 1);   // mar (navios e ilhas) ou lago gelado (redondo)
+    if (G.map === 'rd'){ cx.fillStyle = 'rgba(170,215,240,.28)'; cx.fillRect(0, 0, W, H); }
+    if (G.map !== 'rd' && G.phase !== 'menu'){ if (Math.random() < .012){ const a = Math.random() * 6.283, d = SIZE * (.55 + Math.random() * .2), x = SIZE / 2 + Math.cos(a) * d, y = SIZE / 2 + Math.sin(a) * d; if (!onPlat(x, y)) KARPS.push({ x, y, t:0, f:Math.random() < .5 ? 0 : Math.PI }); }
       for (const k of KARPS){ k.t += 1 / 60; const p = k.t / 1.1, h = Math.sin(Math.min(1, p) * Math.PI) * 1.3; if (p < 1) drawSprite(129, 'Idle', k.t, k.f, k.x + (p - .5) * .8 * (k.f ? -1 : 1), k.y - h, T / 30, .95);
         if (!k.sp && p > .02){ k.sp = 1; for (let q = 0; q < 8; q++) fx(k.x, k.y, rnd(-1.5, 1.5), rnd(-2.5, -.5), .5, '#cfe8ff', 5); } if (!k.sp2 && p >= 1){ k.sp2 = 1; for (let q = 0; q < 10; q++) fx(k.x + (k.f ? -.4 : .4), k.y, rnd(-1.5, 1.5), rnd(-2.5, -.5), .5, '#ffffff', 5); } }
       KARPS = KARPS.filter(k => k.t < 1.3); } }
@@ -2220,7 +2223,7 @@ function draw(){
   if (G.map === 'pt') drawHulls(S);
   for (const [key, m] of S){ const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T || X > W + T || Y < -T * 2 || Y > H + T) continue; const c = tileRGB(i, j, m, S);
     cx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
-    if (m === 15){ cx.fillRect(X + 1, Y + 1, T - 2, T - 2); TH.deco(i, j, X, Y, hsh(i, j), S); } else { cellPath(i, j, m, 1); cx.fill(); }
+    if (m === 15){ if (TH.nat) cx.fillRect(X, Y, T + .5, T + .5); else cx.fillRect(X + 1, Y + 1, T - 2, T - 2); TH.deco(i, j, X, Y, hsh(i, j), S); } else { cellPath(i, j, m, TH.nat ? 0 : 1); cx.fill(); }
     if (play && willFall(i, j, m)){ cx.fillStyle = `rgba(155,227,106,${pulse})`; if (m === 15) cx.fillRect(X + 1, Y + 1, T - 2, T - 2); else { cellPath(i, j, m, 1); cx.fill(); }
       cx.strokeStyle = 'rgba(30,20,10,.7)'; cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(X + T * .2, Y + T * .3); cx.lineTo(X + T * .5, Y + T * .55); cx.lineTo(X + T * .8, Y + T * .4); cx.stroke(); } }
   cx.strokeStyle = TH.edge; cx.lineWidth = Math.max(1.5, T * .05); cx.beginPath();
