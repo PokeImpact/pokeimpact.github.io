@@ -136,6 +136,8 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 #tsk{position:fixed;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));width:190px;height:190px;z-index:7}
 #tsk .sl{position:absolute;width:54px;height:54px}
 @media (max-width:700px){#plist{width:auto;right:calc(8px + env(safe-area-inset-right,0px));flex-direction:row;flex-wrap:wrap;gap:3px}.pc{grid-template-columns:22px 34px;font-size:10px;padding:2px 4px}.pc img{width:22px;height:22px}.pc .nm>span:first-child{display:none}.pc .em{right:-6px;top:-10px;font-size:16px}#bar{display:none}#top{left:calc(8px + env(safe-area-inset-left,0px));transform:none;font-size:12px;gap:6px;padding:5px 10px}#emo{flex-direction:column;bottom:calc(215px + env(safe-area-inset-bottom,0px))}#emo button{width:34px;height:34px;font-size:17px}#feed{top:calc(100px + env(safe-area-inset-top,0px))}}
+#shopOv .box>.row:last-child{position:sticky;bottom:-20px;margin-bottom:-20px;padding:14px 0 20px;background:linear-gradient(rgba(35,26,46,0),var(--panel) 40%)}
+#shopTime:empty{display:none}
 @media (max-width:440px){#top{font-size:11px;gap:5px;padding:4px 9px;max-width:calc(100vw - 150px);overflow:hidden}#top .sh{display:none}#gold span{padding:4px 9px;font-size:13px}#emo{opacity:.8}#emo button{width:30px;height:30px;font-size:15px;border-radius:8px}#feed div{font-size:11px;max-width:calc(100vw - 24px);white-space:normal;text-align:right}}
 @media (prefers-reduced-motion:reduce){.pc .em{animation:none}}
 </style>
@@ -168,7 +170,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v64 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v65 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2109,6 +2111,26 @@ function drawMark(m){ const k = clamp(1 - m.t / m.d.delay, 0, 1), X = sx(m.x), Y
 function nearMe(x, y, r){ const me = G.me; return me && me.alive && Math.hypot(me.x - x, me.y - y) < r; }
 // ---------- enfeites de cada mapa ----------
 // no chão (antes dos Pokémon): emblema do ginásio, cabos dos Voltorbs, vitórias-régias do pântano
+// Pântano: vitórias-régias, juncos e sapos por cima da lama (antes ficavam por baixo e quase não apareciam)
+function drawSwamp(){ if (G.map !== 'pn') return; const t = G.t;
+  if (G.map === 'pn') for (const p of G.mud){ if (!onPlat(p.x, p.y)) continue; const h = hsh(Math.round(p.x * 7), Math.round(p.y * 7));
+    for (let q = 0; q < 2; q++){ const a = h * 6.283 + q * 2.6, X = sx(p.x + Math.cos(a) * p.r * .5), Y = sy(p.y + Math.sin(a) * p.r * .45), r = T * (.28 + .06 * q);   // vitória-régia
+      cx.fillStyle = '#3f7d3a'; cx.beginPath(); cx.moveTo(X, Y); cx.arc(X, Y, r, a + .35, a + 6.0); cx.closePath(); cx.fill(); cx.strokeStyle = '#2a5a28'; cx.lineWidth = 1; cx.stroke();
+      if (q === 0 && h > .5){ cx.fillStyle = '#ffb3d9'; cx.beginPath(); cx.arc(X + r * .2, Y - r * .15, r * .28, 0, 7); cx.fill(); cx.fillStyle = '#fff3a0'; cx.beginPath(); cx.arc(X + r * .2, Y - r * .15, r * .1, 0, 7); cx.fill(); } }
+    cx.strokeStyle = '#5d7a2e'; cx.lineWidth = Math.max(1.5, T * .05); cx.beginPath(); for (let q = 0; q < 4; q++){ const a = h * 9 + q * 1.4, X = sx(p.x + Math.cos(a) * p.r * 1.02), Y = sy(p.y + Math.sin(a) * p.r * 1.02); cx.moveTo(X, Y); cx.lineTo(X + Math.sin(t * 1.5 + q) * T * .05, Y - T * .55); } cx.stroke();
+    cx.fillStyle = '#6b4a2a'; for (let q = 0; q < 4; q++){ const a = h * 9 + q * 1.4, X = sx(p.x + Math.cos(a) * p.r * 1.02), Y = sy(p.y + Math.sin(a) * p.r * 1.02); cx.beginPath(); cx.ellipse(X + Math.sin(t * 1.5 + q) * T * .05, Y - T * .55, T * .05, T * .12, 0, 0, 7); cx.fill(); } }
+  if (G.map === 'pn'){ const now = performance.now() / 1000; for (const p of G.mud){ if (!onPlat(p.x, p.y)) continue; const h = hsh(Math.round(p.x * 7), Math.round(p.y * 7)); if (h > .5) continue;   // sapos
+    const pad = q => { const a = h * 6.283 + q * 2.6; return [p.x + Math.cos(a) * p.r * .5, p.y + Math.sin(a) * p.r * .45]; }, A = pad(1), B = pad(0), cyc = (now * .25 + h * 3) % 2, fk = Math.round(p.x * 7) + ',' + Math.round(p.y * 7), fr = FROGS.get(fk) || {}; FROGS.set(fk, fr);
+    let fx2 = cyc < 1 ? A : B, hop = 0; const ph = cyc % 1; if (ph > .8){ const k = (ph - .8) / .2, F = cyc < 1 ? A : B, Tt = cyc < 1 ? B : A; fx2 = [F[0] + (Tt[0] - F[0]) * k, F[1] + (Tt[1] - F[1]) * k]; hop = Math.sin(k * Math.PI) * .6; }
+    if (G.units.some(u => u.alive && Math.hypot(u.x - fx2[0], u.y - fx2[1]) < 1.5)){ if (!(now - (fr.hid || -9) < 6)){ fr.hid = now; fr.at = fx2; } }
+    const hd = now - (fr.hid || -9); if (hd < 6){ if (hd < .6 && fr.at){ const k = hd / .6; cx.strokeStyle = `rgba(170,140,95,${.7 * (1 - k)})`; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(sx(fr.at[0]), sy(fr.at[1]), T * (.15 + k * .5), T * (.07 + k * .25), 0, 0, 7); cx.stroke(); } continue; }   // mergulhou na lama
+    const X = sx(fx2[0]), Y = sy(fx2[1]) - hop * T, z = T * .13, sac = ph < .7 ? Math.max(0, Math.sin(now * 5 + h * 9)) : 0;
+    cx.fillStyle = 'rgba(0,0,0,.2)'; cx.beginPath(); cx.ellipse(X, sy(fx2[1]) + z * .4, z * 1.1, z * .35, 0, 0, 7); cx.fill();
+    cx.fillStyle = '#4f9a3c'; cx.beginPath(); cx.ellipse(X, Y, z * 1.1, z * .8, 0, 0, 7); cx.fill(); for (const s2 of [-1, 1]){ cx.beginPath(); cx.ellipse(X + s2 * z * .85, Y + z * .35, z * .45, z * .25, s2 * .5, 0, 7); cx.fill(); }   // corpo e patas
+    if (sac > .05){ cx.fillStyle = 'rgba(245,235,170,.9)'; cx.beginPath(); cx.arc(X, Y + z * .25, z * (.3 + sac * .45), 0, 7); cx.fill(); }   // papo enchendo
+    for (const s2 of [-1, 1]){ cx.fillStyle = '#4f9a3c'; cx.beginPath(); cx.arc(X + s2 * z * .45, Y - z * .65, z * .32, 0, 7); cx.fill(); cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(X + s2 * z * .45, Y - z * .7, z * .2, 0, 7); cx.fill(); cx.fillStyle = '#111'; cx.beginPath(); cx.arc(X + s2 * z * .45, Y - z * .7, z * .1, 0, 7); cx.fill(); } } }
+}
+const FROGS = new Map();   // chave pela posição da poça (no convidado as poças chegam como objetos novos)
 function drawMapDecor(){ const c = SIZE / 2, t = G.t; drawDust();
   for (const o of G.obs) if (o.k === 'snor') for (let q = 0; q < 5; q++){ const h = hsh(q * 7 + 3, 11), a = q * 1.26 + h * .8, d = 1.5 + h * .6, x = o.x + Math.cos(a) * d, y = o.y + Math.sin(a) * d * .8 + .2; if (!onPlat(x, y)) continue;   // restos do lanche do Snorlax
     const X = sx(x), Y = sy(y), k = q % 3; cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(X, Y + T * .08, T * .16, T * .05, 0, 0, 7); cx.fill();
@@ -2127,12 +2149,6 @@ function drawMapDecor(){ const c = SIZE / 2, t = G.t; drawDust();
       cx.strokeStyle = '#1b1e24'; cx.lineWidth = T * .14; cx.beginPath(); cx.moveTo(sx(a.x), sy(a.y)); cx.lineTo(sx(b.x), sy(b.y)); cx.stroke();
       cx.strokeStyle = `rgba(255,224,102,${.25 + .5 * f})`; cx.lineWidth = T * .04; cx.stroke();
       for (let q = 0; q < 3; q++){ const p = (t * (.5 + f * 1.5) + q / 3) % 1; glow(sx(a.x + (b.x - a.x) * p), sy(a.y + (b.y - a.y) * p), T * .22, 'rgba(255,250,200,.95)', 'rgba(255,210,60,.5)'); } } }
-  if (G.map === 'pn') for (const p of G.mud){ if (!onPlat(p.x, p.y)) continue; const h = hsh(Math.round(p.x * 7), Math.round(p.y * 7));
-    for (let q = 0; q < 2; q++){ const a = h * 6.283 + q * 2.6, X = sx(p.x + Math.cos(a) * p.r * .5), Y = sy(p.y + Math.sin(a) * p.r * .45), r = T * (.28 + .06 * q);   // vitória-régia
-      cx.fillStyle = '#3f7d3a'; cx.beginPath(); cx.moveTo(X, Y); cx.arc(X, Y, r, a + .35, a + 6.0); cx.closePath(); cx.fill(); cx.strokeStyle = '#2a5a28'; cx.lineWidth = 1; cx.stroke();
-      if (q === 0 && h > .5){ cx.fillStyle = '#ffb3d9'; cx.beginPath(); cx.arc(X + r * .2, Y - r * .15, r * .28, 0, 7); cx.fill(); cx.fillStyle = '#fff3a0'; cx.beginPath(); cx.arc(X + r * .2, Y - r * .15, r * .1, 0, 7); cx.fill(); } }
-    cx.strokeStyle = '#5d7a2e'; cx.lineWidth = Math.max(1.5, T * .05); cx.beginPath(); for (let q = 0; q < 4; q++){ const a = h * 9 + q * 1.4, X = sx(p.x + Math.cos(a) * p.r * 1.02), Y = sy(p.y + Math.sin(a) * p.r * 1.02); cx.moveTo(X, Y); cx.lineTo(X + Math.sin(t * 1.5 + q) * T * .05, Y - T * .55); } cx.stroke();
-    cx.fillStyle = '#6b4a2a'; for (let q = 0; q < 4; q++){ const a = h * 9 + q * 1.4, X = sx(p.x + Math.cos(a) * p.r * 1.02), Y = sy(p.y + Math.sin(a) * p.r * 1.02); cx.beginPath(); cx.ellipse(X + Math.sin(t * 1.5 + q) * T * .05, Y - T * .55, T * .05, T * .12, 0, 0, 7); cx.fill(); } }
 }
 // no ar (por cima de tudo): folhas caindo na floresta, vaga-lumes no pântano
 // gás venenoso da Grande Batalha (por cima de tudo, nas casas que já fecharam)
@@ -2421,6 +2437,8 @@ function draw(){
     cx.save(); cx.globalAlpha = k; cx.translate(sx(f.i + .5), sy(f.j + .5) + (1 - k) * T * .7); cx.rotate((f.rot || 0) * (1 - k));
     cx.fillStyle = `rgb(${c[0] - 18},${c[1] - 18},${c[2] - 18})`; cx.fillRect(-s / 2, -s / 2, s, s); cx.fillStyle = 'rgba(0,0,0,.3)'; cx.fillRect(-s / 2, s * .3, s, s * .2); cx.restore(); }
   cx.globalAlpha = 1;
+  for (const f of G.falling){ if (f.t > .55) continue; const k = f.t / .55, X = sx(f.i + .5), Y = sy(f.j + .5);   // poeira subindo da beira quando a casa cai
+    for (let q = 0; q < 5; q++){ const a = q * 1.256 + f.i, d = T * (.45 + k * .5); cx.fillStyle = `rgba(200,195,180,${.4 * (1 - k)})`; cx.beginPath(); cx.arc(X + Math.cos(a) * d, Y + Math.sin(a) * d * .6 - k * T * .3, T * (.1 + k * .18), 0, 7); cx.fill(); } }
   // marcas no chão (explosões e golpes grandes): somem em 14 s
   { const now = performance.now() / 1000; G.decals = (G.decals || []).filter(d => now - d.t0 < 14);
     for (const d of G.decals){ if (!onPlat(d.x, d.y)) continue; const a = .3 * (1 - (now - d.t0) / 14), X = sx(d.x), Y = sy(d.y), g = cx.createRadialGradient(X, Y, 0, X, Y, d.r * T);
@@ -2433,6 +2451,7 @@ function draw(){
   for (const p of G.mud){ if (!onPlat(p.x, p.y)) continue; const X = sx(p.x), Y = sy(p.y), r = p.r * T;
     cx.fillStyle = 'rgba(70,52,30,.75)'; cx.beginPath(); cx.ellipse(X, Y, r, r * .92, 0, 0, 7); cx.fill(); cx.fillStyle = 'rgba(110,84,50,.5)'; cx.beginPath(); cx.ellipse(X - r * .2, Y - r * .2, r * .5, r * .35, -.4, 0, 7); cx.fill();
     for (let k = 0; k < 3; k++){ const ph = (G.t * .7 + k / 3 + p.x) % 1; cx.strokeStyle = `rgba(170,140,95,${.6 * (1 - ph)})`; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(X + Math.cos(k * 2.1 + p.y) * r * .5, Y + Math.sin(k * 2.1 + p.y) * r * .4, ph * T * .18 + 1, 0, 7); cx.stroke(); } }
+  drawSwamp();
   // aviso do Snorlax: a área que ele vai esmagar
   for (const o of G.obs) if (o.k === 'snor' && o.charge > 0){ const full = o.frenzy > 0, x0 = full ? o.x : o.x + Math.cos(o.aim) * 1.3, y0 = full ? o.y : o.y + Math.sin(o.aim) * 1.3;
     cx.fillStyle = `rgba(255,${full ? 150 : 205},80,${.14 + .12 * Math.sin(G.t * 16)})`; cx.strokeStyle = 'rgba(255,220,140,.85)'; cx.lineWidth = 2; cx.setLineDash([6, 5]);
