@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v56 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v57 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -1780,13 +1780,13 @@ function shotHit(s, e, sp){
   const dir = d.pull ? -1 : 1;   // Lambida: puxa para o Gengar
   hit(s.o, e, d, s.L, dir * s.vx / sp, dir * s.vy / sp, d.fade ? 1 - d.fade * clamp(1 - s.left / d.range, 0, 1) : 1);
   if (d.splash){ for (const f of foesOf(s.o)){ if (f === e) continue; const ex = f.x - s.x, ey = f.y - s.y, el = Math.hypot(ex, ey); if (el <= d.splash + .2) hit(s.o, f, d, s.L, ex / (el || 1), ey / (el || 1), .5); }
-    G.fx.push({ ring:1, x:s.x, y:s.y, r:d.splash, t:0, life:.35, col:d.col }); for (let k = 0; k < 14; k++) fx(s.x, s.y, rnd(-4, 4), rnd(-4, 4), .35, pick(['#ffd23f','#ff7a1a']), 6); }
+    G.fx.push({ ring:1, x:s.x, y:s.y, r:d.splash, t:0, life:.4, col:d.col, st:'boom' }); for (let k = 0; k < 14; k++) fx(s.x, s.y, rnd(-4, 4), rnd(-4, 4), .35, pick(['#ffd23f','#ff7a1a']), 6); }
   if (d.slowAoe){ const [rad, dur, f] = d.slowAoe; for (const g of foesOf(s.o)) if (Math.hypot(g.x - s.x, g.y - s.y) <= rad + .2){ g.b.slow = dur; g.b.slowF = f; }
-    G.fx.push({ ring:1, x:s.x, y:s.y, r:rad, t:0, life:.4, col:'#9fd8ff' }); for (let k = 0; k < 14; k++) fx(s.x, s.y, rnd(-3, 3), rnd(-3, 3), .4, '#9fd8ff', 6); }
+    G.fx.push({ ring:1, x:s.x, y:s.y, r:rad, t:0, life:.45, col:'#9fd8ff', st:'surf' }); for (let k = 0; k < 14; k++) fx(s.x, s.y, rnd(-3, 3), rnd(-3, 3), .4, '#9fd8ff', 6); }
 }
 function explode(s){
   for (const e of foesOf(s.o)){ const ex = e.x - s.x, ey = e.y - s.y, el = Math.hypot(ex, ey); if (el <= s.d.aoe + .3) hit(s.o, e, s.d, s.L, ex / (el || 1), ey / (el || 1), el < .7 ? 1 : .75); }
-  G.fx.push({ ring:1, x:s.x, y:s.y, r:s.d.aoe, t:0, life:.4, col:s.d.col }); ballArea(s.x, s.y, s.d.aoe + .3, s.d.push * s.L.p * .9);
+  G.fx.push({ ring:1, x:s.x, y:s.y, r:s.d.aoe, t:0, life:.45, col:s.d.col, st:'boom' }); ballArea(s.x, s.y, s.d.aoe + .3, s.d.push * s.L.p * .9);
   for (let k = 0; k < 24; k++) fx(s.x, s.y, rnd(-5, 5), rnd(-5, 5), .45, pick(['#ffd23f','#ff7a1a','#fff']), 7);
 }
 
