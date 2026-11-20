@@ -140,6 +140,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 #tsk{position:fixed;right:calc(14px + env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));width:190px;height:190px;z-index:7}
 #tsk .sl{position:absolute;width:54px;height:54px}
 @media (max-width:700px){#plist{width:auto;right:calc(8px + env(safe-area-inset-right,0px));flex-direction:row;flex-wrap:wrap;gap:3px}.pc{grid-template-columns:22px 34px;font-size:10px;padding:2px 4px}.pc img{width:22px;height:22px}.pc .nm>span:first-child{display:none}.pc .em{right:-6px;top:-10px;font-size:16px}#bar{display:none}#top{left:calc(8px + env(safe-area-inset-left,0px));transform:none;font-size:12px;gap:6px;padding:5px 10px}#emo{flex-direction:column;bottom:calc(215px + env(safe-area-inset-bottom,0px))}#emo button{width:34px;height:34px;font-size:17px}#feed{top:calc(100px + env(safe-area-inset-top,0px))}}
+@media (min-width:900px){#spec{left:calc(12px + env(safe-area-inset-left,0px));transform:none;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:min(470px,40vw)}}   /* espectador no canto, sem cobrir o meio da arena */
 #shopOv .box>.row:last-child{position:sticky;bottom:-20px;margin-bottom:-20px;padding:14px 0 20px;background:linear-gradient(rgba(35,26,46,0),var(--panel) 40%)}
 #shopTime:empty{display:none}
 @media (max-width:440px){.podc{flex-basis:120px;padding:8px}.podc canvas{width:96px;height:84px}.podc .tt{font-size:17px}.podc .nm{font-size:15px}.podc small{font-size:11px}#top{font-size:11px;gap:5px;padding:4px 9px;max-width:calc(100vw - 150px);overflow:hidden}#top .sh{display:none}#gold span{padding:4px 9px;font-size:13px}#emo{opacity:.8}#emo button{width:30px;height:30px;font-size:15px;border-radius:8px}#feed div{font-size:11px;max-width:calc(100vw - 24px);white-space:normal;text-align:right}}
@@ -174,7 +175,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v73 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v74 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
