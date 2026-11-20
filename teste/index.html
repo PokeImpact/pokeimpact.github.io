@@ -105,6 +105,8 @@ button.link{background:none;border:0;color:var(--dim);text-decoration:underline;
 #feed{position:fixed;right:calc(10px + env(safe-area-inset-right,0px));top:calc(52px + env(safe-area-inset-top,0px));z-index:5;display:flex;flex-direction:column;gap:4px;align-items:flex-end;pointer-events:none}
 #feed div{background:rgba(21,15,28,.85);border-radius:8px;padding:4px 10px;font-size:13px;font-weight:800}
 #banner{position:fixed;left:50%;top:30%;transform:translate(-50%,-50%);z-index:6;font-family:var(--font-d);font-size:clamp(30px,6vw,54px);text-align:center;pointer-events:none;text-shadow:0 4px 0 #000,0 0 24px rgba(0,0,0,.6);white-space:nowrap}
+#banner.pop{animation:bnPop .38s cubic-bezier(.2,1.4,.4,1)}
+@keyframes bnPop{0%{transform:translate(-50%,-50%) scale(.35);opacity:0}60%{transform:translate(-50%,-50%) scale(1.12);opacity:1}100%{transform:translate(-50%,-50%) scale(1)}}
 #banner small{display:block;font-family:var(--font-b);font-size:16px;font-weight:800;color:var(--dim);text-shadow:0 1px 3px #000}
 /* loja */
 .shop{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
@@ -143,8 +145,8 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 @media (min-width:900px){#spec{left:calc(12px + env(safe-area-inset-left,0px));transform:none;bottom:calc(12px + env(safe-area-inset-bottom,0px));max-width:min(470px,40vw)}}   /* espectador no canto, sem cobrir o meio da arena */
 #shopOv .box>.row:last-child{position:sticky;bottom:-20px;margin-bottom:-20px;padding:14px 0 20px;background:linear-gradient(rgba(35,26,46,0),var(--panel) 40%)}
 #shopTime:empty{display:none}
-@media (max-width:440px){.podc{flex-basis:120px;padding:8px}.podc canvas{width:96px;height:84px}.podc .tt{font-size:17px}.podc .nm{font-size:15px}.podc small{font-size:11px}#top{font-size:11px;gap:5px;padding:4px 9px;max-width:calc(100vw - 150px);overflow:hidden}#top .sh{display:none}#gold span{padding:4px 9px;font-size:13px}#emo{opacity:.8}#emo button{width:30px;height:30px;font-size:15px;border-radius:8px}#feed div{font-size:11px;max-width:calc(100vw - 24px);white-space:normal;text-align:right}}
-@media (prefers-reduced-motion:reduce){.pc .em,.sl.ult.rdy,.sl.pop::after{animation:none}}
+@media (max-width:440px){#banner{white-space:normal;width:92vw}.podc{flex-basis:120px;padding:8px}.podc canvas{width:96px;height:84px}.podc .tt{font-size:17px}.podc .nm{font-size:15px}.podc small{font-size:11px}#top{font-size:11px;gap:5px;padding:4px 9px;max-width:calc(100vw - 150px);overflow:hidden}#top .sh{display:none}#gold span{padding:4px 9px;font-size:13px}#emo{opacity:.8}#emo button{width:30px;height:30px;font-size:15px;border-radius:8px}#feed div{font-size:11px;max-width:calc(100vw - 24px);white-space:normal;text-align:right}}
+@media (prefers-reduced-motion:reduce){.pc .em,.sl.ult.rdy,.sl.pop::after,#banner.pop{animation:none}}
 </style>
 
 </head>
@@ -175,7 +177,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v75 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v76 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado (Voltorb que rebate tudo), redondo (Lapras e gelo), Voltorbs, floresta, navios (canhões, barris e ventania), arquipélago, pântano, Snorlax e a Grande Batalha (mapa enorme com mato e caixas). Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -1213,7 +1215,7 @@ function feed(s, col){
 }
 function emote(u, e){ u.emo = { e, t:2.6 }; hudList(true); }
 let bannerT = 0;
-function banner(h, s, dur = 1.6){ if (NET.on && NET.host && G.phase !== 'count') NET.ev.push(['n', h, s || '', dur]); $('#banner').innerHTML = h + (s ? `<small>${s}</small>` : ''); bannerT = dur; }
+function banner(h, s, dur = 1.6){ if (NET.on && NET.host && G.phase !== 'count') NET.ev.push(['n', h, s || '', dur]); const hb = h + (s ? `<small>${s}</small>` : ''), el = $('#banner'); if (hb !== el.innerHTML){ el.innerHTML = hb; if (h !== banner.h){ el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); } } banner.h = h; bannerT = dur; }   // texto novo: entra pulando
 
 /* ---------- partida e rodadas ---------- */
 function newMatch(){
@@ -1551,7 +1553,7 @@ function botThink(u, dt){
 function update(dt){
   G.t += dt;
   for (const u of G.units) u.at += dt;
-  if (bannerT > 0){ bannerT -= dt; if (bannerT <= 0) $('#banner').innerHTML = ''; }
+  if (bannerT > 0){ bannerT -= dt; if (bannerT <= 0){ $('#banner').innerHTML = ''; banner.h = ''; } }
   for (const f of G.fx){ f.t += dt; if (!f.ring && !f.beam){ f.x += f.vx * dt; f.y += f.vy * dt; f.vx *= .92; f.vy *= .92; } }
   G.fx = G.fx.filter(f => f.t < f.life);
   for (const t of G.txt) t.t += dt; G.txt = G.txt.filter(t => t.t < 1);
@@ -3428,7 +3430,7 @@ function clientUpdate(dt){
   G.t += dt;
   for (const u of G.units){ u.at += dt; u.anim.t += dt;
     if (u.tx != null){ const k = Math.min(1, dt * 14); u.x += (u.tx - u.x) * k; u.y += (u.ty - u.y) * k; } }
-  if (bannerT > 0){ bannerT -= dt; if (bannerT <= 0) $('#banner').innerHTML = ''; }
+  if (bannerT > 0){ bannerT -= dt; if (bannerT <= 0){ $('#banner').innerHTML = ''; banner.h = ''; } }
   for (const f of G.fx){ f.t += dt; if (!f.ring && !f.beam){ f.x += f.vx * dt; f.y += f.vy * dt; f.vx *= .92; f.vy *= .92; } }
   G.fx = G.fx.filter(f => f.t < f.life);
   for (const t of G.txt) t.t += dt; G.txt = G.txt.filter(t => t.t < 1);
