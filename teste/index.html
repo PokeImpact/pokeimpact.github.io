@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v35 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v36 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -271,40 +271,40 @@ const POKE = {
 };
 // k: shot · leap · cone · zone · nova · beam · dash · self
 const SK = {
-  sombra:   { n:'Bola Sombria', ic:'🟣', k:'shot', cd:2.5, price:0, spd:6, range:6, r:.28, dmg:5, push:6.5, split:1, ghost:1, col:'#7d3cff', l3:{ splitN:3 }, d3:'se divide em 3 (um segue reto)', desc:'Tiro fantasma (atravessa obstáculos). Aperte Q de novo para ele se dividir em 2 tiros para os lados; se não apertar, ele se divide sozinho no alcance máximo. Com a sombra carregada os tiros dos lados ficam brancos e dão Medo.' },
-  sombra2:  { n:'Sombra Fantasma', ic:'🟣', k:'shot', spd:6, range:3.5, r:.22, dmg:3, push:4.5, ghost:1, col:'#9b6bff' },
-  sombra2f: { n:'Sombra Assustadora', ic:'⚪', k:'shot', spd:6, range:3.5, r:.24, dmg:3, push:4.5, ghost:1, fear:.9, col:'#efe6ff' },
+  sombra:   { n:'Bola Sombria', ic:'🟣', vis:'shadow', k:'shot', cd:2.5, price:0, spd:6, range:6, r:.28, dmg:5, push:6.5, split:1, ghost:1, col:'#7d3cff', l3:{ splitN:3 }, d3:'se divide em 3 (um segue reto)', desc:'Tiro fantasma (atravessa obstáculos). Aperte Q de novo para ele se dividir em 2 tiros para os lados; se não apertar, ele se divide sozinho no alcance máximo. Com a sombra carregada os tiros dos lados ficam brancos e dão Medo.' },
+  sombra2:  { n:'Sombra Fantasma', ic:'🟣', vis:'shadow', k:'shot', spd:6, range:3.5, r:.22, dmg:3, push:4.5, ghost:1, col:'#9b6bff' },
+  sombra2f: { n:'Sombra Assustadora', ic:'⚪', vis:'shadowf', k:'shot', spd:6, range:3.5, r:.24, dmg:3, push:4.5, ghost:1, fear:.9, col:'#efe6ff' },
   mergulho: { n:'Mergulho na Sombra', ic:'🕳️', k:'sink', cd:9, price:10, range:6, delay:1.2, rad:1.4, dmg:3, push:6, col:'#5b2a86', l3:{ delay:.9 }, d3:'sai do chão em 0,9 s', desc:'Afunda no chão na hora (nada o acerta) e uma sombrinha anda até o ponto escolhido. Sai 1,2 s depois empurrando quem está perto. Com a sombra carregada, quem está perto foge de Medo.' },
   hipnose:  { n:'Hipnose', ic:'💤', k:'wave', cd:11, price:10, spd:4.2, range:7.5, w:1.3, dmg:0, push:0, sleep:1.3, col:'#6a3fb5', parts:['#7c3aed','#c4b5fd','#312e81'], l3:{ w:1.7 }, d3:'onda mais larga', desc:'Uma onda estreita que atravessa obstáculos e faz dormir 1,3 s. Um golpe acorda; se for um golpe de Medo do Gengar, o susto empurra 50% mais.' },
-  lambida:  { n:'Lambida', ic:'👅', k:'shot', cd:8, price:10, spd:13, range:3.2, r:.3, dmg:3, push:7, pull:1, col:'#ff7bc0', l3:{ range:4.2 }, d3:'língua mais comprida', desc:'A língua sai rápido e puxa o primeiro inimigo que pegar até o Gengar.' },
+  lambida:  { n:'Lambida', ic:'👅', vis:'tongue', k:'shot', cd:8, price:10, spd:13, range:3.2, r:.3, dmg:3, push:7, pull:1, col:'#ff7bc0', l3:{ range:4.2 }, d3:'língua mais comprida', desc:'A língua sai rápido e puxa o primeiro inimigo que pegar até o Gengar.' },
   correntes:{ n:'Correntes das Trevas', ic:'⛓️', k:'chains', cd:10, price:10, range:7, rad:1.6, windup:.8, dur:2, teth:2, col:'#3b0764', l3:{ rad:2.1 }, d3:'círculo maior', desc:'Marca um círculo escuro. 0,8 s depois, quem estiver dentro fica acorrentado ao chão por 2 s: só anda até 2 casas da corrente. Qualquer golpe quebra a corrente.' },
-  lingua:   { n:'Chicotada de Língua', ic:'👅', k:'shot', cd:16, price:16, ult:1, spd:15, range:6.5, r:.32, dmg:4, push:0, whip:1, col:'#ff7bc0', l3:{ range:8 }, d3:'língua bem mais comprida', desc:'A língua gruda no primeiro inimigo e vai puxando cada vez mais rápido, como no gelo: ele tenta fugir, mas não escapa. Quando chega em você, passa direto escorregando. Ande enquanto puxa para jogar ele para o lado, como um chicote.' },
+  lingua:   { n:'Chicotada de Língua', ic:'👅', vis:'tongue', k:'shot', cd:16, price:16, ult:1, spd:15, range:6.5, r:.32, dmg:4, push:0, whip:1, col:'#ff7bc0', l3:{ range:8 }, d3:'língua bem mais comprida', desc:'A língua gruda no primeiro inimigo e vai puxando cada vez mais rápido, como no gelo: ele tenta fugir, mas não escapa. Quando chega em você, passa direto escorregando. Ande enquanto puxa para jogar ele para o lado, como um chicote.' },
   splash:   { n:'Splash', ic:'💦', k:'leap', cd:2, price:0, range:3, dur:.6, desc:'Pula. Só isso. No ar nada te acerta.' },
   portal:   { n:'Portal Sombrio', ic:'🌌', k:'portal', cd:18, price:16, ult:1, range:7.5, dur:4.5, col:'#8b5cf6', l3:{ dur:6.5 }, d3:'os portais duram 6,5 s', desc:'Abre um portal na sua frente e outro onde você mirar, por 4,5 s. Golpes e Pokémon que entram em um saem no outro. Ponha a saída na beira da névoa…' },
-  brasa:    { n:'Brasa', ic:'🔥', k:'shot', cd:2.5, price:0, spd:5.5, range:9, r:.3, dmg:6, push:7.5, burn:[3,2.2], col:'#ff7a1a', l3:{ splash:1.2 }, d3:'explode ao acertar e empurra quem estiver perto', desc:'Bola de fogo de longo alcance. Empurra e queima.' },
+  brasa:    { n:'Brasa', ic:'🔥', vis:'fire', k:'shot', cd:2.5, price:0, spd:5.5, range:9, r:.3, dmg:6, push:7.5, burn:[3,2.2], col:'#ff7a1a', l3:{ splash:1.2 }, d3:'explode ao acertar e empurra quem estiver perto', desc:'Bola de fogo de longo alcance. Empurra e queima.' },
   voo:      { n:'Voo', ic:'🪽', k:'leap', cd:9, price:10, range:4.5, dur:.7, desc:'Salta voando até o cursor. No ar não leva dano nem é empurrado.' },
   rugido:   { n:'Rugido', ic:'🗯️', k:'nova', cd:8, price:10, rad:2.1, dmg:0, push:7, col:'#f4f1e8', wind:1, windup:.55, desc:'Enche o peito por meio segundo (aparece o círculo) e ruge: uma rajada de vento afasta quem estiver perto.' },
   turbilhao:{ n:'Redemoinho de Fogo', ic:'🌀', k:'zone', cd:12, price:10, range:7, rad:1.4, dur:3.5, dps:6, col:'#ff6a1a', desc:'Deixa uma área em chamas: dano a quem ficar dentro.' },
-  explosao: { n:'Onda de Calor', ic:'🔥', k:'fan', cd:16, price:16, ult:1, cnt:11, ang:.6, spd:7, range:6, r:.2, dmg:1.6, push:2.2, fade:.75, burn:[2, 2], col:'#ff6a1a', desc:'Cospe um leque de bolinhas de fogo que vão se apagando: de perto empurra muito, de longe pouco, e deixa queimando. Não é anulada pelos golpes Q.' },
-  jato:     { n:'Jato d\'Água', ic:'💧', k:'shot', cd:2.5, price:0, spd:5, range:7.5, r:.3, dmg:4, push:8.5, col:'#4dabff', l3:{ slowAoe:[1.3, 1.6, .45] }, d3:'estoura ao acertar e deixa lentos todos em volta', desc:'Jato que empurra forte.' },
+  explosao: { n:'Onda de Calor', ic:'🔥', vis:'ember', k:'fan', cd:16, price:16, ult:1, cnt:11, ang:.6, spd:7, range:6, r:.2, dmg:1.6, push:2.2, fade:.75, burn:[2, 2], col:'#ff6a1a', desc:'Cospe um leque de bolinhas de fogo que vão se apagando: de perto empurra muito, de longe pouco, e deixa queimando. Não é anulada pelos golpes Q.' },
+  jato:     { n:'Jato d\'Água', ic:'💧', vis:'water', k:'shot', cd:2.5, price:0, spd:5, range:7.5, r:.3, dmg:4, push:8.5, col:'#4dabff', l3:{ slowAoe:[1.3, 1.6, .45] }, d3:'estoura ao acertar e deixa lentos todos em volta', desc:'Jato que empurra forte.' },
   concha:   { n:'Concha', ic:'🐚', k:'self', cd:10, price:10, dur:2, l3:{ refl:1 }, d3:'no primeiro segundo, devolve os projéteis que baterem nela', desc:'Entra na concha por 2 s: não leva dano nem é empurrado, mas fica parado. Aperte de novo para sair rolando (curto) na direção do mouse: bom para voltar à plataforma.' },
   hidro:    { n:'Hidro Bomba', ic:'🌊', k:'beam', cd:9, price:10, windup:.7, len:8, w:.45, dmg:10, push:13, col:'#6cc6ff', desc:'Carrega e dispara um jato em linha reta que arremessa longe.' },
   giro:     { n:'Giro Rápido', ic:'🔄', k:'dash', cd:8, price:10, dist:4, spd:9, dmg:6, push:9, col:'#9fd8ff', desc:'Avança girando na concha e tira do caminho quem encostar.' },
   lama:     { n:'Bomba de Lama', ic:'🟤', k:'lob', cd:11, price:10, spd:6, range:7, rad:1.5, dur:2.5, dps:1.5, slow:.4, dmg:3, col:'#8a6a3e', zc:['rgba(110,80,40,.38)','rgba(160,120,70,.85)'], desc:'Arremessa uma bola de lama por cima de todos. Onde cai, faz uma poça que deixa lento quem pisar.' },
   pedra:    { n:'Lançar Pedra', ic:'🪨', k:'lob', cd:2.5, price:0, spd:10, range:6.5, rad:.9, dmg:6, push:7, rock:1, col:'#9aa3ad', l3:{ frag:1 }, d3:'a pedra quebra em 3 pedaços que rolam para fora', desc:'Arremessa uma pedra por cima de tudo (passa por cima de árvores e não é anulada). Onde cai, empurra quem estiver em volta.' },
-  pedra2:   { n:'Pedaço de Pedra', ic:'🪨', k:'shot', spd:6, range:2.4, r:.2, dmg:2, push:4.5, col:'#9aa3ad' },
+  pedra2:   { n:'Pedaço de Pedra', ic:'🪨', vis:'rock', k:'shot', spd:6, range:2.4, r:.2, dmg:2, push:4.5, col:'#9aa3ad' },
   rolagem:  { n:'Rolagem', ic:'🔘', k:'roll', cd:9, price:10, dur:1.2, v0:3, v1:6, acc:4, turn:2.2, push0:4, pushV:1.2, dmg:5, push:9, col:'#9aa3ad', l3:{ v1:7.2, acc:5 }, d3:'rola mais rápido e atropela mais forte', desc:'Vira bola e rola uns 6 a 7 casas, cada vez mais rápido. Curva devagar seguindo o mouse; quando passa do mouse, segue reto. Quanto mais rápido, mais forte o atropelo. Acertou alguém, continua rolando (boliche: cada um uma vez). Bateu em árvore ou Voltorb, para tonto. Aperte de novo para frear. Cuidado: golpes desviam a bola.' },
   magnitude:{ n:'Magnitude', ic:'🌋', k:'nova', cd:9, price:10, mag:1, windup:.5, rad:2.4, dmg:5, push:8.4, col:'#c9b28a', l3:{ magMin:6 }, d3:'nunca sai menos que 6', desc:'Faz o chão tremer em volta. A força é sorteada de 4 a 10 e aparece para todos no começo da carga (meio segundo para fugir). Quanto maior o número, maior o tremor e o empurrão.' },
   encolher: { n:'Defesa Encolhida', ic:'🛡️', k:'self', cd:10, price:10, dur:1.5, win:3, col:'#9aa3ad', l3:{ dur:2.2 }, d3:'fica encolhido 2,2 s', desc:'Encolhe por 1,5 s: recebe 70% menos empurrão, mas anda a metade. Se usar a Rolagem nos 3 s seguintes, ela já sai na velocidade máxima.' },
   boom:     { n:'Explosão', ic:'💥', k:'fuse', cd:18, price:16, ult:1, fuse:1.5, rad:3.2, dmg:14, push:15, pushMin:8, self:.35, col:'#ffb03a', l3:{ rad:3.8 }, d3:'raio da explosão bem maior', desc:'Acende o pavio: pisca 1,5 s e explode, com o maior empurrão do jogo (mais forte perto). Custa 35% da sua vida e deixa você tonto meio segundo. Durante o pavio dá para andar devagar ou rolar: a bomba rolando.' },
   surf:     { n:'Surfe', ic:'🏄', k:'nova', cd:16, price:16, ult:1, rad:3.5, dmg:10, push:12, col:'#4dabff', desc:'Onda gigante ao seu redor que empurra todo mundo para fora.' },
-  lamina:   { n:'Lâmina de Ar', ic:'🍃', k:'shot', cd:2.5, price:0, spd:8, range:6.5, r:.28, dmg:5, push:6, col:'#c8f59a', l3:{ spdMul:1.45, range:7.5 }, d3:'fica muito mais rápida e vai mais longe', desc:'Corte de vento rápido e de curto alcance.' },
+  lamina:   { n:'Lâmina de Ar', ic:'🍃', vis:'blade', k:'shot', cd:2.5, price:0, spd:8, range:6.5, r:.28, dmg:5, push:6, col:'#c8f59a', l3:{ spdMul:1.45, range:7.5 }, d3:'fica muito mais rápida e vai mais longe', desc:'Corte de vento rápido e de curto alcance.' },
   agilidade:{ n:'Agilidade', ic:'👻', k:'self', cd:20, price:10, dur:2.5, l3:{ dur:3.2 }, d3:'fica 3,2 s invisível', desc:'Some por 2,5 s e corre mais. No começo os golpes atravessam você. A partir do nível 2 deixa um clone parado (aperte de novo para voltar até ele), e o clone gira junto no Giro de Lâminas.' },
   giroL:    { n:'Giro de Lâminas', ic:'⚔️', k:'nova', cd:7, price:10, l3:{ rad:2.6 }, d3:'área bem maior', rad:1.9, dmg:8, push:11, col:'#d8ffb0', desc:'Gira as lâminas e joga longe quem estiver perto.' },
   xtesoura: { n:'Tesoura X', ic:'✂️', k:'dash', cd:6, price:10, dist:3.5, spd:10, dmg:12, push:5, col:'#b8f57a', desc:'Investida cortante: muito dano em quem você atravessar.' },
-  confusao: { n:'Confusão', ic:'🌀', k:'shot', cd:2.5, price:0, spd:5, range:8, r:.26, dmg:5, push:7.5, zig:.6, col:'#e07bff', l3:{ twin:1 }, d3:'solta duas ondas cruzadas', desc:'Onda psíquica em zigue-zague: difícil de prever, empurra pouco.' },
-  teleporte:{ n:'Teletransporte', ic:'✨', k:'shot', cd:11, price:10, spd:4.2, range:6.5, r:.3, dmg:0, push:0, tele:1, col:'#ffb3ff', desc:'Esfera lenta. Se acertar alguém, vocês trocam de lugar. Se não acertar, você aparece onde ela parar. Aperte de novo para aparecer onde ela está.' },
-  psiquico: { n:'Psíquico', ic:'🔮', k:'multi', cd:10, price:10, spd:3.4, range:9, r:.24, dmg:4, push:4, conf:1, home:1.1, col:'#c77dff', desc:'Solta uma esfera lenta que persegue cada inimigo, curvando atrás dele (quanto mais perto, mais forte a curva). Quem é atingido fica confuso por 1 s: os controles ficam invertidos.' },
+  confusao: { n:'Confusão', ic:'🌀', vis:'psyw', k:'shot', cd:2.5, price:0, spd:5, range:8, r:.26, dmg:5, push:7.5, zig:.6, col:'#e07bff', l3:{ twin:1 }, d3:'solta duas ondas cruzadas', desc:'Onda psíquica em zigue-zague: difícil de prever, empurra pouco.' },
+  teleporte:{ n:'Teletransporte', ic:'✨', vis:'star', k:'shot', cd:11, price:10, spd:4.2, range:6.5, r:.3, dmg:0, push:0, tele:1, col:'#ffb3ff', desc:'Esfera lenta. Se acertar alguém, vocês trocam de lugar. Se não acertar, você aparece onde ela parar. Aperte de novo para aparecer onde ela está.' },
+  psiquico: { n:'Psíquico', ic:'🔮', vis:'psy', k:'multi', cd:10, price:10, spd:3.4, range:9, r:.24, dmg:4, push:4, conf:1, home:1.1, col:'#c77dff', desc:'Solta uma esfera lenta que persegue cada inimigo, curvando atrás dele (quanto mais perto, mais forte a curva). Quem é atingido fica confuso por 1 s: os controles ficam invertidos.' },
   esferas:  { n:'Esferas Psíquicas', ic:'🟣', k:'orbit', cd:13, price:10, dur:6, cnt:3, orad:1.05, dmg:4, push:7.5, col:'#d98cff', desc:'Três esferas giram em volta de você por 6 s: empurram quem encostar e destroem projéteis.' },
   futuro:   { n:'Premonição', ic:'👁️', k:'delay', cd:16, price:16, ult:1, range:8, rad:1.8, delay:1.4, dmg:12, push:12, core:.35, col:'#b14dff', l3:{ core:.55 }, d3:'o miolo escuro fica bem maior', desc:'Marca uma área que puxa inimigos e projéteis para o centro como gravidade (projéteis leves curvam mais). 1,4 s depois ela explode e arremessa longe. No miolo escuro empurra muito mais do que na beirada.' },
   furia:    { n:'Corte Fúria', ic:'✂️', k:'cone', cd:1.8, price:10, range:1.7, ang:.85, dmg:9, push:5, fury:1, col:'#b8f57a', parts:['#e8ffd0','#b8f57a','#ffffff'], desc:'Corte curto à frente. Cada acerto seguido no mesmo alvo (até 3 s entre eles) fica 40% mais forte, até 3 vezes.' },
@@ -743,7 +743,7 @@ function voltExplode(o){
   for (const e of G.units){ if (!e.alive || e.air) continue; const ex = e.x - o.x, ey = e.y - o.y, el = Math.hypot(ex, ey); if (el > rad + POKE[e.sp].rad) continue;
     const k = el < 1.2 ? 1 : 1 - .5 * (el - 1.2) / (rad - 1.2);
     damage(e, 8 * DMG * k, o.by && o.by !== e ? o.by : null); push(e, ex / (el || 1), ey / (el || 1), 13 * k); }
-  G.fx.push({ ring:1, x:o.x, y:o.y, r:rad, t:0, life:.5, col:'#ffe066' }); G.fx.push({ ring:1, x:o.x, y:o.y, r:rad * .6, t:0, life:.4, col:'#ff5d5d' });
+  G.fx.push({ ring:1, x:o.x, y:o.y, r:rad, t:0, life:.5, col:'#ffe066', st:'boom' }); G.fx.push({ ring:1, x:o.x, y:o.y, r:rad * .6, t:0, life:.4, col:'#ff5d5d' });
   for (let k = 0; k < 40; k++) fx(o.x, o.y, rnd(-7, 7), rnd(-7, 7), .5, pick(['#ffe066','#ff5d5d','#fff']), 8);
   feed('O Voltorb explodiu!', '#ffe066');
   o.chg = 0; o.boom = 0; o.down = 8;   // desmaia por 8 s: o centro fica livre
@@ -983,10 +983,10 @@ function cast(u, i, ax, ay){
 function doNova(u, d, L, id){
   if (id === 'giroL') for (const c of G.decoys) if (c.o === u){   // o clone do Scyther gira junto, com a mesma força
     for (const e of foesOf(u)){ const ex = e.x - c.x, ey = e.y - c.y, el = Math.hypot(ex, ey); if (el <= d.rad + .3) hit(u, e, d, L, ex / (el || 1), ey / (el || 1)); }
-    G.fx.push({ ring:1, x:c.x, y:c.y, r:d.rad, t:0, life:.45, col:d.col }); }
+    G.fx.push({ ring:1, x:c.x, y:c.y, r:d.rad, t:0, life:.45, col:d.col, st:'giro' }); }
   ballArea(u.x, u.y, d.rad + .3, d.push * L.p);
   for (const e of foesOf(u)){ const ex = e.x - u.x, ey = e.y - u.y, el = Math.hypot(ex, ey); if (el <= d.rad + .3) hit(u, e, d, L, ex / (el || 1), ey / (el || 1)); }
-  G.fx.push({ ring:1, x:u.x, y:u.y, r:d.rad, t:0, life:.45, col:d.col });
+  G.fx.push({ ring:1, x:u.x, y:u.y, r:d.rad, t:0, life:.45, col:d.col, st:{ surf:'surf', giroL:'giro', rugido:'wind', magnitude:'mag' }[id] || 0 });
   if (d.mag) for (let k = 0; k < 10 + d.M * 4; k++){ const a = rnd(0, 6.283), r = rnd(.2, d.rad); fx(u.x + Math.cos(a) * r, u.y + Math.sin(a) * r, Math.cos(a) * 1.5, -rnd(1, 3), rnd(.35, .6), pick(['#8d6e4a','#c9b28a','#6b5134']), rnd(4, 8)); }
   if (d.wind) for (let k = 0; k < 36; k++){ const a = k / 36 * 6.283 + rnd(-.08, .08), v = rnd(5, 8); fx(u.x + Math.cos(a) * .4, u.y + Math.sin(a) * .4, Math.cos(a) * v, Math.sin(a) * v, rnd(.3, .45), pick(['rgba(255,255,255,.9)','rgba(220,235,255,.8)']), rnd(3, 6)); }
   u.anim = { n:id === 'giroL' ? 'Rotate' : 'Shoot', t:0 };
@@ -1412,7 +1412,7 @@ function update(dt){
   G.t += dt;
   for (const u of G.units) u.at += dt;
   if (bannerT > 0){ bannerT -= dt; if (bannerT <= 0) $('#banner').innerHTML = ''; }
-  for (const f of G.fx){ f.t += dt; if (!f.ring){ f.x += f.vx * dt; f.y += f.vy * dt; f.vx *= .92; f.vy *= .92; } }
+  for (const f of G.fx){ f.t += dt; if (!f.ring && !f.beam){ f.x += f.vx * dt; f.y += f.vy * dt; f.vx *= .92; f.vy *= .92; } }
   G.fx = G.fx.filter(f => f.t < f.life);
   for (const t of G.txt) t.t += dt; G.txt = G.txt.filter(t => t.t < 1);
   for (const f of G.falling) f.t += dt; G.falling = G.falling.filter(f => f.t < .8);
@@ -1572,7 +1572,7 @@ function updateWorld(dt){
       if (el < R0 && el > .05){ const sp = Math.hypot(q.vx, q.vy), cur = Math.atan2(q.vy, q.vx); let da = Math.atan2(ey, ex) - cur; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
         const tr = 3 * (q.d.wt ?? 1) * (.4 + .6 * (1 - el / R0)) * dt, na = cur + clamp(da, -tr, tr); q.vx = Math.cos(na) * sp; q.vy = Math.sin(na) * sp; } }
     if (m.t <= 0){ for (const e of foesOf(m.o)){ const ex = e.x - m.x, ey = e.y - m.y, el = Math.hypot(ex, ey); if (el <= m.d.rad + .3) hit(m.o, e, m.d, m.L, ex / (el || 1), ey / (el || 1), el < m.d.rad * co ? 1.25 : 1 - .55 * (el - m.d.rad * co) / (m.d.rad * (1 - co))); }
-      G.fx.push({ ring:1, x:m.x, y:m.y, r:m.d.rad, t:0, life:.45, col:m.d.col }); ballArea(m.x, m.y, m.d.rad + .3, m.d.push * m.L.p);
+      G.fx.push({ ring:1, x:m.x, y:m.y, r:m.d.rad, t:0, life:.6, col:m.d.col, st:'psy' }); ballArea(m.x, m.y, m.d.rad + .3, m.d.push * m.L.p);
       for (let k = 0; k < 26; k++) fx(m.x, m.y, rnd(-5, 5), rnd(-5, 5), .45, pick(['#b14dff','#e07bff','#fff']), 7); }
   }
   G.marks = G.marks.filter(m => m.t > 0);
@@ -1727,7 +1727,7 @@ function boomGo(u){
   ballArea(u.x, u.y, d.rad + .3, d.push * L.p);
   const cost = u.maxhp * d.self; u.hp = Math.max(1, u.hp - cost); u.hurtT = G.t; txt(u.x, u.y - .9, '-' + Math.round(cost), '#ff8a8a');
   u.b.stun = .5; endRoll(u); u.vx = u.vy = 0; u.anim = { n:'Hurt', t:0 };
-  G.fx.push({ ring:1, x:u.x, y:u.y, r:d.rad, t:0, life:.6, col:'#ffb03a' }, { ring:1, x:u.x, y:u.y, r:d.rad * .5, t:0, life:.4, col:'#fff' });
+  G.fx.push({ ring:1, x:u.x, y:u.y, r:d.rad, t:0, life:.6, col:'#ffb03a', st:'boom' }, { ring:1, x:u.x, y:u.y, r:d.rad * .5, t:0, life:.4, col:'#fff' });
   for (let k = 0; k < 60; k++){ const a = rnd(0, 6.283), v = rnd(3, 9); fx(u.x, u.y, Math.cos(a) * v, Math.sin(a) * v, rnd(.4, .7), pick(['#ffd23f','#ff7a1a','#ff3b1a','#fff','#5e646c']), rnd(6, 11)); }
   txt(u.x, u.y - 1.6, 'BUM!', '#ffcf4a');
 }
@@ -1793,8 +1793,143 @@ const THEME = {
     if (j === G.bridge.y0){ cx.moveTo(X, Y + 2); cx.lineTo(X + T, Y + 2); } if (j === G.bridge.y1 - 1){ cx.moveTo(X, Y + T - 2); cx.lineTo(X + T, Y + T - 2); } cx.stroke(); } },
 };
 THEME.flr = THEME.fl;
+// ---------- efeitos das habilidades ----------
+// corrente de elos (de (x0,y0) a (x1,y1), em pixels), com barriga "sag" para baixo quando está frouxa
+function chainLine(x0, y0, x1, y1, s, sag = 0){
+  const mx = (x0 + x1) / 2, my = (y0 + y1) / 2 + sag, n = Math.max(2, Math.round((Math.hypot(x1 - x0, y1 - y0) + Math.abs(sag)) / (s * 1.45)));
+  for (let q = 0; q < n; q++){ const t = (q + .5) / n, v = 1 - t, x = v * v * x0 + 2 * v * t * mx + t * t * x1, y = v * v * y0 + 2 * v * t * my + t * t * y1,
+      a = Math.atan2(2 * v * (my - y0) + 2 * t * (y1 - my), 2 * v * (mx - x0) + 2 * t * (x1 - mx));
+    cx.save(); cx.translate(x, y); cx.rotate(a);
+    if (q % 2){ cx.lineCap = 'round'; cx.strokeStyle = '#140a1e'; cx.lineWidth = s * .62; cx.beginPath(); cx.moveTo(-s * .8, 0); cx.lineTo(s * .8, 0); cx.stroke();
+      cx.strokeStyle = '#cfc6e0'; cx.lineWidth = s * .28; cx.beginPath(); cx.moveTo(-s * .75, 0); cx.lineTo(s * .75, 0); cx.stroke(); cx.lineCap = 'butt'; }
+    else { cx.strokeStyle = '#140a1e'; cx.lineWidth = s * .55; cx.beginPath(); cx.ellipse(0, 0, s * .92, s * .52, 0, 0, 7); cx.stroke();
+      cx.strokeStyle = '#9d93b3'; cx.lineWidth = s * .28; cx.beginPath(); cx.ellipse(0, 0, s * .92, s * .52, 0, 0, 7); cx.stroke();
+      cx.strokeStyle = 'rgba(255,255,255,.75)'; cx.lineWidth = s * .1; cx.beginPath(); cx.ellipse(0, 0, s * .92, s * .52, 0, Math.PI * 1.05, Math.PI * 1.65); cx.stroke(); }
+    cx.restore(); } }
+// selo sombrio (Correntes): poço escuro, dois anéis, runas e uma estrela girando
+function darkSeal(X, Y, r, k, a, al){
+  const g = cx.createRadialGradient(X, Y, 0, X, Y, r); g.addColorStop(0, `rgba(8,0,18,${.7 * al})`); g.addColorStop(.7, `rgba(40,6,72,${.5 * al})`); g.addColorStop(1, 'rgba(90,40,160,0)');
+  cx.fillStyle = g; cx.beginPath(); cx.arc(X, Y, r, 0, 7); cx.fill();
+  cx.strokeStyle = `rgba(196,181,253,${(.45 + .45 * k) * al})`; cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, r, 0, 7); cx.stroke(); cx.lineWidth = 1.2; cx.beginPath(); cx.arc(X, Y, r * .84, 0, 7); cx.stroke();
+  cx.fillStyle = `rgba(216,200,255,${(.5 + .5 * k) * al})`;
+  for (let q = 0; q < 10; q++){ const b = a + q * Math.PI / 5, z = r * .045 + 1; cx.save(); cx.translate(X + Math.cos(b) * r * .92, Y + Math.sin(b) * r * .92); cx.rotate(b); cx.fillRect(-z, -z * .35, z * 2, z * .7); cx.fillRect(-z * .35, -z, z * .7, z * 2); cx.restore(); }
+  cx.strokeStyle = `rgba(167,139,250,${(.35 + .5 * k) * al})`; cx.lineWidth = 1.5; cx.beginPath();
+  for (let q = 0; q <= 5; q++){ const b = -a * .7 + q * 4 * Math.PI / 5 - Math.PI / 2, px = X + Math.cos(b) * r * .8, py = Y + Math.sin(b) * r * .8; if (q) cx.lineTo(px, py); else cx.moveTo(px, py); } cx.stroke(); }
+// rabo de projétil (só pela velocidade: funciona igual para o convidado)
+function shotTail(X, Y, ux, uy, len, w, c0){
+  const g = cx.createLinearGradient(X, Y, X - ux * len, Y - uy * len); g.addColorStop(0, c0); g.addColorStop(1, 'rgba(0,0,0,0)');
+  cx.strokeStyle = g; cx.lineWidth = w; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(X, Y); cx.lineTo(X - ux * len, Y - uy * len); cx.stroke(); cx.lineCap = 'butt'; }
+function glow(X, Y, r, c0, c1){ const g = cx.createRadialGradient(X, Y, 0, X, Y, r); g.addColorStop(0, c0); g.addColorStop(.45, c1); g.addColorStop(1, 'rgba(0,0,0,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(X, Y, r, 0, 7); cx.fill(); }
+function drawShot(s){
+  const sp = Math.hypot(s.vx, s.vy) || 1, ux = s.vx / sp, uy = s.vy / sp, a = Math.atan2(uy, ux), X = sx(s.x), Y = sy(s.y);
+  const r = s.d.r * T * 1.1 * (s.d.fade && s.left != null ? .4 + .6 * clamp(s.left / s.d.range, 0, 1) : 1), t = G.t, v = s.d.vis;
+  if (v === 'fire' || v === 'ember'){
+    shotTail(X, Y, ux, uy, r * (v === 'fire' ? 4 : 2.6), r * 1.5, 'rgba(255,120,30,.7)');
+    glow(X, Y, r * 2.2, 'rgba(255,200,80,.9)', 'rgba(255,90,20,.45)');
+    for (let q = 0; q < 3; q++){ const f = Math.sin(t * 30 + q * 2 + s.x * 3) * .25; cx.fillStyle = ['#ff5a1a','#ffa22a','#fff2b0'][q]; cx.beginPath(); cx.arc(X - ux * r * .25 * (2 - q), Y - uy * r * .25 * (2 - q), r * (1 - q * .28 + f * .3), 0, 7); cx.fill(); }
+    return; }
+  if (v === 'water'){
+    shotTail(X, Y, ux, uy, r * 3.5, r * 1.2, 'rgba(120,200,255,.55)');
+    for (let q = 1; q <= 3; q++){ const ph = (t * 4 + q * .33 + s.x) % 1; cx.fillStyle = `rgba(220,240,255,${.7 * (1 - ph)})`; cx.beginPath(); cx.arc(X - ux * r * (1 + ph * 3) + Math.sin(q * 5 + t * 9) * r * .4, Y - uy * r * (1 + ph * 3) + Math.cos(q * 5 + t * 9) * r * .4, r * .2, 0, 7); cx.fill(); }
+    cx.save(); cx.translate(X, Y); cx.rotate(a); cx.fillStyle = '#3d9bff'; cx.beginPath(); cx.moveTo(r * 1.15, 0); cx.quadraticCurveTo(r * .2, -r * 1.05, -r * .9, 0); cx.quadraticCurveTo(r * .2, r * 1.05, r * 1.15, 0); cx.fill();
+    cx.fillStyle = '#a8dcff'; cx.beginPath(); cx.ellipse(r * .1, -r * .25, r * .45, r * .22, 0, 0, 7); cx.fill(); cx.restore(); return; }
+  if (v === 'blade'){
+    shotTail(X, Y, ux, uy, r * 3, r * .5, 'rgba(220,255,180,.6)');
+    cx.save(); cx.translate(X, Y); cx.rotate(a); glow(0, 0, r * 1.8, 'rgba(230,255,200,.6)', 'rgba(184,245,122,.25)');
+    cx.fillStyle = '#d8ffb0'; cx.beginPath(); cx.arc(-r * .3, 0, r * 1.25, -1.25, 1.25); cx.arc(-r * .85, 0, r * 1.05, 1.1, -1.1, true); cx.closePath(); cx.fill();
+    cx.strokeStyle = '#ffffff'; cx.lineWidth = Math.max(1.5, r * .18); cx.beginPath(); cx.arc(-r * .3, 0, r * 1.25, -1.1, 1.1); cx.stroke(); cx.restore(); return; }
+  if (v === 'shadow' || v === 'shadowf'){
+    const f = v === 'shadowf', c1 = f ? 'rgba(239,230,255,.5)' : 'rgba(125,60,255,.55)';
+    for (let q = 1; q <= 3; q++){ const w = Math.sin(t * 10 + q * 1.7) * r * .35; cx.fillStyle = f ? `rgba(239,230,255,${.28 - q * .06})` : `rgba(91,42,180,${.4 - q * .09})`; cx.beginPath(); cx.arc(X - ux * r * q * .9 - uy * w, Y - uy * r * q * .9 + ux * w, r * (1 - q * .18), 0, 7); cx.fill(); }
+    glow(X, Y, r * 2, f ? 'rgba(255,255,255,.8)' : 'rgba(170,110,255,.7)', c1);
+    cx.fillStyle = f ? '#f6f0ff' : '#1a0636'; cx.beginPath(); cx.arc(X, Y, r * .8, 0, 7); cx.fill();
+    cx.strokeStyle = f ? '#c4b5fd' : '#b18cff'; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(X, Y, r * .8, t * 6, t * 6 + 3.5); cx.stroke(); return; }
+  if (v === 'star'){
+    for (let q = 0; q < 4; q++){ const ph = (t * 2 + q * .25) % 1; cx.fillStyle = `rgba(255,190,255,${.8 * (1 - ph)})`; const bx = X - ux * r * (1 + ph * 3) + Math.sin(q * 7) * r * .6, by = Y - uy * r * (1 + ph * 3) + Math.cos(q * 7) * r * .6; cx.fillRect(bx - 1.5, by - 1.5, 3, 3); }
+    glow(X, Y, r * 2.2, 'rgba(255,240,255,.9)', 'rgba(255,150,255,.4)');
+    cx.save(); cx.translate(X, Y); cx.rotate(t * 3); cx.fillStyle = '#fff'; cx.beginPath();
+    for (let q = 0; q < 8; q++){ const rr = q % 2 ? r * .35 : r * 1.25, b = q * Math.PI / 4; if (q) cx.lineTo(Math.cos(b) * rr, Math.sin(b) * rr); else cx.moveTo(rr, 0); } cx.closePath(); cx.fill(); cx.restore(); return; }
+  if (v === 'psy' || v === 'psyw'){
+    shotTail(X, Y, ux, uy, r * 3.2, r * 1.1, v === 'psy' ? 'rgba(199,125,255,.55)' : 'rgba(224,123,255,.5)');
+    glow(X, Y, r * 2, 'rgba(255,220,255,.85)', v === 'psy' ? 'rgba(199,125,255,.5)' : 'rgba(224,123,255,.45)');
+    cx.strokeStyle = '#fff'; cx.lineWidth = 1.5;
+    if (v === 'psyw'){ for (let q = 0; q < 2; q++){ const ph = (t * 3 + q * .5) % 1; cx.globalAlpha = 1 - ph; cx.beginPath(); cx.arc(X, Y, r * (.4 + ph * 1.2), 0, 7); cx.stroke(); } cx.globalAlpha = 1; }
+    else { cx.beginPath(); cx.arc(X, Y, r * .9, t * 8, t * 8 + 2); cx.stroke(); cx.beginPath(); cx.arc(X, Y, r * .9, t * 8 + 3.14, t * 8 + 5.1); cx.stroke(); }
+    return; }
+  if (v === 'rock'){ cx.save(); cx.translate(X, Y); cx.rotate(t * 9 + s.x); cx.fillStyle = '#8d96a0'; cx.strokeStyle = '#3f454c'; cx.lineWidth = 1.5; cx.beginPath();
+    for (let q = 0; q < 6; q++){ const b = q / 6 * 6.283, rr = r * (.85 + ((q * 37) % 5) * .08); if (q) cx.lineTo(Math.cos(b) * rr, Math.sin(b) * rr); else cx.moveTo(rr, 0); } cx.closePath(); cx.fill(); cx.stroke(); cx.restore(); return; }
+  if (v === 'tongue'){ cx.fillStyle = '#ff7bc0'; cx.beginPath(); cx.arc(X, Y, r * 1.1, 0, 7); cx.fill(); cx.fillStyle = '#ffc0e0'; cx.beginPath(); cx.arc(X - r * .3, Y - r * .3, r * .4, 0, 7); cx.fill(); return; }
+  shotTail(X, Y, ux, uy, r * 2.5, r, s.d.col);
+  glow(X, Y, r * 1.8, '#fff', s.d.col);
+}
+// anéis com estilo: Premonição, Surfe, Giro de Lâminas, Rugido, Magnitude, explosões
+function drawRingFx(f){
+  const p = f.t / f.life, k = 1 - p, X = sx(f.x), Y = sy(f.y), R = f.r * T;
+  if (f.st === 'psy'){ // Premonição explodindo: clarão, espinhos e onda
+    if (p < .35){ const q = 1 - p / .35; glow(X, Y, R * (.6 + p * 1.5), `rgba(255,255,255,${q})`, `rgba(210,120,255,${.7 * q})`); }
+    cx.strokeStyle = `rgba(224,123,255,${k})`; cx.lineWidth = 6 * k + 1; cx.beginPath(); cx.arc(X, Y, R * (.4 + .9 * p), 0, 7); cx.stroke();
+    cx.strokeStyle = `rgba(255,255,255,${k})`; cx.lineWidth = 2; cx.beginPath();
+    for (let q = 0; q < 14; q++){ const b = q / 14 * 6.283 + f.x, r0 = R * (.25 + .7 * p), r1 = r0 + R * (.35 + .25 * Math.sin(q * 3.1)) * k; cx.moveTo(X + Math.cos(b) * r0, Y + Math.sin(b) * r0); cx.lineTo(X + Math.cos(b) * r1, Y + Math.sin(b) * r1); } cx.stroke(); return; }
+  if (f.st === 'surf'){ const rr = R * (.35 + .75 * p);
+    cx.strokeStyle = `rgba(40,120,220,${.8 * k})`; cx.lineWidth = T * .5 * k + 2; cx.beginPath(); cx.arc(X, Y, rr, 0, 7); cx.stroke();
+    cx.strokeStyle = `rgba(120,200,255,${.9 * k})`; cx.lineWidth = T * .22 * k + 1; cx.beginPath(); cx.arc(X, Y, rr + T * .12, 0, 7); cx.stroke();
+    cx.fillStyle = `rgba(255,255,255,${k})`; for (let q = 0; q < 28; q++){ const b = q / 28 * 6.283 + Math.sin(q * 2.3) * .1, w = rr + T * (.2 + .1 * Math.sin(q * 5 + p * 20)); cx.beginPath(); cx.arc(X + Math.cos(b) * w, Y + Math.sin(b) * w, T * .05 + 1, 0, 7); cx.fill(); } return; }
+  if (f.st === 'giro'){ const rr = R * (.5 + .55 * p), a0 = p * 9;
+    cx.lineCap = 'round'; for (let q = 0; q < 3; q++){ const b = a0 + q * 2.094; cx.strokeStyle = `rgba(216,255,176,${k})`; cx.lineWidth = T * .16 * k + 1; cx.beginPath(); cx.arc(X, Y, rr, b, b + 1.3); cx.stroke();
+      cx.strokeStyle = `rgba(255,255,255,${k})`; cx.lineWidth = T * .05 + 1; cx.beginPath(); cx.arc(X, Y, rr + T * .05, b + .3, b + 1.3); cx.stroke(); } cx.lineCap = 'butt'; return; }
+  if (f.st === 'wind'){ const rr = R * (.3 + .8 * p);
+    cx.strokeStyle = `rgba(240,245,255,${.85 * k})`; cx.lineWidth = 2.5; cx.lineCap = 'round';
+    for (let q = 0; q < 16; q++){ const b = q / 16 * 6.283 + p; cx.beginPath(); cx.arc(X, Y, rr - (q % 2) * T * .25, b, b + .28); cx.stroke(); } cx.lineCap = 'butt'; return; }
+  if (f.st === 'mag'){ // rachaduras saindo do Golem
+    cx.strokeStyle = `rgba(60,40,20,${k})`; cx.lineWidth = 3; cx.beginPath();
+    for (let q = 0; q < 9; q++){ let b = q / 9 * 6.283 + f.x * 3, x = X, y = Y; cx.moveTo(x, y); for (let s2 = 1; s2 <= 4; s2++){ b += Math.sin(q * 7 + s2 * 3) * .45; const st2 = R * .25 * Math.min(1, p * 3); x += Math.cos(b) * st2; y += Math.sin(b) * st2; cx.lineTo(x, y); } } cx.stroke();
+    cx.strokeStyle = `rgba(201,178,138,${.8 * k})`; cx.lineWidth = 4 * k + 1; cx.beginPath(); cx.arc(X, Y, R * (.3 + .7 * p), 0, 7); cx.stroke(); return; }
+  if (f.st === 'boom'){
+    if (p < .4){ const q = 1 - p / .4; glow(X, Y, R * (.5 + p * 1.6), `rgba(255,255,220,${q})`, `rgba(255,140,40,${.8 * q})`); }
+    cx.strokeStyle = `rgba(255,170,60,${k})`; cx.lineWidth = 8 * k + 1; cx.beginPath(); cx.arc(X, Y, R * (.3 + .8 * p), 0, 7); cx.stroke();
+    cx.strokeStyle = `rgba(90,60,40,${.6 * k})`; cx.lineWidth = 3; cx.beginPath(); cx.arc(X, Y, R * (.2 + .95 * p), 0, 7); cx.stroke(); return; }
+  cx.strokeStyle = f.col; cx.globalAlpha = k; cx.lineWidth = 4 * k + 1; cx.beginPath(); cx.arc(X, Y, R * (.3 + .7 * p), 0, 7); cx.stroke(); cx.globalAlpha = 1;
+}
+function drawBeamFx(f){ // Hidro Bomba / Raio de Gelo: bordas onduladas, miolo branco e espuma
+  const k = 1 - f.t / f.life, L = f.len * T, W = f.w * T * k;
+  cx.save(); cx.translate(sx(f.x), sy(f.y)); cx.rotate(Math.atan2(f.dy, f.dx)); cx.globalAlpha = Math.min(1, k * 1.5);
+  const path = (w, ph) => { cx.beginPath(); cx.moveTo(0, -w * .6); for (let x = 0; x <= L; x += T * .25) cx.lineTo(x, -w - Math.sin(x / T * 4 + G.t * 30 + ph) * w * .18); cx.lineTo(L, 0); for (let x = L; x >= 0; x -= T * .25) cx.lineTo(x, w + Math.sin(x / T * 4 + G.t * 30 + ph + 1) * w * .18); cx.lineTo(0, w * .6); cx.closePath(); };
+  cx.fillStyle = f.col; path(W * 1.1, 0); cx.fill();
+  cx.fillStyle = 'rgba(255,255,255,.55)'; path(W * .6, 2); cx.fill();
+  cx.fillStyle = '#fff'; path(W * .25, 4); cx.fill();
+  cx.fillStyle = 'rgba(255,255,255,.9)'; for (let q = 0; q < 14; q++){ const x = ((q * .137 + G.t * 2.5) % 1) * L, y = (q % 2 ? 1 : -1) * W * (1 + .15 * Math.sin(q)); cx.beginPath(); cx.arc(x, y, T * .05 + 1, 0, 7); cx.fill(); }
+  cx.restore(); cx.globalAlpha = 1; }
+// áreas no chão
+function drawZone(z){ const X = sx(z.x), Y = sy(z.y), R = z.rad * T, t = G.t;
+  if (z.d.zc){ // lama
+    cx.fillStyle = 'rgba(92,64,34,.6)'; cx.beginPath(); for (let q = 0; q <= 16; q++){ const b = q / 16 * 6.283, rr = R * (.9 + .1 * Math.sin(q * 2.7 + z.x)); if (q) cx.lineTo(X + Math.cos(b) * rr, Y + Math.sin(b) * rr); else cx.moveTo(X + rr, Y); } cx.closePath(); cx.fill();
+    cx.fillStyle = 'rgba(140,105,60,.45)'; cx.beginPath(); cx.ellipse(X - R * .25, Y - R * .2, R * .45, R * .28, -.4, 0, 7); cx.fill();
+    for (let q = 0; q < 5; q++){ const ph = (t * .8 + q / 5 + z.y) % 1, bx = X + Math.cos(q * 2.4 + z.x) * R * .55, by = Y + Math.sin(q * 2.4 + z.x) * R * .45; cx.strokeStyle = `rgba(190,150,100,${.8 * (1 - ph)})`; cx.lineWidth = 1.5; cx.beginPath(); cx.arc(bx, by, ph * T * .2 + 1, 0, 7); cx.stroke(); }
+    return; }
+  // fogo: brasa no chão e labaredas girando
+  glow(X, Y, R, 'rgba(255,160,60,.55)', 'rgba(200,40,10,.35)');
+  cx.strokeStyle = 'rgba(255,170,60,.6)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.stroke();
+  const n = 11; for (let q = 0; q < n; q++){ const b = q / n * 6.283 + t * 1.6, rr = R * (.35 + .55 * ((q * .37) % 1)), fx0 = X + Math.cos(b) * rr, fy0 = Y + Math.sin(b) * rr, h = T * (.35 + .2 * Math.sin(t * 12 + q * 1.9)), w = T * .13;
+    cx.fillStyle = '#ff5a1a'; cx.beginPath(); cx.moveTo(fx0 - w, fy0); cx.quadraticCurveTo(fx0 - w * .6, fy0 - h * .6, fx0, fy0 - h); cx.quadraticCurveTo(fx0 + w * .6, fy0 - h * .6, fx0 + w, fy0); cx.closePath(); cx.fill();
+    cx.fillStyle = '#ffd23f'; cx.beginPath(); cx.moveTo(fx0 - w * .5, fy0); cx.quadraticCurveTo(fx0 - w * .3, fy0 - h * .35, fx0, fy0 - h * .6); cx.quadraticCurveTo(fx0 + w * .3, fy0 - h * .35, fx0 + w * .5, fy0); cx.closePath(); cx.fill(); } }
+// Premonição: campo de gravidade com um olho que vai abrindo
+function drawMark(m){ const k = clamp(1 - m.t / m.d.delay, 0, 1), X = sx(m.x), Y = sy(m.y), R = m.d.rad * T, C = R * (m.co || m.d.core || .35), t = G.t;
+  const g = cx.createRadialGradient(X, Y, 0, X, Y, R); g.addColorStop(0, `rgba(40,0,70,${.55 + .3 * k})`); g.addColorStop(C / R, `rgba(110,30,170,${.4 + .2 * k})`); g.addColorStop(1, 'rgba(177,77,255,.06)');
+  cx.fillStyle = g; cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.fill();
+  cx.strokeStyle = 'rgba(224,123,255,.9)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.stroke();
+  cx.lineWidth = 1.5; cx.beginPath(); for (let q = 0; q < 24; q++){ const b = q / 24 * 6.283 + t * .4, l = q % 3 ? .06 : .13; cx.moveTo(X + Math.cos(b) * R, Y + Math.sin(b) * R); cx.lineTo(X + Math.cos(b) * R * (1 - l), Y + Math.sin(b) * R * (1 - l)); } cx.stroke();
+  cx.strokeStyle = '#fff'; cx.lineWidth = 4; cx.beginPath(); cx.arc(X, Y, R + 4, -Math.PI / 2, -Math.PI / 2 + k * 6.283); cx.stroke();   // contagem
+  cx.strokeStyle = 'rgba(240,180,255,.55)'; cx.lineWidth = 2; for (let q = 0; q < 5; q++){ cx.beginPath(); for (let s2 = 0; s2 <= 12; s2++){ const f = s2 / 12, rr = R * (1 - f * .85), b = q * 1.2566 - t * 2.2 + f * 2.4; const px = X + Math.cos(b) * rr, py = Y + Math.sin(b) * rr; if (s2) cx.lineTo(px, py); else cx.moveTo(px, py); } cx.stroke(); }   // espirais sugando
+  for (let q = 0; q < 14; q++){ const ph = (t * 1.1 + q * .37) % 1, rr = R * (1 - ph) + 2, b = q * 2.4 + ph * 2; cx.fillStyle = `rgba(255,220,255,${ph})`; cx.beginPath(); cx.arc(X + Math.cos(b) * rr, Y + Math.sin(b) * rr, 1.5 + ph, 0, 7); cx.fill(); }
+  glow(X, Y, C * 1.5, `rgba(255,150,255,${.3 + .4 * k})`, 'rgba(120,30,180,.25)');
+  const ew = C * 1.5, eh = C * .85 * Math.min(1, k * 1.4);   // o olho
+  cx.fillStyle = '#f7e6ff'; cx.beginPath(); cx.moveTo(X - ew, Y); cx.quadraticCurveTo(X, Y - eh * 2, X + ew, Y); cx.quadraticCurveTo(X, Y + eh * 2, X - ew, Y); cx.fill();
+  if (eh > 1){ cx.save(); cx.beginPath(); cx.moveTo(X - ew, Y); cx.quadraticCurveTo(X, Y - eh * 2, X + ew, Y); cx.quadraticCurveTo(X, Y + eh * 2, X - ew, Y); cx.clip();
+    cx.fillStyle = '#b14dff'; cx.beginPath(); cx.arc(X, Y, C * .55, 0, 7); cx.fill(); cx.fillStyle = '#1a0030'; cx.beginPath(); cx.ellipse(X, Y, C * .14, C * .45, 0, 0, 7); cx.fill(); cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(X - C * .18, Y - C * .2, C * .1, 0, 7); cx.fill(); cx.restore(); }
+  cx.strokeStyle = '#3b0764'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(X - ew, Y); cx.quadraticCurveTo(X, Y - eh * 2, X + ew, Y); cx.quadraticCurveTo(X, Y + eh * 2, X - ew, Y); cx.stroke(); }
 function draw(){
   const ms = Math.min(8, G.step || 0); cx.fillStyle = `rgb(${21 - ms},${15 + ms * 2},${Math.round(28 - ms * 1.2)})`; cx.fillRect(0, 0, W, H);   // a névoa fica mais verde a cada encolhida
+  cx.save(); if (G.shake > .3 && CFG.shake !== false){ cx.translate(rnd(-1, 1) * G.shake, rnd(-1, 1) * G.shake); G.shake *= .86; } else G.shake = 0;   // tremida em golpes grandes
   for (const p of PUFFS){
     p.x += p.vx / 60; p.y += p.vy / 60; if (p.x < -7) p.x = SIZE + 7; if (p.x > SIZE + 7) p.x = -7; if (p.y < -7) p.y = SIZE + 7; if (p.y > SIZE + 7) p.y = -7;
     const g = cx.createRadialGradient(sx(p.x), sy(p.y), 0, sx(p.x), sy(p.y), p.r * T);
@@ -1845,7 +1980,10 @@ function draw(){
   // aviso do Raio de Gelo do Lapras
   for (const o of G.obs) if (o.k === 'lapras' && o.charge > 0){ cx.save(); cx.translate(sx(o.x), sy(o.y)); cx.rotate(o.aim); cx.fillStyle = `rgba(191,243,255,${.15 + .15 * Math.sin(G.t * 16)})`; cx.fillRect(0, -.55 * T, 7.5 * T, 1.1 * T); cx.restore(); }
   // zonas
-  for (const z of G.zones){ cx.fillStyle = z.d.zc ? z.d.zc[0] : 'rgba(255,106,26,.22)'; cx.strokeStyle = z.d.zc ? z.d.zc[1] : 'rgba(255,170,60,.8)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(z.x), sy(z.y), z.rad * T, 0, 7); cx.fill(); cx.stroke(); }
+  for (const z of G.zones) drawZone(z);
+  // selos das Correntes ficam no chão, por baixo dos Pokémon
+  for (const C of G.chains || []){ const k = clamp(1 - Math.max(0, C.t) / (C.wu || C.d.windup), 0, 1); darkSeal(sx(C.x), sy(C.y), (C.rad || C.d.rad) * T, k, G.t * 1.2, 1); }
+  for (const u of G.units) if (u.alive && u.b.chain > 0 && u.b.ax != null) darkSeal(sx(u.b.ax), sy(u.b.ay) + T * .1, T * .5, 1, G.t * 2, .9);
   // Pokébol: gols e bola
   if (isPb()){ const c = SIZE / 2;
     for (const t of [0, 1]){ const x = t ? SIZE : 0, d = t ? 1 : -1; cx.fillStyle = TEAMCOL[t][0]; cx.globalAlpha = .35; cx.fillRect(Math.min(sx(x), sx(x + d * .9)), sy(c - GOALW), T * .9, GOALW * 2 * T); cx.globalAlpha = 1;
@@ -1869,16 +2007,14 @@ function draw(){
     const h = w.d.w * T, g = cx.createLinearGradient(-T * .5, 0, T * .5, 0); const sl = w.d.sleep; g.addColorStop(0, sl ? 'rgba(60,20,110,0)' : 'rgba(255,90,20,0)'); g.addColorStop(.6, sl ? 'rgba(106,63,181,.7)' : 'rgba(255,120,30,.75)'); g.addColorStop(1, sl ? 'rgba(196,181,253,.9)' : 'rgba(255,230,120,.95)');
     cx.fillStyle = g; cx.beginPath(); cx.ellipse(0, 0, T * .5, h / 2, 0, 0, 7); cx.fill(); cx.restore(); }
   // Premonição: área marcada
-  for (const m of G.marks){ const k = 1 - m.t / m.d.delay; cx.fillStyle = `rgba(177,77,255,${.12 + .2 * k})`; cx.strokeStyle = 'rgba(224,123,255,.9)'; cx.lineWidth = 2;
-    cx.beginPath(); cx.arc(sx(m.x), sy(m.y), m.d.rad * T, 0, 7); cx.fill(); cx.stroke();
-    cx.fillStyle = `rgba(110,30,170,${.3 + .3 * k})`; cx.beginPath(); cx.arc(sx(m.x), sy(m.y), m.d.rad * (m.co || m.d.core || .35) * T, 0, 7); cx.fill();
-    for (let q = 0; q < 3; q++){ const ph = ((G.t * 1.2 + q / 3) % 1), rr = m.d.rad * (1 - ph); cx.strokeStyle = `rgba(224,123,255,${.5 * ph})`; cx.beginPath(); cx.arc(sx(m.x), sy(m.y), rr * T, 0, 7); cx.stroke(); }   // anéis sendo sugados
-    cx.beginPath(); cx.arc(sx(m.x), sy(m.y), m.d.rad * T * k, 0, 7); cx.stroke(); }
+  for (const m of G.marks) drawMark(m);
   // avisos (Hidro Bomba carregando)
   for (const u of G.units) if (u.alive && u.wind && u.wind.nova){ const w = u.wind, k = 1 - Math.max(0, w.t) / (w.d.windup || .55), r = w.d.rad * T;
     cx.fillStyle = `rgba(255,250,235,${.1 + .18 * k})`; cx.strokeStyle = `rgba(255,255,255,${.5 + .4 * Math.sin(G.t * 30)})`; cx.lineWidth = 2;
     cx.beginPath(); cx.arc(sx(u.x), sy(u.y), r, 0, 7); cx.fill(); cx.stroke(); cx.beginPath(); cx.arc(sx(u.x), sy(u.y), r * k, 0, 7); cx.stroke(); }
-  for (const u of G.units) if (u.alive && u.wind && !u.wind.nova){ const w = u.wind; cx.save(); cx.translate(sx(u.x), sy(u.y)); cx.rotate(Math.atan2(w.dy, w.dx)); cx.fillStyle = 'rgba(108,198,255,.22)'; cx.fillRect(0, -w.d.w * T, w.d.len * T, w.d.w * 2 * T); cx.restore(); }
+  for (const u of G.units) if (u.alive && u.wind && !u.wind.nova){ const w = u.wind; cx.save(); cx.translate(sx(u.x), sy(u.y)); cx.rotate(Math.atan2(w.dy, w.dx)); const k = 1 - Math.max(0, w.t) / (w.d.windup || .7);
+    cx.fillStyle = `rgba(108,198,255,${.12 + .12 * k})`; cx.fillRect(0, -w.d.w * T, w.d.len * T, w.d.w * 2 * T); cx.strokeStyle = `rgba(190,230,255,${.4 + .4 * Math.sin(G.t * 25)})`; cx.setLineDash([8, 6]); cx.lineWidth = 2; cx.strokeRect(0, -w.d.w * T, w.d.len * T, w.d.w * 2 * T); cx.setLineDash([]);
+    glow(T * .45, 0, T * (.25 + .45 * k), 'rgba(255,255,255,.95)', 'rgba(108,198,255,.6)'); cx.restore(); }
   // mira do jogador
   const me = G.me;
   if (me && me.alive && G.phase === 'play' && !touch.on){
@@ -1930,6 +2066,9 @@ function draw(){
       if (p < .25 || p > .8) drawSprite(u.sp, 'Sink', (p < .25 ? p / .25 : (1 - p) / .2) * 1.15, u.face, u.x, u.y, T / 28 * POKE[u.sp].sc, alpha, isShiny(u));
       else { cx.fillStyle = 'rgba(15,0,30,.7)'; cx.beginPath(); cx.ellipse(sx(u.x), sy(u.y) + T * .12, T * .32, T * .13, 0, 0, 7); cx.fill(); } }
     else drawSprite(u.sp, an, an === 'Ball' ? G.t * 1.8 : u.anim.n === an ? u.anim.t : u.at, u.face, u.x, u.y - lift, T / 28 * POKE[u.sp].sc, alpha, isShiny(u));
+    if (u.anim.n === 'Hurt' && u.anim.t < .14 && !sunk){ const q = 1 - u.anim.t / .14;   // clarão do golpe
+      cx.globalCompositeOperation = 'lighter'; drawSprite(u.sp, an, u.anim.t, u.face, u.x, u.y - lift, T / 28 * POKE[u.sp].sc, .6 * q * alpha, isShiny(u)); cx.globalCompositeOperation = 'source-over';
+      cx.strokeStyle = `rgba(255,255,255,${q})`; cx.lineWidth = 2; cx.beginPath(); for (let k2 = 0; k2 < 6; k2++){ const b = k2 * 1.047 + u.x * 5, r0 = T * (.35 + .3 * (1 - q)), r1 = r0 + T * .22 * q; cx.moveTo(sx(u.x) + Math.cos(b) * r0, sy(u.y - lift) - T * .3 + Math.sin(b) * r0); cx.lineTo(sx(u.x) + Math.cos(b) * r1, sy(u.y - lift) - T * .3 + Math.sin(b) * r1); } cx.stroke(); }
     if (u.b.sleep > 0){ cx.font = `800 ${T * .3}px system-ui`; cx.fillStyle = '#c4b5fd'; for (let k = 0; k < 2; k++){ const ph = (G.t * .8 + k * .5) % 1; cx.fillText('z', sx(u.x) + T * (.25 + ph * .3), sy(u.y) - T * (.7 + ph * .6)); } }
     if (u.b.fear > 0){ cx.font = `900 ${T * .45}px system-ui`; cx.fillStyle = '#efe6ff'; cx.fillText('!', sx(u.x) + Math.sin(G.t * 40) * 2, sy(u.y) - T * .95); }
     if (u.b.refl > 0 && !(u.b.shell > 0)){ cx.strokeStyle = `rgba(255,179,255,${.6 + .3 * Math.sin(G.t * 20)})`; cx.lineWidth = 3; cx.beginPath(); cx.arc(sx(u.x), sy(u.y) - T * .3, T * .6, 0, 7); cx.stroke(); }
@@ -1952,20 +2091,26 @@ function draw(){
   for (const s of G.shots) if (s.lob){ const p = 1 - s.left / s.tot, h = Math.sin(p * Math.PI) * 1.6;
     cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(sx(s.x), sy(s.y), T * .25, T * .1, 0, 0, 7); cx.fill();
     cx.strokeStyle = 'rgba(160,120,70,.6)'; cx.setLineDash([4, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(s.tx), sy(s.ty), s.d.rad * T, 0, 7); cx.stroke(); cx.setLineDash([]);
-    cx.fillStyle = s.d.rock ? '#8d96a0' : '#7a5a32'; cx.strokeStyle = s.d.rock ? '#3f454c' : '#3e2a14'; cx.lineWidth = 2; cx.beginPath(); cx.arc(sx(s.x), sy(s.y - h), T * (s.d.rock ? .3 : .28), 0, 7); cx.fill(); cx.stroke(); }
-  for (const C of G.chains || []){ const k = 1 - Math.max(0, C.t) / (C.wu || C.d.windup), X = sx(C.x), Y = sy(C.y), r = (C.rad || C.d.rad) * T;   // aviso das correntes
-    cx.fillStyle = `rgba(30,0,50,${.25 + .3 * k})`; cx.strokeStyle = 'rgba(167,139,250,.9)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, r, 0, 7); cx.fill(); cx.stroke(); cx.beginPath(); cx.arc(X, Y, r * k, 0, 7); cx.stroke(); }
-  for (const u of G.units) if (u.alive && u.b.chain > 0 && u.b.ax != null){ const ax = sx(u.b.ax), ay = sy(u.b.ay) + T * .1, ux = sx(u.x), uy = sy(u.y) - T * .1, n = 7;   // corrente presa no chão
-    cx.strokeStyle = '#b8b0c8'; cx.lineWidth = 2; for (let q = 0; q < n; q++){ const t0 = q / n; cx.beginPath(); cx.ellipse(ax + (ux - ax) * (t0 + .5 / n), ay + (uy - ay) * (t0 + .5 / n), T * .07, T * .045, Math.atan2(uy - ay, ux - ax) + (q % 2 ? 1.57 : 0), 0, 7); cx.stroke(); }
-    cx.fillStyle = '#3b0764'; cx.beginPath(); cx.arc(ax, ay, T * .12, 0, 7); cx.fill(); }
+    const X = sx(s.x), Y = sy(s.y - h), r = T * (s.d.rock ? .3 : .28);
+    if (s.d.rock){ cx.save(); cx.translate(X, Y); cx.rotate(p * 8); cx.fillStyle = '#8d96a0'; cx.strokeStyle = '#3f454c'; cx.lineWidth = 2; cx.beginPath(); for (let q = 0; q < 7; q++){ const b = q / 7 * 6.283, rr = r * (.85 + ((q * 37) % 5) * .07); if (q) cx.lineTo(Math.cos(b) * rr, Math.sin(b) * rr); else cx.moveTo(rr, 0); } cx.closePath(); cx.fill(); cx.stroke();
+      cx.fillStyle = '#b4bcc6'; cx.beginPath(); cx.ellipse(-r * .25, -r * .3, r * .35, r * .2, -.5, 0, 7); cx.fill(); cx.restore(); }
+    else { cx.fillStyle = '#6e4e2a'; cx.beginPath(); cx.arc(X, Y, r, 0, 7); cx.fill(); for (let q = 0; q < 3; q++){ const b = q * 2.1 + p * 4; cx.beginPath(); cx.arc(X + Math.cos(b) * r * .8, Y + Math.sin(b) * r * .8, r * .35, 0, 7); cx.fill(); }
+      cx.fillStyle = '#9c7646'; cx.beginPath(); cx.arc(X - r * .3, Y - r * .3, r * .35, 0, 7); cx.fill(); } }
+  for (const C of G.chains || []){ const k = clamp(1 - Math.max(0, C.t) / (C.wu || C.d.windup), 0, 1), X = sx(C.x), Y = sy(C.y), r = (C.rad || C.d.rad) * T;   // aviso das correntes: selo no chão e correntes saindo da borda
+    for (let q = 0; q < 6; q++){ const b = q / 6 * 6.283 + G.t * .5, ox = X + Math.cos(b) * r, oy = Y + Math.sin(b) * r, e = k * k * .8; if (e > .05) chainLine(ox, oy, ox + (X - ox) * e, oy + (Y - oy) * e, Math.max(3, T * .1)); }
+    if (k > .8){ cx.strokeStyle = `rgba(255,255,255,${(k - .8) * 5})`; cx.lineWidth = 3; cx.beginPath(); cx.arc(X, Y, r, 0, 7); cx.stroke(); } }
+  for (const u of G.units) if (u.alive && u.b.chain > 0 && u.b.ax != null){ const ax = sx(u.b.ax), ay = sy(u.b.ay) + T * .1, ux = sx(u.x), uy = sy(u.y) + T * .08, tense = Math.min(1, Math.hypot(u.x - u.b.ax, u.y - u.b.ay) / 2);   // acorrentado: estaca no chão, corrente e algema
+    chainLine(ax, ay, ux, uy, Math.max(3, T * .11), T * .4 * (1 - tense));
+    cx.fillStyle = '#2a0f45'; cx.strokeStyle = '#c4b5fd'; cx.lineWidth = 2; cx.beginPath(); cx.arc(ax, ay, T * .13, 0, 7); cx.fill(); cx.stroke();
+    const rr = T * POKE[u.sp].rad * .8; cx.strokeStyle = '#140a1e'; cx.lineWidth = T * .11; cx.beginPath(); cx.ellipse(ux, uy, rr, T * .15, 0, 0, 7); cx.stroke(); cx.strokeStyle = '#b9b0cf'; cx.lineWidth = T * .05; cx.stroke();
+    if (tense > .9){ cx.strokeStyle = `rgba(196,181,253,${.5 + .5 * Math.sin(G.t * 24)})`; cx.lineWidth = 2; cx.beginPath(); cx.ellipse(ux, uy, rr * 1.25, T * .22, 0, 0, 7); cx.stroke(); } }
   for (const u of G.units) if (u.whip && u.whip.o){ const g = u.whip.o, lp = 0; cx.strokeStyle = '#ff7bc0'; cx.lineWidth = T * .12; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(sx(g.x), sy(g.y) - T * .3); cx.lineTo(sx(u.x), sy(u.y - lp) - T * .3); cx.stroke(); cx.lineCap = 'butt'; }
   for (const s of G.shots) if ((s.d.pull || s.d.whip) && s.o){ cx.strokeStyle = '#ff7bc0'; cx.lineWidth = T * .12; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(sx(s.o.x), sy(s.o.y) - T * .3); cx.lineTo(sx(s.x), sy(s.y)); cx.stroke(); cx.lineCap = 'butt'; }   // língua
   for (const P of G.portals || []){ const k = Math.min(1, P.t), a = G.t * 4;
     for (const [x, y] of [[P.ax, P.ay], [P.bx, P.by]]){ const X = sx(x), Y = sy(y), r = P.r * T;
       const g = cx.createRadialGradient(X, Y, 0, X, Y, r * 1.3); g.addColorStop(0, `rgba(10,0,25,${.95 * k})`); g.addColorStop(.6, `rgba(91,42,134,${.8 * k})`); g.addColorStop(1, 'rgba(139,92,246,0)'); cx.fillStyle = g; cx.beginPath(); cx.ellipse(X, Y, r * 1.3, r * .9, 0, 0, 7); cx.fill();
       cx.strokeStyle = `rgba(196,181,253,${.8 * k})`; cx.lineWidth = 2; for (let q = 0; q < 3; q++){ cx.beginPath(); cx.ellipse(X, Y, r * (.4 + q * .3), r * (.28 + q * .2), 0, a + q, a + q + 4); cx.stroke(); } } }
-  for (const s of G.shots){ if (s.lob) continue; const r = s.d.r * T * 1.1 * (s.d.fade && s.left != null ? .4 + .6 * clamp(s.left / s.d.range, 0, 1) : 1), g = cx.createRadialGradient(sx(s.x), sy(s.y), 0, sx(s.x), sy(s.y), r * 1.8);
-    g.addColorStop(0, '#fff'); g.addColorStop(.35, s.d.col); g.addColorStop(1, 'rgba(0,0,0,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(sx(s.x), sy(s.y), r * 1.8, 0, 7); cx.fill(); }
+  for (const s of G.shots) if (!s.lob) drawShot(s);
   // ventania do Pântano: riscos andando na direção do vento (fracos no aviso, fortes durante)
   if (G.gust && (G.gust.warn > 0 || G.gust.t > 0)){ const g = G.gust, on = g.t > 0, sp = on ? 7 : 2, c = SIZE / 2;
     cx.strokeStyle = on ? 'rgba(225,242,255,.6)' : `rgba(225,242,255,${.25 + .2 * Math.sin(G.t * 10)})`; cx.lineWidth = on ? 2.5 : 2; cx.beginPath();
@@ -1977,9 +2122,10 @@ function draw(){
   // efeitos
   for (const f of G.fx){ const k = 1 - f.t / f.life;
     if (f.ring && !f.dec && f.r >= 1.6 && G.phase === 'play'){ f.dec = 1; if (!G.decals) G.decals = []; if (G.decals.length < 30) G.decals.push({ x:f.x, y:f.y, r:f.r * .6, t0:performance.now() / 1000 }); }
-    if (f.ring){ cx.strokeStyle = f.col; cx.globalAlpha = k; cx.lineWidth = 4 * k + 1; cx.beginPath(); cx.arc(sx(f.x), sy(f.y), f.r * T * (.3 + .7 * (f.t / f.life)), 0, 7); cx.stroke(); cx.globalAlpha = 1; continue; }
-    if (f.beam){ cx.save(); cx.translate(sx(f.x), sy(f.y)); cx.rotate(Math.atan2(f.dy, f.dx)); cx.globalAlpha = k; cx.fillStyle = f.col; cx.fillRect(0, -f.w * T * k, f.len * T, f.w * 2 * T * k); cx.fillStyle = '#fff'; cx.fillRect(0, -f.w * T * k * .35, f.len * T, f.w * T * k * .7); cx.restore(); cx.globalAlpha = 1; continue; }
+    if (f.ring){ if (!f.sk){ f.sk = 1; if (f.r >= 2) G.shake = Math.max(G.shake || 0, Math.min(8, f.r * (f.st === 'boom' ? 2.6 : 1.8))); } drawRingFx(f); continue; }
+    if (f.beam){ if (!f.sk){ f.sk = 1; if (f.len > 5) G.shake = Math.max(G.shake || 0, 4); } drawBeamFx(f); continue; }
     cx.globalAlpha = k * .9; cx.fillStyle = f.col; cx.beginPath(); cx.arc(sx(f.x), sy(f.y), Math.max(1.5, f.size * k * .5), 0, 7); cx.fill(); cx.globalAlpha = 1; }
+  cx.restore();
   if (G.phase !== 'menu'){ const vg = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75);
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(${8 + ms * 3},${20 + ms * 6},${10 + ms * 2},${.22 + ms * .05})`); cx.fillStyle = vg; cx.fillRect(0, 0, W, H); }
   cx.textAlign = 'center';
@@ -2483,7 +2629,7 @@ function netStartMsg(){
 }
 function netBroadcast(){
   const fxs = [];
-  for (const f of G.fx) if ((f.ring || f.beam) && !f.sent){ f.sent = 1; fxs.push(f.ring ? ['r', r2(f.x), r2(f.y), r2(f.r), f.life, f.col] : ['b', r2(f.x), r2(f.y), r2(f.dx), r2(f.dy), f.len, f.w, f.life, f.col]); }
+  for (const f of G.fx) if ((f.ring || f.beam) && !f.sent){ f.sent = 1; fxs.push(f.ring ? ['r', r2(f.x), r2(f.y), r2(f.r), f.life, f.col, f.st || 0] : ['b', r2(f.x), r2(f.y), r2(f.dx), r2(f.dy), f.len, f.w, f.life, f.col]); }
   const S = {
     t:'s', ph:G.phase, tm:r2(G.timer), rd:G.round, si:r2(G.shrinkIn), st:G.step, pa:[G.pat, G.seed], SZ:SIZE,
     u:G.units.map(u => { const b = u.b, fl = (b.inv > 0 ? 1 : 0) | (b.shell > 0 ? 2 : 0) | (b.refl > 0 ? 4 : 0) | (b.sd > 0 ? 8 : 0) | (b.slow > 0 ? 16 : 0) | (b.burn > 0 ? 32 : 0) | (Math.hypot(u.rvx, u.rvy) > .3 ? 64 : 0) | (b.conf > 0 ? 128 : 0) | (b.sleep > 0 ? 256 : 0) | (b.fear > 0 ? 512 : 0) | (u.gshade ? 1024 : 0) | (u.roll ? 2048 : 0) | (b.curl > 0 ? 4096 : 0);
@@ -2584,7 +2730,7 @@ function applySnap(S){
     if (e[0] === 't') G.txt.push({ x:e[1], y:e[2], s:e[3], col:e[4], t:0 });
     else if (e[0] === 'f') feed(e[1], e[2]);
     else if (e[0] === 'n') banner(e[1], e[2], e[3]);
-    else if (e[0] === 'r') G.fx.push({ ring:1, x:e[1], y:e[2], r:e[3], t:0, life:e[4], col:e[5] });
+    else if (e[0] === 'r') G.fx.push({ ring:1, x:e[1], y:e[2], r:e[3], t:0, life:e[4], col:e[5], st:e[6] || 0 });
     else if (e[0] === 'b') G.fx.push({ beam:1, x:e[1], y:e[2], dx:e[3], dy:e[4], len:e[5], w:e[6], t:0, life:e[7], col:e[8] });
   }
   // os meus dados (ouro, golpes, itens)
