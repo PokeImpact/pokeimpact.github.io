@@ -311,7 +311,7 @@ details.how p{margin:8px 0 0;line-height:1.5;max-width:70ch}
   <div class="box">
     <!-- 1. tela inicial -->
     <section class="scr" id="scHome">
-      <div class="mhead"><h1>Poke Impact <small>v88 · 20/11</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
+      <div class="mhead"><h1>Poke Impact <small>v89 · 20/11</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
       <p class="sub">Empurre todo mundo para a névoa tóxica e seja o último em pé na arena.</p>
       <div class="hero">
         <button class="heroPk" data-go="poke"><img id="heroImg" alt=""><span><small>Seu Pokémon</small><b id="heroName"></b><em>Trocar de Pokémon ›</em></span></button>
@@ -1515,7 +1515,7 @@ const JANELAS = [   // da mais "de cima" para a mais de baixo
   ['cfgOv',  () => $('#cfgOk').click(), true],
   ['skinOv', () => $('#skOk').click(), true],
   ['rivOv',  () => $('#rivOk').click(), true],
-  ['accOv',  () => $('#aSkip').click(), true],
+  ['accOv',  () => accClose(), true],
   ['endOv',  () => $('#toMenu').click(), false] ];   // fim de jogo: × e ESC voltam ao menu, clique fora não (evita sair sem querer)
 for (const [id, fecha, fora] of JANELAS){ const ov = document.getElementById(id); if (!ov) continue; const box = ov.querySelector('.box');
   const x = document.createElement('button'); x.className = 'xclose'; x.type = 'button'; x.title = 'Fechar (Esc)'; x.setAttribute('aria-label', 'Fechar'); x.textContent = '×'; x.onclick = fecha; box.prepend(x);
@@ -1534,9 +1534,10 @@ const GRUPOS = {
   palmas: { capa:'img/capa.webp',        susto:'img/susto.webp' },
   cancun: { capa:'img/capa-cancun.webp', susto:'img/susto-cancun.webp' },
   primos: { capa:'img/capa-primos.webp', susto:'img/susto.webp' } };
+let GRUPO_LINK = false;   // abriu por um link de grupo (/primos etc.): a capa aparece logo de cara
 const GRUPO = (() => { let g = null;
   try { g = new URLSearchParams(location.search).get('g'); } catch(e){}
-  if (g && GRUPOS[g]){ store.set('nt-grupo', g); try { history.replaceState(null, '', location.pathname); } catch(e){} }   // guarda e limpa o endereço
+  if (g && GRUPOS[g]){ GRUPO_LINK = true; store.set('nt-grupo', g); try { history.replaceState(null, '', location.pathname); } catch(e){} }   // guarda e limpa o endereço
   g = store.get('nt-grupo'); return GRUPOS[g] ? g : 'palmas'; })();
 { const G0 = GRUPOS[GRUPO], c = document.querySelector('.acapa'), su = document.querySelector('#susto img'); if (c) c.src = G0.capa; if (su) su.src = G0.susto; }
 // susto ao morrer (zoeira temporária: para tirar, troque para false)
@@ -3592,7 +3593,8 @@ async function initAuth(){
     const { data } = await AUTH.sb.auth.getSession(); AUTH.user = data.session ? data.session.user : null;
     AUTH.sb.auth.onAuthStateChange((ev, ses) => { AUTH.user = ses ? ses.user : null; if (ev === 'PASSWORD_RECOVERY') accScreen('reset'); loadProfile(); });
     await loadProfile();
-    if (!AUTH.user && !store.get('nt-skipacc') && !$('#menu').hidden) accScreen('in');   // primeira visita: oferece criar conta
+    if (GRUPO_LINK){ if (!$('#accOv').hidden && (accMode === 'me' || accMode === 'new')) accScreen(AUTH.user ? 'me' : 'new'); }   // link de grupo: a capa já está aberta; acerta se está logado ou não
+    else if (!AUTH.user && !store.get('nt-skipacc') && !$('#menu').hidden) accScreen('in');   // primeira visita: oferece criar conta
   } catch(e){ AUTH.ok = false; }
   renderAcc();
 }
@@ -3615,19 +3617,23 @@ let accMode = 'in';
 function accScreen(mode, msg, kind){
   accMode = mode; $('#accOv').hidden = false;
   $('#atIn').classList.toggle('on', mode === 'in'); $('#atNew').classList.toggle('on', mode === 'new');
-  $('#aNickL').hidden = mode !== 'new'; $('#aEmL').hidden = mode === 'reset'; $('#aPwL').hidden = mode === 'forgot';
-  $('#aGo').textContent = { in:'Entrar', new:'Criar conta', forgot:'Mandar link para o e-mail', reset:'Salvar nova senha' }[mode];
+  const me = mode === 'me', nk = (AUTH.prof && AUTH.prof.nick) || cleanNick(store.get('nt-nick')) || 'você'; $('#accOv .tabs').hidden = me;
+  $('#aNickL').hidden = mode !== 'new'; $('#aEmL').hidden = mode === 'reset' || me; $('#aPwL').hidden = mode === 'forgot' || me;
+  $('#aGo').textContent = { in:'Entrar', new:'Criar conta', forgot:'Mandar link para o e-mail', reset:'Salvar nova senha', me:'Jogar como ' + nk }[mode];
+  $('#aSkip').textContent = me ? 'Entrar com outra conta' : 'Jogar sem conta →';
   $('#aPw').autocomplete = mode === 'in' ? 'current-password' : 'new-password'; $('#aPwL').firstChild.textContent = mode === 'reset' ? 'Nova senha' : 'Senha';
-  $('#aSub').textContent = mode === 'forgot' ? 'Digite seu e-mail: vamos mandar um link para você criar uma senha nova.' : mode === 'reset' ? 'Escolha a sua senha nova.' : 'Com conta você entra nas partidas ranqueadas, acompanha as rixas com os amigos e junta moedas para a loja.';
+  $('#aSub').textContent = me ? `Que bom te ver de novo, ${nk}! Sua conta já está aberta.` : mode === 'forgot' ? 'Digite seu e-mail: vamos mandar um link para você criar uma senha nova.' : mode === 'reset' ? 'Escolha a sua senha nova.' : 'Com conta você entra nas partidas ranqueadas, acompanha as rixas com os amigos e junta moedas para a loja.';
   if (mode === 'new' && !$('#aNick').value) $('#aNick').value = cleanNick($('#nick').value);
   const m = $('#aMsg'); m.hidden = !msg; m.textContent = msg || ''; m.className = 'amsg ' + (kind || '');
   $('#aForgot').hidden = mode !== 'in';
 }
 $('#atIn').onclick = () => accScreen('in'); $('#atNew').onclick = () => accScreen('new');
 $('#aForgot').onclick = () => accScreen('forgot');
-$('#aSkip').onclick = () => { $('#accOv').hidden = true; store.set('nt-skipacc', 1); };
+function accClose(){ $('#accOv').hidden = true; if (accMode !== 'me') store.set('nt-skipacc', 1); }   // ×, ESC, clique fora e "Jogar sem conta"
+$('#aSkip').onclick = async () => { if (accMode === 'me'){ try { await AUTH.sb.auth.signOut(); } catch(e){} return accScreen('in'); } accClose(); };
 $('#accOv').addEventListener('keydown', e => { if (e.key === 'Enter') $('#aGo').click(); });
 $('#aGo').onclick = async () => {
+  if (accMode === 'me') return accClose();
   const email = ($('#aEm').value || '').trim(), password = $('#aPw').value || '', nick = cleanNick($('#aNick').value);
   if (accMode !== 'reset' && !email) return accScreen(accMode, 'Digite o seu e-mail.', 'err');
   if (accMode !== 'forgot' && password.length < 6) return accScreen(accMode, 'A senha precisa de pelo menos 6 caracteres.', 'err');
@@ -4049,6 +4055,8 @@ $('#joinRoom').onclick = netJoin;
 $('#nick').value = store.get('nt-pick') || store.get('nt-nick') || '';
 renderMenu();
 $('#nick').addEventListener('input', () => { if (!$('#nick').readOnly) store.set('nt-pick', cleanNick($('#nick').value)); });
+const temSessao = () => { try { return Object.keys(localStorage).some(k => /^sb-.*-auth-token$/.test(k)); } catch(e){ return false; } };
+if (GRUPO_LINK) accScreen(temSessao() ? 'me' : 'new');   // mostra a capa já, sem esperar a conta carregar
 initAuth();
 
 window.NT = { G, update, cast, SK, POKE, ITEMS };
