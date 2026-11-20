@@ -250,6 +250,8 @@ details.how p{margin:8px 0 0;line-height:1.5;max-width:70ch}
 #pwRow input,#lobbyPw{text-transform:none!important;letter-spacing:0!important;font-size:15px!important}
 .wait{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .wait b{font-size:17px}
+#endCoins{background:#2e2410;border:1px solid #8a6d22;border-radius:10px;padding:8px 12px;font-weight:800;font-size:15px;color:var(--gold)}
+#endCoins small{color:var(--dim);font-weight:700;margin-left:6px}
 #endWait{background:#1f2a1b;border:1px solid #4d6b3a;border-radius:10px;padding:8px 12px;font-weight:800;font-size:14px}
 /* escolha do Pokémon */
 .pkwrap{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
@@ -326,11 +328,11 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
   <div class="box">
     <!-- 1. tela inicial -->
     <section class="scr" id="scHome">
-      <div class="mhead"><h1>Poke Impact <small>v89 · 20/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
+      <div class="mhead"><h1>Poke Impact <small>v90 · 20/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
       <p class="sub">Empurre todo mundo para a névoa tóxica e seja o último em pé na arena.</p>
       <div class="hero">
         <button class="heroPk" data-go="poke"><img id="heroImg" alt=""><span><small>Seu Pokémon</small><b id="heroName"></b><em>Trocar de Pokémon ›</em></span></button>
-        <div class="meBox"><small id="nickL">Seu nome</small><input id="nick" placeholder="Digite seu nome" maxlength="12"><div id="accRow" hidden><div id="accBox"></div></div></div>
+        <div class="meBox"><div class="row" style="justify-content:space-between;gap:6px"><small id="nickL">Seu nome</small><button class="link" id="nickEdit" hidden style="padding:0;font-size:12px">✏️ trocar nome</button></div><input id="nick" placeholder="Digite seu nome" maxlength="12"><div id="accRow" hidden><div id="accBox"></div></div></div>
       </div>
       <div class="modes">
         <button class="mode main" data-go="solo"><span>🤖</span><b>Jogar contra bots</b><small>Sozinho, na hora que quiser</small></button>
@@ -410,7 +412,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 <div class="ov" id="skinOv" hidden>
   <div class="box" style="max-width:820px">
     <div class="row" style="justify-content:space-between"><h2>🛍 Loja de visuais</h2><span class="chip" id="skCoins" style="color:var(--gold)"></span></div>
-    <p class="sub" id="skSub" style="margin:0">Só visual: não muda força nenhuma. Clique num item para ver como fica. Ganhe moedas jogando partidas ranqueadas (vencedor +30, os outros +10).</p>
+    <p class="sub" id="skSub" style="margin:0">Só visual: não muda força nenhuma. Clique num item para ver como fica. Ganhe moedas jogando: online ranqueada (vencedor +30, os outros +10) ou contra bots (vitória +8 a +25 conforme a dificuldade, derrota +4; até 150 por dia).</p>
     <div class="skwrap">
       <div class="skact"><canvas id="skPrev" width="260" height="230"></canvas><small id="skMsg"></small><button class="go" id="skAct" hidden></button></div>
       <div class="skside"><div class="tabs" id="skTabs"></div><div class="shop" id="skList"></div></div>
@@ -438,6 +440,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
     <div class="pod" id="pod"></div>
     <div style="overflow-x:auto"><table id="endTb"></table></div>
     <div id="endWait" hidden></div>
+    <div id="endCoins" hidden></div>
     <div class="row" style="justify-content:flex-end"><button class="ghost" id="toMenu">Trocar Pokémon</button><button class="go" id="again">Jogar de novo</button></div>
   </div>
 </div>
@@ -580,7 +583,7 @@ const COS = {
   'sh-9':   { n:'Blastoise shiny', p:400, ic:'🐢', d:'Corpo lilás e casco verde.', sp:9 },
   'sh-65':  { n:'Alakazam shiny', p:400, ic:'🥄', d:'Roxo, com a armadura azul.', sp:65 },
   'sh-94':  { n:'Gengar shiny', p:400, ic:'👻', d:'Cinza-azulado claro, quase um fantasma de verdade, com os olhos roxos brilhando.', sp:94 },
-  'sh-94p': { n:'Gengar Sombrio ✦ épica', p:900, ic:'🖤', d:'Preto, com olhos verdes brilhando. As magias também mudam: Bola Sombria verde, o susto vira um fantasminha verde fluorescente e a Forma Fantasma fica verde.', sp:94 },
+  'sh-94p': { n:'Gengar Sombrio ✦ épica', p:1500, ic:'🖤', d:'Preto, com olhos verdes brilhando. As magias também mudam: Bola Sombria verde, o susto vira um fantasminha verde fluorescente e a Forma Fantasma fica verde.', sp:94 },
   'sh-123': { n:'Scyther shiny', p:400, ic:'🦗', d:'Dourado.', sp:123 },
   'sh-129': { n:'Luquitarp dourado', p:150, ic:'🐟', d:'O Magikarp de ouro. Continua só pulando.', sp:129 },
   'nm-ouro':  { n:'Nome dourado', p:100, ic:'🟡', d:'Seu nome em ouro.', col:'#ffd23f' },
@@ -1616,6 +1619,7 @@ function banner(h, s, dur = 1.6){ if (NET.on && NET.host && G.phase !== 'count')
 /* ---------- partida e rodadas ---------- */
 function newMatch(){
   if (NET.on && NET.host) waitMerge();
+  G.matchStart = performance.now();
   G.units = []; $('#spec').hidden = true; G.mode = 'cl'; G.fmt = CFG.fmt || 0; G.teamWins = {}; G.caps = [];
   G.me = makeUnit(CFG.map === 'dg' ? 50 : CFG.sp, NET.on ? NET.nick : 'Você', true, 0); G.me.skin = mySkin(); G.units.push(G.me);
   if (NET.on) for (const c of NET.peers){ const u = makeUnit(CFG.map === 'dg' ? 50 : c.sp, c.nick, true, G.units.length); u.remote = c; c.u = u; u.skin = c.skin || null; G.units.push(u); }
@@ -1720,6 +1724,7 @@ function gameOver(){
     rows.map(u => `<tr><td>${u.place}º</td><td style="color:${u.col};font-weight:800">${u.name}</td><td>${POKE[u.sp].n}</td><td>${u.wins}</td><td>${u.kills}</td><td>${Math.round(u.dmg)}</td><td>${(u.dmg / Math.max(1, u.rounds || 1)).toFixed(1).replace('.', ',')}</td><td>${accTxt(u)}</td></tr>`).join('');
   renderPodium(w, rows);
   if (!isClient()) rankReport();
+  botReward();
   waitInfo(); $('#endOv').hidden = false;
 }
 // pódio: campeão com coroa comemorando, último colocado deitado chorando (e zoado)
@@ -3513,8 +3518,8 @@ function renderMenu(){
   const me = POKE[CFG.sp], img = IMG[CFG.sp] ? IMG[CFG.sp].por : '';
   $('#heroImg').src = $('#miniImg').src = img; $('#heroName').textContent = $('#miniName').textContent = me.n;
   // nome: com conta fica o da conta; sem conta, o que a pessoa digitou (guardado no aparelho)
-  const acc = !!(AUTH.user && AUTH.prof && AUTH.prof.nick); $('#nick').readOnly = acc;
-  if (acc) $('#nick').value = AUTH.prof.nick;
+  const acc = !!(AUTH.user && AUTH.prof && AUTH.prof.nick); $('#nickEdit').hidden = !acc || NICKED; $('#nick').readOnly = acc && !NICKED;
+  if (acc && !NICKED) $('#nick').value = AUTH.prof.nick;
   $('#nickL').textContent = acc ? 'Seu nome (da conta)' : 'Seu nome';
   $('#nick').title = acc ? 'É o nome da sua conta: aparece igual em todo lugar.' : '';
   // Pokémon
@@ -3558,6 +3563,15 @@ $('#menu').addEventListener('click', e => {
   store.set('nt-cfg', CFG); renderMenu(); if (NET.on && NET.host && G.phase === 'menu') netLobby();
 });
 $('#roomIn').addEventListener('keydown', e => { if (e.key === 'Enter') netJoin(); });
+// trocar o nome da conta (o "Host" do Felipe veio do campo de sala antigo)
+let NICKED = false;
+$('#nickEdit').onclick = () => { NICKED = true; renderMenu(); const n = $('#nick'); n.focus(); n.select(); $('#nickL').textContent = 'Novo nome: Enter salva, Esc cancela'; };
+async function nickSave(ok){ if (!NICKED) return; NICKED = false; const n = cleanNick($('#nick').value);
+  if (ok && n && AUTH.user && n !== AUTH.prof.nick){ const { error } = await AUTH.sb.from('pi_profiles').update({ nick:n }).eq('id', AUTH.user.id);
+    if (!error){ AUTH.prof.nick = n; store.set('nt-nick', n); feed('Nome trocado para ' + n, '#7fe05a'); } else feed('Não deu para trocar o nome: ' + error.message, '#ff6a3d'); }
+  renderMenu(); renderAcc(); }
+$('#nick').addEventListener('keydown', e => { if (!NICKED) return; if (e.key === 'Enter'){ e.preventDefault(); nickSave(true); } if (e.key === 'Escape'){ e.preventDefault(); e.stopImmediatePropagation(); nickSave(false); } });
+$('#nick').addEventListener('blur', () => { if (NICKED) nickSave(true); });
 $('#roomPw').addEventListener('keydown', e => { if (e.key === 'Enter') netJoin(); });
 $('#menu').addEventListener('input', e => { if (e.target.id === 'lobbyPw'){ NET.pw = e.target.value.trim().slice(0, 12); roomsTrackSoon(); } });
 $('#play').onclick = () => { if (!isClient()) newMatch(); };
@@ -3771,6 +3785,15 @@ function rankRound(){
   const ws = G.units.filter(u => u.wins > (u._w0 || 0)); if (!ws.length) return;
   for (const w of ws) for (const o of G.inRound || []) if (o !== w && !ws.includes(o)){ const k = G.units.indexOf(w) + '>' + G.units.indexOf(o); G.rv[k] = (G.rv[k] || 0) + 1; }
 }
+// contra bots (sozinho, com conta): o servidor dá as moedas e segura o limite do dia (supabase-bots.sql)
+async function botReward(){ const el = $('#endCoins'); el.hidden = true;
+  if (NET.on || !AUTH.ok || !AUTH.user || !G.me) return;
+  const won = G.me.place === 1, secs = Math.round((performance.now() - (G.matchStart || performance.now())) / 1000);
+  try { const { data, error } = await AUTH.sb.rpc('pi_bot_reward', { p_diff:G.diff || 'normal', p_won:won, p_secs:secs }); if (error || !data) return;
+    if (data.gained > 0){ el.innerHTML = `🪙 +${data.gained} moedas<small>hoje contra bots: ${data.today} de ${data.cap}</small>`; if (AUTH.prof) AUTH.prof.coins += data.gained; renderAcc(); }
+    else if (data.why === 'limite') el.innerHTML = `🪙 Limite de hoje contra bots alcançado (${data.cap}).<small>Amanhã tem mais, ou jogue online.</small>`;
+    else return;
+    el.hidden = false; } catch(e){} }
 async function rankReport(){
   if (!G.ranked || !NET.on || !NET.host || !AUTH.user) return;
   const seen = new Set(), ps = G.units.filter(u => u.human && u.uid && UUIDRE.test(u.uid) && !seen.has(u.uid) && seen.add(u.uid));
