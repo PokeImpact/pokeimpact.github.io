@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v57 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v58 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2248,6 +2248,40 @@ function drawMeHints(){ const me = G.me; if (!me || !me.alive) return; const X =
     if (inMist || edgeIn(S, me.x, me.y) < .5 || tx < 0 || tx > W || ty < 0 || ty > H){ const a = Math.atan2(ty - Y, tx - X), m = 60, ex = clamp(X + Math.cos(a) * 1e4, m, W - m), ey = clamp(Y + Math.sin(a) * 1e4, m + 40, H - m - 60);
       const px = clamp(X + Math.cos(a) * T * 2.2, m, W - m), py = clamp(Y + Math.sin(a) * T * 2.2, m, H - m), qx = inMist ? px : (tx < 0 || tx > W || ty < 0 || ty > H ? ex : px), qy = inMist ? py : (tx < 0 || tx > W || ty < 0 || ty > H ? ey : py);
       cx.save(); cx.translate(qx, qy); cx.rotate(a); cx.fillStyle = `rgba(155,227,106,${.75 + .25 * Math.sin(G.t * 10)})`; cx.strokeStyle = '#13240c'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(T * .45, 0); cx.lineTo(-T * .25, -T * .3); cx.lineTo(-T * .1, 0); cx.lineTo(-T * .25, T * .3); cx.closePath(); cx.fill(); cx.stroke(); cx.restore(); } } }
+const WHALE_P = 46, WHALE_D = 16;   // a cada 46 s um Wailord atravessa o mar (16 s de travessia), só desenho preso ao relógio da partida
+function whaleAt(){ if (G.map !== 'pt' && G.map !== 'ar') return null; const t = G.t + 20, n = Math.floor(t / WHALE_P), ph = (t % WHALE_P) / WHALE_D; if (ph >= 1) return null;
+  const dir = n % 2 ? 1 : -1, L = SIZE + 14;
+  if (G.map === 'pt') return { x:SIZE / 2, y:dir > 0 ? -7 + ph * L : SIZE + 7 - ph * L, a:dir > 0 ? Math.PI / 2 : -Math.PI / 2, ph, n };   // nos Navios passa por baixo da prancha
+  const y = SIZE * (.3 + (n * 37 % 5) * .1); return { x:dir > 0 ? -7 + ph * L : SIZE + 7 - ph * L, y, a:dir > 0 ? 0 : Math.PI, ph, n }; }
+function drawWhale(layer){ const w = whaleAt(); if (!w) return; const X = sx(w.x), Y = sy(w.y), sc = T * (G.map === 'pt' ? .9 : 1.1), t = G.t;
+  if (layer === 0){ cx.save(); cx.translate(X, Y); cx.rotate(w.a); const sw = Math.sin(t * 2.2) * .18;
+    cx.globalAlpha = .55; cx.fillStyle = '#123a5c'; cx.beginPath(); cx.ellipse(0, 0, sc * 3, sc * 1.25, 0, 0, 7); cx.fill();   // corpo submerso
+    cx.beginPath(); cx.moveTo(-sc * 2.6, 0); cx.quadraticCurveTo(-sc * 3.6, sw * sc * 2, -sc * 4.2, sc * (.9 + sw)); cx.lineTo(-sc * 3.7, sw * sc); cx.lineTo(-sc * 4.2, -sc * (.9 - sw)); cx.quadraticCurveTo(-sc * 3.6, sw * sc * 2, -sc * 2.6, 0); cx.fill();   // cauda
+    cx.globalAlpha = .4; cx.fillStyle = '#9fd0ef'; cx.beginPath(); cx.ellipse(sc * .4, sc * .55, sc * 2.2, sc * .45, 0, 0, 7); cx.fill();   // barriga clara
+    cx.globalAlpha = .5; cx.fillStyle = '#123a5c'; for (const s2 of [-1, 1]){ cx.beginPath(); cx.ellipse(sc * .9, s2 * sc * 1.25, sc * .7, sc * .25, s2 * (.5 + sw), 0, 7); cx.fill(); }   // nadadeiras
+    cx.strokeStyle = '#d8f1ff'; cx.lineWidth = 2; for (let q = 0; q < 3; q++){ const p2 = (t * 1.3 + q / 3) % 1; cx.globalAlpha = .35 * (1 - p2); cx.beginPath(); cx.ellipse(-sc * (1 + p2 * 3), 0, sc * (1 + p2 * 1.2), sc * (.6 + p2 * 1.4), 0, -1.2, 1.2); cx.stroke(); }   // esteira
+    cx.restore(); cx.globalAlpha = 1; return; }
+  const cyc = (t * .55 + w.n) % 1; if (cyc > .45 || onPlat(w.x, w.y)) return;   // jato d'água pelo respiradouro
+  const bx = X + Math.cos(w.a) * sc * 1.2, by = Y + Math.sin(w.a) * sc * 1.2, k = cyc / .45, hgt = T * 2.4 * Math.sin(k * Math.PI);
+  cx.fillStyle = 'rgba(230,246,255,.7)'; for (let q = 0; q < 14; q++){ const f = q / 14, sp = (q % 2 ? 1 : -1) * f * T * .9 * k; cx.beginPath(); cx.arc(bx + sp + Math.sin(q * 7) * T * .1, by - hgt * (1 - f * f * .6), T * (.12 + .1 * (1 - f)), 0, 7); cx.fill(); }
+  cx.strokeStyle = 'rgba(230,246,255,.6)'; cx.lineWidth = T * .12; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(bx, by); cx.lineTo(bx, by - hgt * .9); cx.stroke(); }
+const CLOUD_MAPS = new Set(['pt','ar','gb','fl','flr','pn','sn','sq','vt','rd']);
+function drawClouds(){ if (!CLOUD_MAPS.has(G.map) || G.phase === 'menu') return; const t = G.t;   // sombras de nuvens passando (só desenho)
+  const vx = .6, vy = .25, span = SIZE + 16;
+  for (let q = 0; q < 4; q++){ const r = SIZE * (.14 + (q * 13 % 5) * .03), x = ((q * 9.7 + t * .35 * vx * (1 + q * .15)) % span + span) % span - 8, y = ((q * 6.3 + SIZE * .2 * q + t * .35 * vy) % span + span) % span - 8;
+    const X = sx(x), Y = sy(y), R = r * T; if (X < -R * 2 || X > W + R * 2 || Y < -R * 2 || Y > H + R * 2) continue;
+    cx.save(); cx.translate(X, Y); cx.scale(1.6, 1); const g = cx.createRadialGradient(0, 0, 0, 0, 0, R); g.addColorStop(0, 'rgba(10,20,30,.13)'); g.addColorStop(.6, 'rgba(10,20,30,.08)'); g.addColorStop(1, 'rgba(10,20,30,0)');
+    cx.fillStyle = g; cx.beginPath(); cx.arc(0, 0, R, 0, 7); cx.fill(); cx.restore(); } }
+// transição entre rodadas: uma Pokébola fecha no fim da rodada e abre na loja e na contagem (só desenho, segue a fase que vem do anfitrião)
+const TRN = { ph:'', open:-9 };
+function drawTransition(){ const now = performance.now() / 1000; if (G.phase !== TRN.ph){ if (G.phase === 'count' || (G.phase === 'shop' && TRN.ph === 'roundEnd')) TRN.open = now; TRN.ph = G.phase; }
+  let k = 0; if (G.phase === 'roundEnd' && G.timer < .45) k = 1 - Math.max(0, G.timer) / .45; else if (now - TRN.open < .75) k = 1 - (now - TRN.open) / .75;
+  if (k <= 0) return; k = k * k * (3 - 2 * k); const hh = H / 2 * k, cy = H / 2, R = Math.min(W, H) * .09 * Math.min(1, k * 1.3);
+  cx.fillStyle = '#e8322f'; cx.fillRect(0, 0, W, hh); cx.fillStyle = 'rgba(0,0,0,.18)'; cx.fillRect(0, hh - 14, W, 7);
+  cx.fillStyle = '#f2f2f2'; cx.fillRect(0, H - hh, W, hh); cx.fillStyle = 'rgba(0,0,0,.08)'; cx.fillRect(0, H - hh + 7, W, 10);
+  cx.fillStyle = '#1a1a1a'; cx.fillRect(0, hh - 7, W, 7); cx.fillRect(0, H - hh, W, 7);
+  if (k > .55){ cx.globalAlpha = (k - .55) / .45; cx.fillStyle = '#1a1a1a'; cx.beginPath(); cx.arc(W / 2, cy, R * 1.35, 0, 7); cx.fill(); cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(W / 2, cy, R, 0, 7); cx.fill();
+    cx.fillStyle = '#ddd'; cx.beginPath(); cx.arc(W / 2, cy, R * .55, 0, 7); cx.fill(); cx.globalAlpha = 1; } }
 function drawMist(ms){
   if (!fogPat){ fogPat = cx.createPattern(FOG, 'repeat'); seaPat = cx.createPattern(SEA, 'repeat'); }
   const t = G.t;
@@ -2271,7 +2305,7 @@ function drawMist(ms){
 function draw(){
   const ms = Math.min(8, G.step || 0); cx.fillStyle = `rgb(${16 + ms},${20 + ms * 2.5},${Math.round(19 - ms * .5)})`; cx.fillRect(0, 0, W, H);   // a névoa fica mais verde a cada encolhida
   cx.save(); if (G.shake > .3 && CFG.shake !== false){ cx.translate(rnd(-1, 1) * G.shake, rnd(-1, 1) * G.shake); G.shake *= .86; } else G.shake = 0;   // tremida em golpes grandes
-  drawMist(ms);
+  drawMist(ms); drawWhale(0);
   // plataforma: cada mapa tem o seu chão; a beira tem paredão e contorno para dar para ler onde o chão acaba
   const S = platCells(), TH = THEME[G.map] || THEME.sq, play = G.phase === 'play', pulse = .25 + .25 * Math.sin(G.t * 14);
   if (G.map === 'gb' && G.stages[0]) for (const [key] of G.stages[0]){ if (S.has(key)) continue; const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T || X > W + T || Y < -T || Y > H + T) continue;   // chão tomado pelo gás
@@ -2472,7 +2506,7 @@ function draw(){
       for (let k = 0; k < 3; k++){ const a = G.t * 5 + k * 2.1; cx.fillText('✦', sx(u.x) + Math.cos(a) * T * .38, by - T * .35 + Math.sin(a) * T * .12); } }   // confuso: estrelinhas girando
     if (u.emo){ cx.font = `${T * .6}px system-ui`; cx.fillText(u.emo.e, sx(u.x) + T * .6, by - 2); }
   }
-  drawCanopies(); drawTent(); drawBushes(); drawGas(); drawAmbient();
+  drawCanopies(); drawTent(); drawBushes(); drawGas(); drawWhale(1); drawClouds(); drawAmbient();
   if (G.drop){ const D = G.drop, p = Math.min(1, D.t / D.dur), X = sx(D.x), Y = sy(D.y), h = (1 - p) * (1 - p) * 9, R = T * .55;   // Pokébola gigante caindo
     cx.fillStyle = `rgba(0,0,0,${.15 + .35 * p})`; cx.beginPath(); cx.ellipse(X, Y, R * (.4 + .8 * p), R * (.15 + .3 * p), 0, 0, 7); cx.fill();
     cx.strokeStyle = `rgba(255,210,63,${.5 + .4 * Math.sin(G.t * 14)})`; cx.setLineDash([6, 5]); cx.lineWidth = 2; cx.beginPath(); cx.arc(X, Y, T * 1.7, 0, 7); cx.stroke(); cx.setLineDash([]);
@@ -2527,7 +2561,7 @@ function draw(){
   cx.restore();
   if (G.phase !== 'menu'){ const vg = cx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.max(W, H) * .75);
     vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, `rgba(${8 + ms * 3},${20 + ms * 6},${10 + ms * 2},${.22 + ms * .05})`); cx.fillStyle = vg; cx.fillRect(0, 0, W, H); }
-  drawMeHints(); drawMinimap();
+  drawMeHints(); drawMinimap(); drawTransition();
   cx.textAlign = 'center';
   cx.lineJoin = 'round';
   for (const t of G.txt){ const num = /^\d+$/.test(t.s), v = num ? +t.s : 0, big = num ? Math.min(1.9, 1 + v / 25) : 1, pop = t.t < .12 ? 1 + (1 - t.t / .12) * .6 : 1, sz = Math.max(12, T * .32) * big * pop;
@@ -2549,8 +2583,17 @@ function drawObstacle(o){
     cx.fillStyle = '#5a3a1c'; cx.fillRect(X - T * .32, Y - T * .12, T * .64, T * .3); cx.fillStyle = '#2a1a0c'; for (const s of [-1, 1]){ cx.beginPath(); cx.arc(X + s * T * .22, Y + T * .2, T * .12, 0, 7); cx.fill(); }
     cx.save(); cx.translate(X - Math.cos(o.face) * rc, Y - T * .1 - Math.sin(o.face) * rc); cx.rotate(o.face); cx.fillStyle = '#26272c'; cx.fillRect(-T * .2, -T * .13, T * .75, T * .26); cx.fillStyle = '#4b4d55'; cx.fillRect(-T * .2, -T * .13, T * .75, T * .07);
     cx.fillStyle = '#111'; cx.beginPath(); cx.arc(T * .55, 0, T * .1, 0, 7); cx.fill(); cx.restore(); return; }
-  if (o.k === 'wall'){ const X = sx(o.x), Y = sy(o.y), s = T * .47; cx.fillStyle = '#3d3f46'; cx.fillRect(X - s, Y - s * .55, s * 2, s * 1.3); cx.fillStyle = '#80838e'; cx.fillRect(X - s, Y - s * 1.35, s * 2, s * .85);
-    cx.fillStyle = '#9da1ac'; cx.fillRect(X - s, Y - s * 1.35, s * 2, s * .18); cx.strokeStyle = '#26272c'; cx.lineWidth = 1.5; cx.strokeRect(X - s, Y - s * 1.35, s * 2, s * 2.1); return; }
+  if (o.k === 'wall'){ const X = sx(o.x), Y = sy(o.y), s = T * .5, h = hsh(Math.round(o.x * 2), Math.round(o.y * 2)), top = Y - s * 1.3, fy = Y - s * .45;   // bloco de pedra com volume: topo, frente com tijolos, musgo e sombra
+    cx.fillStyle = 'rgba(0,0,0,.25)'; cx.fillRect(X - s + T * .12, Y + s * .6, s * 2, T * .16);
+    cx.fillStyle = '#4a4c55'; cx.fillRect(X - s, fy, s * 2, s * 1.2); cx.fillStyle = '#3a3c44'; cx.fillRect(X - s, fy + s * .9, s * 2, s * .3);
+    cx.strokeStyle = '#2b2c33'; cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(X - s, fy + s * .42); cx.lineTo(X + s, fy + s * .42); cx.moveTo(X - s, fy + s * .84); cx.lineTo(X + s, fy + s * .84);
+    const o1 = (h - .5) * s * .6; cx.moveTo(X + o1, fy); cx.lineTo(X + o1, fy + s * .42); cx.moveTo(X - s * .45 - o1 * .5, fy + s * .42); cx.lineTo(X - s * .45 - o1 * .5, fy + s * .84); cx.moveTo(X + s * .5 - o1 * .4, fy + s * .42); cx.lineTo(X + s * .5 - o1 * .4, fy + s * .84); cx.stroke();
+    const g = cx.createLinearGradient(0, top, 0, fy); g.addColorStop(0, '#a7abb6'); g.addColorStop(1, '#858995'); cx.fillStyle = g; cx.fillRect(X - s, top, s * 2, fy - top);
+    cx.strokeStyle = 'rgba(60,62,70,.55)'; cx.beginPath(); cx.moveTo(X - s * .2 + o1, top); cx.lineTo(X - s * .1 + o1, fy); cx.moveTo(X - s, top + (fy - top) * (.4 + h * .3)); cx.lineTo(X - s * .15 + o1, top + (fy - top) * .55); cx.stroke();
+    cx.fillStyle = 'rgba(255,255,255,.22)'; cx.fillRect(X - s, top, s * 2, 2);
+    if (h > .35){ cx.fillStyle = '#5f8f3c'; cx.beginPath(); cx.ellipse(X + (h - .6) * s * 1.6, top + 2, s * (.25 + h * .25), s * .14, 0, 0, 7); cx.fill(); cx.fillStyle = '#4c7a30'; cx.beginPath(); cx.ellipse(X + (h - .6) * s * 1.6 + s * .1, fy + s * .05, s * .12, s * .25, 0, 0, 7); cx.fill(); }
+    if (h < .2){ cx.fillStyle = '#6a9a46'; for (let q = 0; q < 3; q++){ cx.beginPath(); cx.arc(X - s * .7 + q * s * .18, fy + s * 1.15, s * .1, Math.PI, 0); cx.fill(); } }
+    cx.strokeStyle = '#26272c'; cx.lineWidth = 1.5; cx.strokeRect(X - s, top, s * 2, fy + s * 1.2 - top); return; }
   if (o.k === 'box'){ const X = sx(o.x), Y = sy(o.y) - T * .12, s = T * .42, f = o.hitT > 0;
     cx.fillStyle = f ? '#e8c89a' : '#9a6a3a'; cx.fillRect(X - s, Y - s, s * 2, s * 2); cx.strokeStyle = '#5a3a1c'; cx.lineWidth = 2; cx.strokeRect(X - s, Y - s, s * 2, s * 2);
     cx.beginPath(); cx.moveTo(X - s, Y - s); cx.lineTo(X + s, Y + s); cx.moveTo(X + s, Y - s); cx.lineTo(X - s, Y + s); cx.stroke();
