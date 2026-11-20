@@ -153,7 +153,7 @@ th{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v32 · 19/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v33 · 19/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -1224,9 +1224,15 @@ function botThink(u, dt){
   // Pokébol: chuta a bola com o golpe Q quando ela está entre o bot e o gol do outro time
   if (isPb() && G.ball && u.ai.cdr <= 0 && canAct(u) && u.sk[0].lvl && u.sk[0].cd <= 0){ const B = G.ball, gT = u.team ? 0 : SIZE, ax = B.x - u.x, ay = B.y - u.y, bd = Math.hypot(ax, ay), gx2 = gT - B.x, gy2 = SIZE / 2 - B.y;
     if (bd < 5 && (ax * gx2 + ay * gy2) / ((bd || 1) * (Math.hypot(gx2, gy2) || 1)) > .6 && Math.random() < .6){ cast(u, 0, B.x, B.y); u.ai.cdr = rnd(.5, 1); return; } }
-  // Gengar: divide a Bola Sombria quando ela passa do lado de alguém
+  // Gengar: divide a Bola Sombria só quando alguém está DO LADO dela (os fantasmas saem para os lados).
+  // Se a bola vai acertar alguém de frente, deixa ela seguir (dividir antes fazia o bot errar o alvo certo).
   const myBall = G.shots.find(x => x.o === u && x.d.split && !x.dead);
-  if (myBall && Math.random() < D.smart && foes.some(e => Math.hypot(e.x - myBall.x, e.y - myBall.y) < 1.6)){ cast(u, 0, u.x, u.y); return; }
+  if (myBall && Math.random() < D.smart + .3){
+    const bv = Math.hypot(myBall.vx, myBall.vy) || 1, ux = myBall.vx / bv, uy = myBall.vy / bv, gs = SK.sombra2.spd, gr = SK.sombra2.range;
+    const rel = (e, t) => { const ex = e.x + (e.rvx || 0) * t * D.lead - myBall.x, ey = e.y + (e.rvy || 0) * t * D.lead - myBall.y; return [ex * ux + ey * uy, Math.abs(ex * uy - ey * ux)]; };
+    const direct = foes.some(e => { const [al0] = rel(e, 0), [al, pp] = rel(e, Math.max(0, al0) / bv); return al > -.3 && al < (myBall.left || 0) + .3 && pp < myBall.d.r + (POKE[e.sp] ? POKE[e.sp].rad : .35) + .1; });
+    const side = !direct && foes.some(e => { const [, pp0] = rel(e, 0), [al, pp] = rel(e, pp0 / gs); return Math.abs(al) < .5 && pp > .45 && pp < gr - .2; });
+    if (side){ cast(u, 0, u.x, u.y); return; } }
   // Golem rolando: mira no alvo, foge da névoa e acende a Explosão no meio da galera
   if (u.roll){ const R = u.roll; let mx2 = (tgt ? tgt.x : C.x) - u.x, my2 = (tgt ? tgt.y : C.y) - u.y;
     if (!onPlat(u.x + R.dx * 1.8, u.y + R.dy * 1.8) && Math.random() < D.escape + .2){ if (myEdge < 1 && Math.random() < D.smart){ R.brake = 1; return; } mx2 = C.x - u.x; my2 = C.y - u.y; }
