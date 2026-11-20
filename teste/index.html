@@ -167,7 +167,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v55 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v56 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -2166,9 +2166,10 @@ function drawMast(o){
   cx.quadraticCurveTo(X + bx * 1.4, bot + by * .6 + T * .15, X - sw / 2 * .9 + bx * .3, bot - fl);
   cx.quadraticCurveTo(X - sw / 2 + bx * .9, (yard + bot) / 2 + by, X - sw / 2, yard); cx.fill(); cx.stroke();
   cx.strokeStyle = 'rgba(150,130,90,.6)'; cx.lineWidth = 1; cx.beginPath(); for (const q of [-.25, .25]){ cx.moveTo(X + q * sw, yard); cx.quadraticCurveTo(X + q * sw + bx, (yard + bot) / 2 + by, X + q * sw * .9 + bx * .3, bot); } cx.stroke();
-  cx.fillStyle = 'rgba(200,60,50,.9)'; cx.beginPath(); cx.arc(X + bx * .5, (yard + bot) / 2 + by * .5, T * .16, 0, 7); cx.fill();   // emblema
+  const tc = teamOn() ? TEAMCOL[o.x < SIZE / 2 ? 0 : 1][0] : 'rgba(200,60,50,.9)';   // no modo de times, cada navio tem a cor do seu time
+  cx.fillStyle = tc; cx.beginPath(); cx.arc(X + bx * .5, (yard + bot) / 2 + by * .5, T * .16, 0, 7); cx.fill();   // emblema
   const fx0 = X, fy0 = top, L = T * (.5 + .2 * on);   // bandeira apontando para onde o vento vai
-  cx.fillStyle = '#e8322f'; cx.beginPath(); cx.moveTo(fx0, fy0); cx.quadraticCurveTo(fx0 + wx * L * .5, fy0 + wy * L * .3 - T * .08 + fl, fx0 + wx * L, fy0 + wy * L * .5 + fl); cx.lineTo(fx0 + wx * L * .9, fy0 + wy * L * .5 + T * .14 + fl); cx.quadraticCurveTo(fx0 + wx * L * .45, fy0 + wy * L * .3 + T * .12, fx0, fy0 + T * .2); cx.fill();
+  cx.fillStyle = teamOn() ? tc : '#e8322f'; cx.beginPath(); cx.moveTo(fx0, fy0); cx.quadraticCurveTo(fx0 + wx * L * .5, fy0 + wy * L * .3 - T * .08 + fl, fx0 + wx * L, fy0 + wy * L * .5 + fl); cx.lineTo(fx0 + wx * L * .9, fy0 + wy * L * .5 + T * .14 + fl); cx.quadraticCurveTo(fx0 + wx * L * .45, fy0 + wy * L * .3 + T * .12, fx0, fy0 + T * .2); cx.fill();
   cx.globalAlpha = 1; }
 // ---------- névoa ----------
 // textura de neblina feita uma vez (manchas suaves que emendam nas bordas) e rolada em duas camadas, com paralaxe
@@ -2750,7 +2751,7 @@ function renderMenu(){
   $('#botsRow').hidden = !!CFG.fmt || CFG.mode === 'pb'; $('#livesRow').hidden = CFG.mode === 'zn' || CFG.mode === 'pb';
   $('#ndif').innerHTML = [['easy','Fácil'],['normal','Normal'],['hard','Difícil']].map(([k, n]) => `<button class="chip" data-df="${k}" aria-pressed="${k === (CFG.diff || 'normal')}">${n}</button>`).join('');
   $('#nlives').innerHTML = [1,3,5].map(n => `<button class="chip" data-nl="${n}" aria-pressed="${n === CFG.lives}">${n}</button>`).join('');
-  $('#nmap').innerHTML = [['rand','Sorteado'],['sq','Quadrado'],['rd','Redondo'],['vt','Voltorbs'],['fl','Floresta'],['pt','Navios'],['gb','Grande Batalha'],['ar','Arquipélago'],['pn','Pântano'],['sn','Snorlax']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
+  $('#nmap').innerHTML = [['rand','🎲 Sorteado'],['sq','🏟️ Quadrado'],['rd','🧊 Redondo'],['vt','⚡ Voltorbs'],['fl','🌲 Floresta'],['pt','⛵ Navios'],['gb','🌿 Grande Batalha'],['ar','🏝️ Arquipélago'],['pn','🐸 Pântano'],['sn','😴 Snorlax']].map(([k, n]) => `<button class="chip" data-mp="${k}" aria-pressed="${k === CFG.map}">${n}</button>`).join('');
 }
 $('#menu').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
