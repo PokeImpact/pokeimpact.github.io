@@ -174,7 +174,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 
 <div class="ov" id="menu">
   <div class="box">
-    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v72 · 20/11 · TESTE</small></h1>
+    <h1>Poke Impact <small style="font-family:var(--font-b);font-size:13px;color:var(--dim);letter-spacing:0;text-shadow:none;vertical-align:middle">v73 · 20/11 · TESTE</small></h1>
     <p class="sub">A arena encolhe a cada 15 segundos e os Weezings enchem a borda de névoa tóxica. Mapas: quadrado com árvores e um Voltorb que rebate tudo, redondo com o Lapras e seu gelo escorregadio, o dos Voltorbs (1 a 4 por rodada) ou a floresta, com árvores, pedras e uma árvore de Natal congelada. Empurre os outros para a névoa e seja o último em cima da plataforma. Quem perde todas as vidas fica assistindo. Dá para jogar todos contra todos ou em times (2v2, 3v3, 4v4). Em desenvolvimento: Zona Estratégica e Pokébol.</p>
     <div class="picks" id="picks"></div>
     <div class="row"><span class="lbl">Modo</span><span class="row" id="nmode"></span></div>
@@ -922,6 +922,7 @@ function obstacleShot(s){
       if (s.d.aoe) explode(s); return true; }
     if (o.k === 'barrel' && !s.d.tele){ const v = Math.hypot(s.vx, s.vy) || 1, f = 2.5 + (s.d.push || 4) * .45; o.vx += s.vx / v * f; o.vy += s.vy / v * f; if (s.d.aoe) explode(s); for (let k = 0; k < 6; k++) fx(s.x, s.y, rnd(-2, 2), rnd(-2, 2), .3, '#c9a76a', 5); return true; }
     if (o.k === 'lapras') lapRage(o); else if (o.k === 'snor') snorHit(o);
+    if ((o.k === 'wall' || o.k === 'rock') && G.fx.length < 120) G.fx.push({ ring:1, x:s.x, y:s.y, r:.3, t:0, life:.5, col:'#9da1ac', st:'stone' });   // pedra atingida: lascas e poeira
     if (o.k === 'tree' && G.fx.length < 120) G.fx.push({ ring:1, x:o.x, y:o.y, r:.3, t:0, life:.8, col:'#5cad46', st:'leaf' });   // árvore atingida: copa treme e solta folhas
     if (o.k === 'mast' && G.fx.length < 120) G.fx.push({ ring:1, x:o.x, y:o.y, r:.3, t:0, life:.6, col:'#c9a76a', st:'mast' });   // mastro atingido: treme e solta lascas (vai pela rede)
     if (s.d.tele){
@@ -2034,6 +2035,9 @@ function drawRingFx(f){
     for (let q = 0; q < 46; q++){ const a = (q * 2.399) % 6.283, v = T * (2 + (q * 37 % 11) * .35), x = X + Math.cos(a) * v * Math.min(1, p * 3), y = Y - T * 1 + Math.sin(a) * v * .6 * Math.min(1, p * 3) - T * 2.5 * Math.sin(Math.min(1, p * 2) * Math.PI / 2) + T * 4 * p * p, rot = p * 12 + q;
       cx.save(); cx.globalAlpha = Math.min(1, k * 2); cx.translate(x, y); cx.rotate(rot); cx.fillStyle = C[q % C.length]; cx.fillRect(-T * .07, -T * .035 * Math.abs(Math.cos(rot * 2)) - 1, T * .14, T * .07 * Math.abs(Math.cos(rot * 2)) + 2); cx.restore(); }
     cx.globalAlpha = 1; if (p < .5){ glow(X, Y - T * .4, T * 1.4 * (1 - p), `rgba(255,240,150,${.5 * (1 - p * 2)})`, 'rgba(255,210,63,.15)'); } return; }
+  if (f.st === 'stone'){ for (let q = 0; q < 6; q++){ const a = q * 1.05 + f.x * 7, d = T * (.1 + p * .7), hy = T * .6 * Math.sin(p * Math.PI) * (.6 + (q % 3) * .25);   // lascas de pedra e poeira
+      cx.fillStyle = `rgba(${q % 2 ? '120,124,135' : '170,174,184'},${k})`; cx.fillRect(X + Math.cos(a) * d - T * .04, Y + Math.sin(a) * d * .6 - hy - T * .04, T * .08, T * .08); }
+    cx.fillStyle = `rgba(200,200,205,${.4 * k})`; cx.beginPath(); cx.arc(X, Y - T * .2 * p, T * (.15 + p * .35), 0, 7); cx.fill(); return; }
   if (f.st === 'leaf'){ for (let q = 0; q < 7; q++){ const a = q * .9 + f.x * 5, d = T * (.3 + p * .8), Y2 = Y - T * 1.1 + p * T * 1.2 + Math.sin(a) * T * .3;   // folhas caindo da copa
       cx.save(); cx.translate(X + Math.cos(a) * d + Math.sin(p * 9 + q) * T * .12, Y2); cx.rotate(a + p * 6); cx.globalAlpha = k; cx.fillStyle = q % 2 ? '#5cad46' : '#3f8e33'; cx.beginPath(); cx.ellipse(0, 0, T * .1, T * .045, 0, 0, 7); cx.fill(); cx.restore(); } cx.globalAlpha = 1; return; }
   if (f.st === 'mast'){ for (let q = 0; q < 6; q++){ const a = q * 1.05 + f.x * 3, d = T * (.2 + p * .9), hy = T * (.9 + .6 * Math.sin(p * Math.PI));   // lascas de madeira
@@ -2166,9 +2170,12 @@ function drawMapDecor(){ const c = SIZE / 2, t = G.t; drawDust();
 function drawGas(){ if (G.map !== 'gb' || !G.stages[0]) return; const S = platCells(), L = [];
   for (const [key] of G.stages[0]){ if (S.has(key)) continue; const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T * 2 || X > W + T * 2 || Y < -T * 2 || Y > H + T * 2) continue; L.push([i, j, X, Y]); }
   if (!L.length) return; const t = G.t;
-  for (const [col, sp, rr, ph] of [['rgba(80,150,50,.16)', .7, .75, 0], ['rgba(130,200,80,.12)', -.5, .6, 2], ['rgba(40,90,30,.16)', .3, .5, 4]]){ cx.fillStyle = col; cx.beginPath();
+  for (const [col, sp, rr, ph] of [['rgba(80,150,50,.22)', .7, .75, 0], ['rgba(130,200,80,.15)', -.5, .6, 2], ['rgba(40,90,30,.2)', .3, .5, 4]]){ cx.fillStyle = col; cx.beginPath();
     for (const [i, j, X, Y] of L){ const ox = Math.sin(t * sp + i * .9 + j * .3 + ph) * T * .25, oy = Math.cos(t * sp * .8 + j * .7 + i * .2 + ph) * T * .2, r = T * rr * (.85 + .15 * Math.sin(t * 2 + i + j)); cx.moveTo(X + T * .5 + ox + r, Y + T * .5 + oy); cx.arc(X + T * .5 + ox, Y + T * .5 + oy, r, 0, 7); }
     cx.fill(); }
+  if (!fxLite()){ cx.lineWidth = 1.5; for (const [i, j, X, Y] of L){ const h = hsh(i, j + 300); if (h > .22) continue; const ph = (t * (.45 + h) + h * 9) % 1, bx = X + T * (.2 + h * 2.6), by = Y + T * .8 - ph * T * .9, br = T * (.06 + ph * .12);   // bolhas subindo e estourando
+      if (ph < .85){ cx.strokeStyle = `rgba(200,255,140,${.55 * (1 - ph)})`; cx.fillStyle = `rgba(120,200,70,${.25 * (1 - ph)})`; cx.beginPath(); cx.arc(bx, by, br, 0, 7); cx.fill(); cx.stroke(); }
+      else { const k = (ph - .85) / .15; cx.strokeStyle = `rgba(200,255,140,${.6 * (1 - k)})`; cx.beginPath(); for (let q = 0; q < 5; q++){ const a = q * 1.256; cx.moveTo(bx + Math.cos(a) * br * (1 + k), by + Math.sin(a) * br * (1 + k)); cx.lineTo(bx + Math.cos(a) * br * (1.6 + k * 1.5), by + Math.sin(a) * br * (1.6 + k * 1.5)); } cx.stroke(); } } }
   cx.strokeStyle = `rgba(190,255,120,${.55 + .25 * Math.sin(t * 6)})`; cx.lineWidth = Math.max(2, T * .08); cx.beginPath();   // borda do gás
   for (const [key] of S){ const [i, j] = key.split(',').map(Number), X = sx(i), Y = sy(j); if (X < -T || X > W + T || Y < -T || Y > H + T) continue;
     if (!S.has(ck(i, j - 1))){ cx.moveTo(X, Y); cx.lineTo(X + T, Y); } if (!S.has(ck(i, j + 1))){ cx.moveTo(X, Y + T); cx.lineTo(X + T, Y + T); } if (!S.has(ck(i - 1, j))){ cx.moveTo(X, Y); cx.lineTo(X, Y + T); } if (!S.has(ck(i + 1, j))){ cx.moveTo(X + T, Y); cx.lineTo(X + T, Y + T); } }
