@@ -96,7 +96,7 @@ h2{font-family:var(--font-d);font-weight:400;font-size:24px;margin:0;color:var(-
 .acc{max-width:640px;gap:12px}.acapa{width:100%;height:auto;max-height:42vh;object-fit:contain;border-radius:12px;display:block}
 #susto{position:fixed;inset:0;z-index:15;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;background:rgba(0,0,0,.55)}#susto img{width:min(80vw,80vh);height:auto}
 #susto.go{animation:susto 1.7s ease-out forwards}#susto.go img{animation:sustoz 1.7s ease-out forwards}
-@keyframes susto{0%{opacity:1}25%{opacity:1}100%{opacity:0}}@keyframes sustoz{0%{transform:scale(1.35) rotate(-6deg)}12%{transform:scale(1) rotate(3deg)}100%{transform:scale(.9) rotate(0)}}.acc label{display:flex;flex-direction:column;gap:5px;font-weight:700;color:var(--dim);font-size:13px}.acc input{width:100%!important;padding:11px 12px!important;font-size:15px}
+@keyframes susto{0%{opacity:1}25%{opacity:1}100%{opacity:0}}@keyframes sustoz{0%{transform:scale(1.35) rotate(-6deg)}12%{transform:scale(1) rotate(3deg)}100%{transform:scale(.9) rotate(0)}}.acc label{display:flex;flex-direction:column;gap:5px;font-weight:700;color:var(--dim);font-size:13px}.acc input{width:100%!important;box-sizing:border-box;padding:11px 12px!important;font-size:15px}
 .tabs{display:flex;background:#1a1323;border-radius:12px;padding:4px;gap:4px}.tabs button{flex:1;border:0;border-radius:9px;padding:9px;background:transparent;color:var(--dim);font-weight:800}.tabs button.on{background:var(--panel);color:var(--fg);box-shadow:0 1px 0 var(--line)}
 .amsg{background:#1a1323;border-radius:10px;padding:9px 12px;font-size:13px;line-height:1.4}.amsg.err{color:#ff8a8a}.amsg.ok{color:#9be36a}
 button.link{background:none;border:0;color:var(--dim);text-decoration:underline;padding:4px;font-size:13px}button.link:hover{color:var(--fg)}
@@ -220,6 +220,11 @@ details.how p{margin:8px 0 0;line-height:1.5;max-width:70ch}
 #nmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;flex:1;min-width:0}
 #nmap .chip{text-align:left;border-radius:10px}
 .mfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;bottom:-20px;margin:0 -20px -20px;padding:12px 20px 20px;background:linear-gradient(rgba(35,26,46,0),var(--panel) 35%)}
+/* janelas: × no canto, ESC e clique fora fecham */
+.ov>.box{position:relative}
+.xclose{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:#1a1323;color:var(--dim);font-size:22px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;z-index:2}
+.xclose:hover{color:var(--fg);border-color:#6a5780;background:#2a1f36}
+.ov>.box>.xclose+h2,.ov>.box>.xclose+.row{margin-right:44px}
 /* salas abertas */
 .rooms{background:#1a1323;border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
 .rhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -300,7 +305,7 @@ details.how p{margin:8px 0 0;line-height:1.5;max-width:70ch}
   <div class="box">
     <!-- 1. tela inicial -->
     <section class="scr" id="scHome">
-      <div class="mhead"><h1>Poke Impact <small>v86 · 20/11</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
+      <div class="mhead"><h1>Poke Impact <small>v87 · 20/11</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
       <p class="sub">Empurre todo mundo para a névoa tóxica e seja o último em pé na arena.</p>
       <div class="hero">
         <button class="heroPk" data-go="poke"><img id="heroImg" alt=""><span><small>Seu Pokémon</small><b id="heroName"></b><em>Trocar de Pokémon ›</em></span></button>
@@ -1499,6 +1504,24 @@ function damage(e, a, by, quiet){
     else die(e);
   }
 }
+// janelas por cima de outra tela: cada uma diz como fecha (igual ao botão de fechar dela). × no canto, ESC e clique fora usam isso.
+const JANELAS = [   // da mais "de cima" para a mais de baixo
+  ['cfgOv',  () => $('#cfgOk').click(), true],
+  ['skinOv', () => $('#skOk').click(), true],
+  ['rivOv',  () => $('#rivOk').click(), true],
+  ['accOv',  () => $('#aSkip').click(), true],
+  ['endOv',  () => $('#toMenu').click(), false] ];   // fim de jogo: × e ESC voltam ao menu, clique fora não (evita sair sem querer)
+for (const [id, fecha, fora] of JANELAS){ const ov = document.getElementById(id); if (!ov) continue; const box = ov.querySelector('.box');
+  const x = document.createElement('button'); x.className = 'xclose'; x.type = 'button'; x.title = 'Fechar (Esc)'; x.setAttribute('aria-label', 'Fechar'); x.textContent = '×'; x.onclick = fecha; box.prepend(x);
+  if (fora){ let down = false; ov.addEventListener('pointerdown', e => { down = e.target === ov; }); ov.addEventListener('click', e => { if (down && e.target === ov) fecha(); down = false; }); } }
+addEventListener('keydown', e => {
+  if (e.code !== 'Escape' || e.repeat || binding) return;
+  const ab = JANELAS.find(([id]) => { const el = document.getElementById(id); return el && !el.hidden; });
+  if (ab){ e.preventDefault(); e.stopImmediatePropagation(); ab[1](); return; }
+  if (!$('#menu').hidden && G.phase === 'menu'){   // menu: ESC volta uma tela (na sala online não sai sem querer)
+    const back = MS === 'poke' ? 'prev' : MS === 'online' ? 'home' : MS === 'cfg' && !NET.on ? 'home' : null;
+    if (back){ e.preventDefault(); e.stopImmediatePropagation(); menuScreen(back); } }
+}, true);
 // grupos: cada grupo de amigos entra por um link próprio (/palmas, /cancun, /primos) que abre o jogo com ?g=grupo.
 // O jogo é um só; muda só a capa da tela de conta e a imagem do susto. Para um grupo novo: ponha as imagens em img/ e uma linha aqui.
 const GRUPOS = {
