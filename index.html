@@ -431,7 +431,7 @@ details.how p{margin:8px 0 0;line-height:1.5;max-width:70ch}
   </div>
 </div>
 
-<script src="sprites.js"></script>
+<script src="sprites.js?v=91"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -3184,7 +3184,7 @@ function draw(){
   if (G.map === 'dg' && G.phase !== 'menu') for (const u of G.units){ if (u.alive || (!u.dgs && !isClient()) || u.x == null) continue; const X = sx(u.x), Y = sy(u.y);   // quem caiu, atirando da água
     if (isClient() && Math.hypot(u.x - SIZE / 2, u.y - SIZE / 2) < dgR() + 1) continue;
     cx.strokeStyle = u.col; cx.lineWidth = 2.5; cx.beginPath(); cx.ellipse(X, Y + T * .15, T * .42, T * .17, 0, 0, 7); cx.stroke();
-    drawSprite(dgK(u), u.anim && u.anim.n === 'Shoot' ? 'Shoot' : 'Idle', u.anim && u.anim.n === 'Shoot' ? u.anim.t : G.t, u.face || 0, u.x, u.y + .1, T / 26, .95);
+    drawSprite(IMG[dgK(u)] ? dgK(u) : 54, u.anim && u.anim.n === 'Shoot' ? 'Shoot' : 'Idle', u.anim && u.anim.n === 'Shoot' ? u.anim.t : G.t, u.face || 0, u.x, u.y + .1, T / 26, .95);
     cx.font = `800 ${Math.max(10, T * .3)}px Nunito,system-ui,sans-serif`; cx.textAlign = 'center'; cx.fillStyle = u.col; cx.strokeStyle = 'rgba(0,0,0,.7)'; cx.lineWidth = 3; cx.strokeText(u.name, X, Y - T * .75); cx.fillText(u.name, X, Y - T * .75); }
   for (const b of G.dshots || []){ if (b.wait > 0) continue; const K = DGK[b.sp] || DGK[54], X = sx(b.x), Y = sy(b.y), r = b.r * T, sp = Math.hypot(b.vx, b.vy) || 1;
     shotTail(X, Y, b.vx / sp, b.vy / sp, r * 3, r * 1.1, K.col === '#2b3550' ? 'rgba(40,50,80,.6)' : K.col + '99');
