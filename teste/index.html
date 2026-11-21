@@ -334,7 +334,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
   <div class="box">
     <!-- 1. tela inicial -->
     <section class="scr" id="scHome">
-      <div class="mhead"><h1>Poke Impact <small>v95 · 21/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
+      <div class="mhead"><h1>Poke Impact <small>v96 · 21/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
       <p class="sub">Empurre todo mundo para a névoa tóxica e seja o último em pé na arena.</p>
       <div class="hero">
         <button class="heroPk" data-go="poke"><img id="heroImg" alt=""><span><small>Seu Pokémon</small><b id="heroName"></b><em>Trocar de Pokémon ›</em></span></button>
@@ -399,7 +399,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
     <img class="acapa" src="img/capa.webp" alt="Poke Impact">
     <div class="tabs"><button id="atIn" class="on">Entrar</button><button id="atNew">Criar conta</button></div>
     <p class="sub" id="aSub" style="text-align:center;margin:0 auto">Com conta você entra nas partidas ranqueadas, acompanha as rixas com os amigos e junta moedas para a loja.</p>
-    <label id="aNickL" hidden>Nome no jogo<input id="aNick" maxlength="12" placeholder="Como os outros vão te ver"></label>
+    <label id="aNickL" hidden>Nome no jogo <small style="color:var(--dim);font-weight:700">(fica para sempre: escolha bem)</small><input id="aNick" maxlength="12" placeholder="Como os outros vão te ver"></label>
     <label id="aEmL">E-mail<input id="aEm" type="email" autocomplete="email" placeholder="seu@email.com"></label>
     <label id="aPwL">Senha<input id="aPw" type="password" autocomplete="current-password" placeholder="mínimo 6 caracteres"></label>
     <div id="aMsg" class="amsg" hidden></div>
@@ -452,7 +452,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 </div>
 
 <div id="bgm" hidden><button id="bgmB" title="Música: liga e desliga">🔊</button><input id="bgmV" type="range" min="0" max="100" aria-label="Volume da música"></div>
-<script src="sprites.js?v=95"></script>
+<script src="sprites.js?v=96"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -3610,10 +3610,10 @@ function renderMenu(){
   const me = POKE[CFG.sp], img = IMG[CFG.sp] ? IMG[CFG.sp].por : '';
   $('#heroImg').src = $('#miniImg').src = img; $('#heroName').textContent = $('#miniName').textContent = me.n;
   // nome: com conta fica o da conta; sem conta, o que a pessoa digitou (guardado no aparelho)
-  const acc = !!(AUTH.user && AUTH.prof && AUTH.prof.nick); $('#nickEdit').hidden = !acc || NICKED; $('#nick').readOnly = acc && !NICKED;
+  const acc = !!(AUTH.user && AUTH.prof && AUTH.prof.nick); $('#nickEdit').hidden = true;   // nick fixo (v96): troca só pelo Felipe, no banco $('#nick').readOnly = acc && !NICKED;
   if (acc && !NICKED) $('#nick').value = AUTH.prof.nick;
   $('#nickL').textContent = acc ? 'Seu nome (da conta)' : 'Seu nome';
-  $('#nick').title = acc ? 'É o nome da sua conta: aparece igual em todo lugar.' : '';
+  $('#nick').title = acc ? 'É o nome da sua conta: fica fixo e aparece igual em todo lugar.' : '';
   // Pokémon
   $('#picks').innerHTML = POKE_ORDER.map(sp => { const p = POKE[sp];
     return `<button class="pkc" data-sp="${sp}" aria-pressed="${sp === CFG.sp}"><img src="${IMG[sp] ? IMG[sp].por : ''}" alt=""><b>${p.n}</b><small>${POKE_TAG[sp]}</small>${pkStats(sp)}</button>`; }).join('');
@@ -3725,7 +3725,8 @@ async function loadProfile(){
   if (!AUTH.user){ AUTH.prof = null; $('#nick').value = store.get('nt-pick') || store.get('nt-nick') || ''; renderAcc(); loadSkins(); renderMenu(); return; }
   let { data } = await AUTH.sb.from('pi_profiles').select('nick,coins').eq('id', AUTH.user.id).maybeSingle();
   if (!data){ const nick = cleanNick(store.get('nt-pendnick')) || cleanNick($('#nick').value) || cleanNick((AUTH.user.email || 'jogador').split('@')[0]) || 'Jogador';
-    await AUTH.sb.from('pi_profiles').insert({ id:AUTH.user.id, nick }); data = { nick, coins:0 }; }
+    let nk = nick; for (let q = 0; q < 4; q++){ const { error } = await AUTH.sb.from('pi_profiles').insert({ id:AUTH.user.id, nick:nk }); if (!error || error.code !== '23505') break; nk = nick.slice(0, 10) + Math.floor(10 + Math.random() * 90); }   // nome já pego (dois criando ao mesmo tempo): ganha um número
+    data = { nick:nk, coins:0 }; }
   AUTH.prof = data; $('#nick').value = data.nick; store.set('nt-nick', data.nick); renderAcc(); loadSkins(); renderMenu();
 }
 const authErr = m => /Invalid login/i.test(m) ? 'E-mail ou senha errados.' : /not confirmed/i.test(m) ? 'Confirme o e-mail antes (veja a caixa de entrada e o spam).' : /already registered/i.test(m) ? 'Esse e-mail já tem conta: use Entrar.' : /rate|limit|security purposes/i.test(m) ? 'Muitas tentativas: espere um pouco.' : /Password/i.test(m) ? 'A senha precisa de pelo menos 6 caracteres.' : 'Erro: ' + m;
@@ -3765,7 +3766,10 @@ $('#aGo').onclick = async () => {
   let r;
   try {
     if (accMode === 'in') r = await AUTH.sb.auth.signInWithPassword({ email, password });
-    else if (accMode === 'new'){ store.set('nt-pendnick', nick); r = await AUTH.sb.auth.signUp({ email, password, options:{ emailRedirectTo:location.origin + location.pathname } }); }
+    else if (accMode === 'new'){
+      const { data:ex } = await AUTH.sb.from('pi_profiles').select('id').ilike('nick', nick.replace(/[\\%_]/g, m => '\\' + m)).limit(1);   // nome já usado (sem ligar para maiúscula)?
+      if (ex && ex.length){ $('#aGo').disabled = false; return accScreen('new', `Já existe alguém chamado "${nick}". Escolha outro nome: ele fica para sempre.`, 'err'); }
+      store.set('nt-pendnick', nick); r = await AUTH.sb.auth.signUp({ email, password, options:{ emailRedirectTo:location.origin + location.pathname } }); }
     else if (accMode === 'forgot') r = await AUTH.sb.auth.resetPasswordForEmail(email, { redirectTo:location.origin + location.pathname });
     else r = await AUTH.sb.auth.updateUser({ password });
   } catch(e){ r = { error:{ message:String(e.message || e) } }; }
