@@ -334,7 +334,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
   <div class="box">
     <!-- 1. tela inicial -->
     <section class="scr" id="scHome">
-      <div class="mhead"><h1>Poke Impact <small>v93 · 21/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
+      <div class="mhead"><h1>Poke Impact <small>v94 · 21/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
       <p class="sub">Empurre todo mundo para a névoa tóxica e seja o último em pé na arena.</p>
       <div class="hero">
         <button class="heroPk" data-go="poke"><img id="heroImg" alt=""><span><small>Seu Pokémon</small><b id="heroName"></b><em>Trocar de Pokémon ›</em></span></button>
@@ -452,7 +452,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 </div>
 
 <div id="bgm" hidden><button id="bgmB" title="Música: liga e desliga">🔊</button><input id="bgmV" type="range" min="0" max="100" aria-label="Volume da música"></div>
-<script src="sprites.js?v=93"></script>
+<script src="sprites.js?v=94"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -554,7 +554,8 @@ const SHINY = {   // agora pela id do item: um Pokémon pode ter mais de um shin
   'sh-6':   [{ h:[0, 30], to:358, s:1.15, l:.92 }, { h:[330, 359], to:350, s:1.1, l:.9 }, { h:[36, 75], to:45, s:.14, l:1.85 }, { h:[150, 270], to:352, s:.9, l:.75 }],   // Charizard vermelho, barriga e chamas brancas
   'sh-6p':  [{ h:[340, 32], to:null, s:.1, l:.55 }, { h:[195, 265], to:356, s:1, l:1 }, { h:[33, 75], to:205, s:1, l:1.12 }],   // Charizard preto, asas vermelhas e o amarelo vira fogo azul (épica)
   'sh-9':   [{ h:[188, 258], to:258, s:.85, l:1.15 }, { h:[8, 50], lmax:.6, to:105, s:.75, l:.95 }],   // Blastoise lilás com casco verde
-  'sh-65':  [{ h:[12, 40], to:215, s:.9, l:1.2 }, { h:[41, 78], to:290, s:.85, l:.95 }],   // Alakazam roxo com a armadura azul
+  'sh-65':  [{ h:[12, 40], to:215, s:.9, l:1.2 }, { h:[41, 78], to:290, s:.85, l:.95 }],   // Alakazam roxo com a armadura azul (épica: Alakazam Cósmico)
+  'sh-65b': [{ h:[41, 78], to:338, s:.72, l:1.2 }],                                        // Alakazam rosa, armadura marrom (básica)
   'sh-94':  [{ h:[330, 30], to:282, s:1, l:1.3 }, { h:[240, 300], to:228, s:.42, l:1.35 }],   // Gengar fantasma claro, olhos roxos brilhando
   'sh-94p': [{ h:[330, 30], to:135, s:1, l:1.6 }, { h:[240, 300], to:270, s:.18, l:.32 }],   // Gengar preto, olhos verdes brilhando (épica)
   'sh-123': [{ h:[70, 128], to:90, s:.08, l:1.55 }, { h:[25, 55], to:112, s:.85, l:.78 }, { gray:1, lmin:.95, lmax:1, to:112, s:.7 }],   // Scyther branco com garras e asas verdes
@@ -590,7 +591,8 @@ const COS = {
   'sh-6':   { n:'Charizard shiny', p:400, ic:'🐉', d:'Vermelho, com a barriga e as chamas brancas.', sp:6 },
   'sh-6p':  { n:'Charizard Sombrio ✦ épica', p:1500, ic:'🔵', d:'Preto, com as asas vermelhas e fogo azul. Os golpes também mudam: Brasa, Redemoinho de Fogo e Onda de Calor ficam azuis.', sp:6 },
   'sh-9':   { n:'Blastoise shiny', p:400, ic:'🐢', d:'Corpo lilás e casco verde.', sp:9 },
-  'sh-65':  { n:'Alakazam shiny', p:400, ic:'🥄', d:'Roxo, com a armadura azul.', sp:65 },
+  'sh-65b': { n:'Alakazam shiny', p:400, ic:'🥄', d:'Rosa, com a armadura marrom.', sp:65 },
+  'sh-65':  { n:'Alakazam Cósmico ✦ épica', p:1500, ic:'🌌', d:'Roxo, com a armadura azul. Os golpes também mudam: a Confusão, o Psíquico, o Teletransporte, a Premonição e o Reflexo ficam azul-galáxia e soltam estrelinhas.', sp:65 },
   'sh-94':  { n:'Gengar shiny', p:400, ic:'👻', d:'Cinza-azulado claro, quase um fantasma de verdade, com os olhos roxos brilhando.', sp:94 },
   'sh-94p': { n:'Gengar Sombrio ✦ épica', p:1500, ic:'🖤', d:'Preto, com olhos verdes brilhando. As magias também mudam: Bola Sombria verde, o susto vira um fantasminha verde fluorescente e a Forma Fantasma fica verde.', sp:94 },
   'sh-123': { n:'Scyther shiny', p:400, ic:'🦗', d:'Branco, com as garras e as asas verdes.', sp:123 },
@@ -631,10 +633,12 @@ function cleanSkin(s){
 }
 const isShiny = u => (u && u.skin && u.skin.sh && u.skin.sh.find(v => COS[v] && COS[v].sp === u.sp)) || false;   // devolve a id do shiny equipado para esse Pokémon
 // épicas que mudam os golpes: h = quanto gira a cor (graus), f = filtro do desenho
-const SKFX = { 'sh-6p':{ h:190, f:'hue-rotate(190deg) saturate(1.4)' }, 'sh-123p':{ h:255, f:'hue-rotate(255deg) saturate(1.3)' } };
+const SKFX = { 'sh-65':{ h:280, f:'hue-rotate(285deg) saturate(1.5) brightness(1.12)', star:1 }, 'sh-6p':{ h:190, f:'hue-rotate(190deg) saturate(1.4)' }, 'sh-123p':{ h:255, f:'hue-rotate(255deg) saturate(1.3)' } };
 const skinFx = u => (u && SKFX[isShiny(u)]) || null;
 const vsp = u => isShiny(u) === 'sh-123p' && IMG[212] ? 212 : u.sp;   // Scizor: desenha outro Pokémon
 const HUEC = new Map();
+function starDust(x, y, r, n){ const t = G.t; for (let q = 0; q < n; q++){ const a = t * (1.6 + q * .37) + q * 2.4, d = r * (.7 + .5 * Math.sin(t * 3 + q * 1.7)), X = sx(x) + Math.cos(a) * d * T, Y = sy(y) + Math.sin(a) * d * T, k = .5 + .5 * Math.sin(t * 9 + q * 3.1), z = T * (.05 + .07 * k);
+    cx.fillStyle = q % 3 ? `rgba(190,235,255,${.55 + .45 * k})` : `rgba(255,255,255,${.6 + .4 * k})`; cx.beginPath(); cx.moveTo(X, Y - z * 2); cx.lineTo(X + z * .5, Y - z * .5); cx.lineTo(X + z * 2, Y); cx.lineTo(X + z * .5, Y + z * .5); cx.lineTo(X, Y + z * 2); cx.lineTo(X - z * .5, Y + z * .5); cx.lineTo(X - z * 2, Y); cx.lineTo(X - z * .5, Y - z * .5); cx.closePath(); cx.fill(); } }
 function hueHex(c, deg){ const key = c + deg; if (HUEC.has(key)) return HUEC.get(key); const m = /^#([0-9a-f]{6})$/i.exec(c || ''); if (!m){ HUEC.set(key, c); return c; }
   const n = parseInt(m[1], 16), r = (n >> 16) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, dl = mx - mn; if (!dl){ HUEC.set(key, c); return c; }
   const s = l > .5 ? dl / (2 - mx - mn) : dl / (mx + mn); let h = mx === r ? ((g - b) / dl) % 6 : mx === g ? (b - r) / dl + 2 : (r - g) / dl + 4; h = ((h * 60 + deg) % 360 + 360) % 360 / 360;
@@ -3042,7 +3046,7 @@ function draw(){
     cx.strokeStyle = 'rgba(230,250,255,.8)'; cx.setLineDash([8, 6]); cx.lineWidth = 2; cx.beginPath(); cx.moveTo(0, -w); cx.lineTo(L, -w); cx.moveTo(0, w); cx.lineTo(L, w); cx.stroke(); cx.setLineDash([]);
     cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.lineWidth = 3; cx.beginPath(); for (let q = 0; q < 5; q++){ const x = ((G.t * 2.2 + q / 5) % 1) * L; cx.moveTo(x - w * .5, -w * .55); cx.lineTo(x, 0); cx.lineTo(x - w * .5, w * .55); } cx.stroke(); cx.restore(); }
   // zonas
-  for (const z of G.zones){ const F = skinFx(z.o); if (F) cx.filter = F.f; drawZone(z); if (F) cx.filter = 'none'; }
+  for (const z of G.zones){ const F = skinFx(z.o); if (F) cx.filter = F.f; drawZone(z); if (F){ cx.filter = 'none'; if (F.star) starDust(z.x, z.y, z.rad * .8, 6); } }
   drawPicks();
   for (const o of G.obs) if ((o.k === 'tree' || o.k === 'xmas') && onPlat(o.x, o.y)){ const cr = (o.dr && o.dr > .7 ? o.dr : .95) * T; cx.fillStyle = 'rgba(10,30,10,.28)'; cx.beginPath(); cx.ellipse(sx(o.x) + T * .15, sy(o.y) - T * .2, cr * 1.05, cr * .75, 0, 0, 7); cx.fill(); }
   // selos das Correntes ficam no chão, por baixo dos Pokémon
@@ -3077,7 +3081,7 @@ function draw(){
         cx.fillStyle = '#ffd23f'; cx.beginPath(); cx.moveTo(0, yy - ww * .5); cx.quadraticCurveTo(hh * .4, yy - ww * .25, hh * .65, yy); cx.quadraticCurveTo(hh * .4, yy + ww * .25, 0, yy + ww * .5); cx.fill(); } }
     cx.restore(); }
   // Premonição: área marcada
-  for (const m of G.marks) drawMark(m);
+  for (const m of G.marks){ const F = skinFx(m.o); if (F) cx.filter = F.f; drawMark(m); if (F){ cx.filter = 'none'; if (F.star) starDust(m.x, m.y, (m.d.rad || 1.5) * .9, 8); } }
   // avisos (Hidro Bomba carregando)
   for (const u of G.units) if (u.alive && u.wind && u.wind.nova && (u.sp === 76 || u.sp === 6)){ const w = u.wind, k = clamp(1 - Math.max(0, w.t) / (w.d.windup || .55), 0, 1), r = w.d.rad * T, X = sx(u.x), Y = sy(u.y);
     if (u.sp === 76){ cx.fillStyle = `rgba(110,80,45,${.15 + .2 * k})`; cx.beginPath(); cx.arc(X, Y, r, 0, 7); cx.fill();   // Magnitude: o chão rachando em volta
@@ -3164,9 +3168,9 @@ function draw(){
     if (u.b.fear > 0){ glow(sx(u.x) + Math.sin(G.t * 40) * 2, sy(u.y) - T * .35, T * .75, 'rgba(120,60,200,.35)', 'rgba(60,20,110,.15)');   // medo: aura roxa tremendo
       cx.font = `900 ${T * .45}px system-ui`; cx.fillStyle = '#efe6ff'; cx.strokeStyle = '#3b0764'; cx.lineWidth = 3; cx.strokeText('!', sx(u.x) + Math.sin(G.t * 40) * 2, sy(u.y) - T * .95); cx.fillText('!', sx(u.x) + Math.sin(G.t * 40) * 2, sy(u.y) - T * .95);
       cx.strokeStyle = 'rgba(239,230,255,.7)'; cx.lineWidth = 1.5; cx.beginPath(); for (const s2 of [-1, 1]){ const x0 = sx(u.x) + s2 * T * .42; cx.moveTo(x0, sy(u.y) - T * .55); cx.lineTo(x0 + s2 * T * .08, sy(u.y) - T * .4); cx.lineTo(x0, sy(u.y) - T * .25); } cx.stroke(); }
-    if (u.b.refl > 0 && !(u.b.shell > 0)){ const X = sx(u.x), Y = sy(u.y - lift) - T * .3, R = T * .66, a = G.t * .8; cx.beginPath(); for (let q = 0; q <= 6; q++){ const b = a + q * Math.PI / 3; if (q) cx.lineTo(X + Math.cos(b) * R, Y + Math.sin(b) * R); else cx.moveTo(X + Math.cos(b) * R, Y + Math.sin(b) * R); }
+    if (u.b.refl > 0 && !(u.b.shell > 0)){ const RF = skinFx(u); if (RF) cx.filter = RF.f; const X = sx(u.x), Y = sy(u.y - lift) - T * .3, R = T * .66, a = G.t * .8; cx.beginPath(); for (let q = 0; q <= 6; q++){ const b = a + q * Math.PI / 3; if (q) cx.lineTo(X + Math.cos(b) * R, Y + Math.sin(b) * R); else cx.moveTo(X + Math.cos(b) * R, Y + Math.sin(b) * R); }
       cx.fillStyle = 'rgba(255,179,255,.14)'; cx.fill(); cx.strokeStyle = `rgba(255,200,255,${.7 + .3 * Math.sin(G.t * 20)})`; cx.lineWidth = 2.5; cx.stroke();
-      const s = (G.t * 1.6) % 1; cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(X - R * .9 + s * R * 1.8, Y - R * .7); cx.lineTo(X - R * 1.2 + s * R * 1.8, Y + R * .7); cx.stroke(); }
+      const s = (G.t * 1.6) % 1; cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(X - R * .9 + s * R * 1.8, Y - R * .7); cx.lineTo(X - R * 1.2 + s * R * 1.8, Y + R * .7); cx.stroke(); if (RF){ cx.filter = 'none'; if (RF.star) starDust(u.x, u.y - lift - .3, .75, 6); } }
     if (u.b.shell > 0){ const X = sx(u.x), Y = sy(u.y) - T * .3, R = T * (.6 + .03 * Math.sin(G.t * 6)), g = cx.createRadialGradient(X - R * .3, Y - R * .3, R * .1, X, Y, R);
       g.addColorStop(0, 'rgba(255,255,255,.35)'); g.addColorStop(.6, 'rgba(120,200,255,.12)'); g.addColorStop(1, 'rgba(90,170,255,.4)'); cx.fillStyle = g; cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.fill();
       cx.strokeStyle = u.b.refl > 0 ? 'rgba(255,255,255,.95)' : 'rgba(159,216,255,.9)'; cx.lineWidth = u.b.refl > 0 ? 3 : 2; cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.stroke();
@@ -3266,7 +3270,7 @@ function draw(){
       const g = cx.createRadialGradient(X, Y, 0, X, Y, r * 1.3); g.addColorStop(0, `rgba(10,0,25,${.95 * k})`); g.addColorStop(.6, `rgba(91,42,134,${.8 * k})`); g.addColorStop(1, 'rgba(139,92,246,0)'); cx.fillStyle = g; cx.beginPath(); cx.ellipse(X, Y, r * 1.3, r * .9, 0, 0, 7); cx.fill();
       cx.strokeStyle = `rgba(196,181,253,${.8 * k})`; cx.lineWidth = 2; for (let q = 0; q < 3; q++){ cx.beginPath(); cx.ellipse(X, Y, r * (.4 + q * .3), r * (.28 + q * .2), 0, a + q, a + q + 4); cx.stroke(); }
       for (let q = 0; q < 10; q++){ const ph = (G.t * .9 + q / 10) % 1, b = q * 2.4 + ph * 3, rr = r * (2.2 - ph * 2); cx.fillStyle = `rgba(216,200,255,${ph * k})`; cx.beginPath(); cx.arc(X + Math.cos(b) * rr, Y + Math.sin(b) * rr * .65, 1.5 + ph * 1.5, 0, 7); cx.fill(); } } }   // partículas sendo sugadas
-  for (const s of G.shots) if (!s.lob){ const F = skinFx(s.o); if (F) cx.filter = F.f; drawShot(s); if (F) cx.filter = 'none'; }
+  for (const s of G.shots) if (!s.lob){ const F = skinFx(s.o); if (F) cx.filter = F.f; drawShot(s); if (F){ cx.filter = 'none'; if (F.star) starDust(s.x, s.y, s.d.r * 2.6, 4); } }
   // ventania do Pântano: riscos andando na direção do vento (fracos no aviso, fortes durante)
   if (G.gust && (G.gust.warn > 0 || G.gust.t > 0)){ const g = G.gust, on = g.t > 0, sp = on ? 7 : 2, c = SIZE / 2;
     cx.strokeStyle = on ? 'rgba(225,242,255,.6)' : `rgba(225,242,255,${.25 + .2 * Math.sin(G.t * 10)})`; cx.lineWidth = on ? 2.5 : 2; cx.beginPath();
@@ -3954,7 +3958,7 @@ function netBroadcast(){
         u.wind ? (u.wind.nova ? [0, 0, 0, 0, u.wind.d.rad, r2(u.wind.t), u.wind.d.windup] : [r2(u.wind.dx), r2(u.wind.dy), u.wind.d.len, u.wind.d.w]) : 0, u.human ? 1 : 0, u.fired || 0, u.hits || 0, u.rounds || 0, Math.round(u.rdmg || 0), u.air && u.air.sink ? 1 : 0, r2(u.gshT || 0), u.whip ? [r2(u.whip.t), G.units.indexOf(u.whip.o)] : 0, u.b.chain > 0 ? [r2(u.b.ax), r2(u.b.ay)] : 0, u.fuse ? [r2(u.fuse.t), u.fuse.d.rad] : 0, u.pow || 0, u.dgf || 0]; }),
     s:G.shots.filter(x => !x.dead).map(x => [skId(x.d), r2(x.x), r2(x.y), r2(x.vx), r2(x.vy), x.lob ? [r2(x.tx), r2(x.ty), r2(x.left), r2(x.tot)] : 0, x.d.fade ? r2(x.left) : null, G.units.indexOf(x.o)]),
     z:G.zones.map(z => [skId(z.d), r2(z.x), r2(z.y), z.rad, G.units.indexOf(z.o)]),
-    m:G.marks.map(m => [skId(m.d), r2(m.x), r2(m.y), r2(m.t), m.d.core || .35]),
+    m:G.marks.map(m => [skId(m.d), r2(m.x), r2(m.y), r2(m.t), m.d.core || .35, G.units.indexOf(m.o)]),
     wv:G.waves.map(w => [r2(w.x), r2(w.y), r2(w.dx), r2(w.dy), skId(w.d)]),
     cn:G.chains.map(C => [r2(C.x), r2(C.y), C.d.rad, r2(C.t), C.d.windup]),
     pr:G.portals.map(P => [r2(P.ax), r2(P.ay), r2(P.bx), r2(P.by), r2(P.t), P.r]),
@@ -4119,7 +4123,7 @@ function applySnap(S){
     u.wind = !a[17] ? null : a[17][4] ? { nova:1, t:a[17][5], d:{ rad:a[17][4], windup:a[17][6] } } : { dx:a[17][0], dy:a[17][1], d:{ len:a[17][2], w:a[17][3] } }; u.human = !!a[18]; u.fired = a[19]; u.hits = a[20]; u.rounds = a[21]; u.rdmg = a[22]; });
   G.shots = S.s.map(a => { const d = SK[a[0]]; const o = { d, x:a[1], y:a[2], vx:a[3], vy:a[4], o:G.units[a[7]] }; if (a[6] != null) o.left = a[6]; if (a[5]){ Object.assign(o, { lob:1, tx:a[5][0], ty:a[5][1], left:a[5][2], tot:a[5][3] }); } return o; });
   G.zones = S.z.map(a => ({ d:SK[a[0]], x:a[1], y:a[2], rad:a[3], o:G.units[a[4]] }));
-  G.marks = S.m.map(a => ({ d:SK[a[0]], x:a[1], y:a[2], t:a[3], co:a[4] }));
+  G.marks = S.m.map(a => ({ d:SK[a[0]], x:a[1], y:a[2], t:a[3], co:a[4], o:G.units[a[5]] }));
   G.waves = (S.wv || []).map(a => ({ d:SK[a[4]] || SK.explosao, x:a[0], y:a[1], dx:a[2], dy:a[3] }));
   G.chains = (S.cn || []).map(a => ({ x:a[0], y:a[1], rad:a[2], t:a[3], wu:a[4], d:SK.correntes }));
   G.portals = (S.pr || []).map(a => ({ ax:a[0], ay:a[1], bx:a[2], by:a[3], t:a[4], r:a[5] }));
