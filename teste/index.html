@@ -334,7 +334,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
   <div class="box">
     <!-- 1. tela inicial -->
     <section class="scr" id="scHome">
-      <div class="mhead"><h1>Poke Impact <small>v94 · 21/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
+      <div class="mhead"><h1>Poke Impact <small>v95 · 21/11 · TESTE</small></h1><button class="ghost" id="cfgBtn2">⚙ Teclas</button></div>
       <p class="sub">Empurre todo mundo para a névoa tóxica e seja o último em pé na arena.</p>
       <div class="hero">
         <button class="heroPk" data-go="poke"><img id="heroImg" alt=""><span><small>Seu Pokémon</small><b id="heroName"></b><em>Trocar de Pokémon ›</em></span></button>
@@ -452,7 +452,7 @@ setTimeout(function(){ var i = document.getElementById('gateP'); if (i) i.focus(
 </div>
 
 <div id="bgm" hidden><button id="bgmB" title="Música: liga e desliga">🔊</button><input id="bgmV" type="range" min="0" max="100" aria-label="Volume da música"></div>
-<script src="sprites.js?v=94"></script>
+<script src="sprites.js?v=95"></script>
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
@@ -592,7 +592,7 @@ const COS = {
   'sh-6p':  { n:'Charizard Sombrio ✦ épica', p:1500, ic:'🔵', d:'Preto, com as asas vermelhas e fogo azul. Os golpes também mudam: Brasa, Redemoinho de Fogo e Onda de Calor ficam azuis.', sp:6 },
   'sh-9':   { n:'Blastoise shiny', p:400, ic:'🐢', d:'Corpo lilás e casco verde.', sp:9 },
   'sh-65b': { n:'Alakazam shiny', p:400, ic:'🥄', d:'Rosa, com a armadura marrom.', sp:65 },
-  'sh-65':  { n:'Alakazam Cósmico ✦ épica', p:1500, ic:'🌌', d:'Roxo, com a armadura azul. Os golpes também mudam: a Confusão, o Psíquico, o Teletransporte, a Premonição e o Reflexo ficam azul-galáxia e soltam estrelinhas.', sp:65 },
+  'sh-65':  { n:'Alakazam Cósmico ✦ épica', p:1500, ic:'🌌', d:'Roxo, com a armadura azul. Os golpes também mudam: Confusão, Psíquico, Teletransporte e Reflexo ficam azul-galáxia com estrelinhas, e a Premonição vira a Premonição Cósmica: abre um pedaço do espaço no chão, com galáxia girando, e uma estrela cadente cai no centro numa supernova.', sp:65 },
   'sh-94':  { n:'Gengar shiny', p:400, ic:'👻', d:'Cinza-azulado claro, quase um fantasma de verdade, com os olhos roxos brilhando.', sp:94 },
   'sh-94p': { n:'Gengar Sombrio ✦ épica', p:1500, ic:'🖤', d:'Preto, com olhos verdes brilhando. As magias também mudam: Bola Sombria verde, o susto vira um fantasminha verde fluorescente e a Forma Fantasma fica verde.', sp:94 },
   'sh-123': { n:'Scyther shiny', p:400, ic:'🦗', d:'Branco, com as garras e as asas verdes.', sp:123 },
@@ -1674,6 +1674,7 @@ function newMatch(){
   G.round = 0; G.t = 0; G.kv = {}; G.rv = {}; G.diff = CFG.diff || 'normal'; G.ranked = NET.on && CFG.ranked !== false;
   G.me.uid = AUTH.user ? AUTH.user.id : null; if (NET.on) for (const c of NET.peers) if (c.u) c.u.uid = c.uid || null;
   const pm = CFG.map === 'rand' ? pick(modePool()) : CFG.map;
+  G.randMap = CFG.map === 'rand' && G.mode !== 'pb' && modePool().length > 1 ? modePool().slice() : null; G.lastPm = pm; G.prevMapR = null;   // sorteado: troca de mapa a cada rodada
   G.matchMap = G.mode === 'pb' ? 'sq' : pm === 'fl' ? pick(['fl','flr']) : pm;   // floresta: quadrada ou redonda   // o mesmo mapa a partida inteira
   for (const id of ['menu','endOv','shopOv']) $('#' + id).hidden = true;
   for (const id of ['top','gold','plist','emo']) $('#' + id).hidden = false;
@@ -1682,6 +1683,7 @@ function newMatch(){
 }
 const MAPFEED = { dg:'Desvie: todo mundo de Diglett. Os Pokémon da água atiram em você: um tiro e você cai. Quem cai vira atirador até o fim da rodada.', gb:'Grande Batalha: mapa enorme, você só vê perto de você. Golpes tiram 3× mais vida, o mato esconde, caixas soltam Doce Raro e a névoa fecha devagar até o centro.', pt:'Navios: metade da sala em cada barco. Os barcos afundam por fora; a ponte e a roda do meio nunca caem. Mastro do meio acertado 3 vezes = os canhões atiram balas retas no outro navio.', ab:'Abordagem: os navios começam separados pelo mar. As pranchas baixam com o tempo; depois os navios afundam por fora.', ar:'Arquipélago: uma ilha afunda de cada vez (a que pisca é a próxima).', pn:'Pântano: poças de lama deixam lento.', sn:'Snorlax: ele se vira de vez em quando e esmaga quem estiver do lado. Muitos golpes nele o acordam.' };
 function startRound(){
+  if (G.randMap && G.round >= 1){ const op = G.randMap.filter(m => m !== G.lastPm), pm = pick(op.length ? op : G.randMap); G.lastPm = pm; G.matchMap = pm === 'fl' ? pick(['fl','flr']) : pm; }
   G.round++; G.map = G.matchMap || 'sq'; { const n = G.units.filter(u => !u.out).length; SIZE = G.map === 'gb' ? (n <= 4 ? 26 : n <= 6 ? 30 : 34) : sizeFor(n) + (isRd() ? 2 : 0) + (isShip() ? 8 : 0) - (G.map === 'dg' ? 2 : 0); } G.dirty = true; camera(true); G.step = 0; G.shrinkIn = SHRINK;
   G.R = SIZE / 2 + .45; G.pat = isZona() || isPb() ? 'anel' : pickPat(G.map); G.seed = 1 + Math.floor(Math.random() * 1e9); buildStages(); G.decals = []; G.picks = []; G.oranT = 12; G.drop = null; G.dropN = 0; G.tent = null; G.tentCd = 12; G.sdT = 3; G.dmgMul = G.map === 'gb' ? 3 : 1; if (G.map === 'gb') G.shrinkIn = 30; makeObstacles();
   G.shots = []; G.zones = []; G.marks = []; G.waves = []; G.decoys = []; G.portals = []; G.chains = []; G.falling = []; G.fx = []; G.txt = [];
@@ -1701,9 +1703,11 @@ function startRound(){
   if (G.map === 'dg') for (const u of G.units) if (u.out && u.dgs){ u.sk[0].cd = 4; u.dgs.cd = rnd(4, 6); }   // Desvie: quem foi eliminado espera uns segundos antes de atirar (senão a rodada acaba na hora)
   for (const u of live) G.fx.push({ ring:1, x:u.x, y:u.y, r:.9, t:0, life:.7, col:u.col, st:'tele' });
   G.phase = 'count'; G.timer = 3;
-  if (G.round === 1 && (G.map === 'fl' || G.map === 'flr')) feed('Floresta: árvores e pedras mudam de lugar a cada rodada. O Alakazam troca de lugar com elas.', '#7fd36a');
+  const newMap = G.round === 1 || G.map !== G.prevMapR; G.prevMapR = G.map;
+  if (G.round > 1 && newMap) feed(`🎲 Mapa da rodada ${G.round}: ${MAPN[G.map] || MAPN.fl}`, '#ffd76a');
+  if (newMap && (G.map === 'fl' || G.map === 'flr')) feed('Floresta: árvores e pedras mudam de lugar a cada rodada. O Alakazam troca de lugar com elas.', '#7fd36a');
   else if (G.round === 1 && isPb()) feed('Pokébol: empurre a bola até o gol do outro time com golpes e com o corpo!', '#ffd23f');
-  else if (G.round === 1 && MAPFEED[G.map]) feed(MAPFEED[G.map], '#9fd8ff');
+  else if (newMap && MAPFEED[G.map]) feed(MAPFEED[G.map], '#9fd8ff');
   if (G.round === 1 && teamOn()) feed('Seu time é o AZUL (nome e anel azuis). Os inimigos são os VERMELHOS.', TEAMCOL[0][0]);
   else if (G.round === 1) feed(G.map === 'rd' ? 'Mapa redondo: cuidado com o gelo do Lapras (golpes nele o deixam furioso)' : G.map === 'vt' ? 'Mapa dos Voltorbs: 1 a 4 por rodada, rebatem tudo' : 'Mapa quadrado: o Voltorb rebate tudo e explode quando enche', '#9fd8ff');
   if (G.map === 'vt') feed(VOLTLINE[G.nvolt][0], G.nvolt === 4 ? '#ff5d5d' : '#ffe066');
@@ -2190,8 +2194,8 @@ function updateWorld(dt){
       if (el < R0 && el > .05){ const sp = Math.hypot(q.vx, q.vy), cur = Math.atan2(q.vy, q.vx); let da = Math.atan2(ey, ex) - cur; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
         const tr = 3 * (q.d.wt ?? 1) * (.4 + .6 * (1 - el / R0)) * dt, na = cur + clamp(da, -tr, tr); q.vx = Math.cos(na) * sp; q.vy = Math.sin(na) * sp; } }
     if (m.t <= 0){ for (const e of foesOf(m.o)){ const ex = e.x - m.x, ey = e.y - m.y, el = Math.hypot(ex, ey); if (el <= m.d.rad + .3) hit(m.o, e, m.d, m.L, ex / (el || 1), ey / (el || 1), el < m.d.rad * co ? 1.25 : 1 - .55 * (el - m.d.rad * co) / (m.d.rad * (1 - co))); }
-      G.fx.push({ ring:1, x:m.x, y:m.y, r:m.d.rad, t:0, life:.6, col:m.d.col, st:'psy' }); ballArea(m.x, m.y, m.d.rad + .3, m.d.push * m.L.p);
-      for (let k = 0; k < 26; k++) fx(m.x, m.y, rnd(-5, 5), rnd(-5, 5), .45, pick(['#b14dff','#e07bff','#fff']), 7); }
+      const cz = (skinFx(m.o) || {}).star; G.fx.push({ ring:1, x:m.x, y:m.y, r:m.d.rad, t:0, life:cz ? .95 : .6, col:m.d.col, st:cz ? 'cosmo' : 'psy' }); ballArea(m.x, m.y, m.d.rad + .3, m.d.push * m.L.p);
+      for (let k = 0; k < (cz ? 44 : 26); k++) fx(m.x, m.y, rnd(-5, 5), rnd(-5, 5), cz ? .7 : .45, pick(cz ? ['#7fd4ff','#bfe9ff','#ffffff','#c9a0ff'] : ['#b14dff','#e07bff','#fff']), 7); }
   }
   G.marks = G.marks.filter(m => m.t > 0);
   // Onda de Calor: parede de fogo que anda; acerta cada um uma vez
@@ -2505,6 +2509,13 @@ function drawShot(s){
 // anéis com estilo: Premonição, Surfe, Giro de Lâminas, Rugido, Magnitude, explosões
 function drawRingFx(f){
   const p = f.t / f.life, k = 1 - p, X = sx(f.x), Y = sy(f.y), R = f.r * T;
+  if (f.st === 'cosmo'){ // Premonição Cósmica explodindo: supernova (clarão, duas ondas, raios e estrelas voando)
+    if (p < .3){ const q = 1 - p / .3; glow(X, Y, R * (.7 + p * 2.6), `rgba(255,255,255,${q})`, `rgba(120,200,255,${.8 * q})`); }
+    cx.strokeStyle = `rgba(150,225,255,${k})`; cx.lineWidth = T * .22 * k + 1; cx.beginPath(); cx.arc(X, Y, R * (.3 + 1.25 * p), 0, 7); cx.stroke();
+    cx.strokeStyle = `rgba(210,150,255,${.8 * k})`; cx.lineWidth = T * .08 * k + 1; cx.beginPath(); cx.arc(X, Y, R * (.15 + 1.7 * p), 0, 7); cx.stroke();
+    for (let q = 0; q < 12; q++){ const b = q / 12 * 6.283 + .2, r0 = R * (.2 + p * .5), r1 = R * (.55 + p * 1.6) * (q % 2 ? .7 : 1); cx.strokeStyle = `rgba(255,255,255,${k})`; cx.lineWidth = (q % 2 ? 1.5 : 3.2) * k + .5; cx.beginPath(); cx.moveTo(X + Math.cos(b) * r0, Y + Math.sin(b) * r0); cx.lineTo(X + Math.cos(b) * r1, Y + Math.sin(b) * r1); cx.stroke(); }
+    for (let q = 0; q < 16; q++){ const b = q * 2.4, rr = R * (.2 + p * (1.1 + (q % 4) * .22)); starAt(X + Math.cos(b) * rr, Y + Math.sin(b) * rr - p * T * .6 * (q % 3), T * .09 * k + 1, q % 3 ? '#bfe9ff' : '#ffffff'); }
+    return; }
   if (f.st === 'psy'){ // Premonição explodindo: clarão, espinhos e onda
     if (p < .35){ const q = 1 - p / .35; glow(X, Y, R * (.6 + p * 1.5), `rgba(255,255,255,${q})`, `rgba(210,120,255,${.7 * q})`); }
     cx.strokeStyle = `rgba(224,123,255,${k})`; cx.lineWidth = 6 * k + 1; cx.beginPath(); cx.arc(X, Y, R * (.4 + .9 * p), 0, 7); cx.stroke();
@@ -2596,6 +2607,29 @@ function drawZone(z){ const X = sx(z.x), Y = sy(z.y), R = z.rad * T, t = G.t;
     cx.fillStyle = '#ff5a1a'; cx.beginPath(); cx.moveTo(fx0 - w, fy0); cx.quadraticCurveTo(fx0 - w * .6, fy0 - h * .6, fx0, fy0 - h); cx.quadraticCurveTo(fx0 + w * .6, fy0 - h * .6, fx0 + w, fy0); cx.closePath(); cx.fill();
     cx.fillStyle = '#ffd23f'; cx.beginPath(); cx.moveTo(fx0 - w * .5, fy0); cx.quadraticCurveTo(fx0 - w * .3, fy0 - h * .35, fx0, fy0 - h * .6); cx.quadraticCurveTo(fx0 + w * .3, fy0 - h * .35, fx0 + w * .5, fy0); cx.closePath(); cx.fill(); } }
 // Premonição: campo de gravidade com um olho que vai abrindo
+function starAt(x, y, z, col){ cx.fillStyle = col; cx.beginPath(); cx.moveTo(x, y - z * 2); cx.lineTo(x + z * .45, y - z * .45); cx.lineTo(x + z * 2, y); cx.lineTo(x + z * .45, y + z * .45); cx.lineTo(x, y + z * 2); cx.lineTo(x - z * .45, y + z * .45); cx.lineTo(x - z * 2, y); cx.lineTo(x - z * .45, y - z * .45); cx.closePath(); cx.fill(); }
+// Premonição Cósmica: um pedaço do espaço se abre no chão (galáxia girando, nebulosas, anel de constelação) e uma estrela cadente desce até o centro
+function drawMarkCosmo(m){ const k = clamp(1 - m.t / m.d.delay, 0, 1), X = sx(m.x), Y = sy(m.y), R = m.d.rad * T, t = G.t, C = R * (m.co || m.d.core || .35);
+  const g = cx.createRadialGradient(X, Y, 0, X, Y, R); g.addColorStop(0, `rgba(8,14,48,${.78 + .2 * k})`); g.addColorStop(.6, `rgba(24,34,110,${.6 + .2 * k})`); g.addColorStop(.88, 'rgba(90,40,170,.38)'); g.addColorStop(1, 'rgba(60,140,255,.05)');
+  cx.fillStyle = g; cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.fill();
+  cx.save(); cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.clip(); cx.globalCompositeOperation = 'lighter';
+  for (let q = 0; q < 3; q++){ const a = t * .35 + q * 2.1, nx = X + Math.cos(a) * R * .45, ny = Y + Math.sin(a) * R * .32, ng = cx.createRadialGradient(nx, ny, 0, nx, ny, R * .62);   // nebulosas
+    ng.addColorStop(0, ['rgba(70,200,255,.3)', 'rgba(200,80,255,.26)', 'rgba(90,110,255,.26)'][q]); ng.addColorStop(1, 'rgba(0,0,0,0)'); cx.fillStyle = ng; cx.fillRect(X - R, Y - R, R * 2, R * 2); }
+  for (let arm = 0; arm < 2; arm++) for (let q = 0; q < 28; q++){ const f = q / 28, b = arm * Math.PI + f * 4.4 - t * (1.2 + k * 2.5), rr = R * (.06 + f * .86), tw = .5 + .5 * Math.sin(t * 7 + q * 1.3 + arm);   // galáxia espiral (gira mais rápido perto de explodir)
+    cx.fillStyle = `rgba(${210 + 45 * (1 - f) | 0},230,255,${(.3 + .65 * tw) * (1 - f * .45)})`; cx.beginPath(); cx.arc(X + Math.cos(b) * rr, Y + Math.sin(b) * rr * .9, (1 + 1.8 * (1 - f)) * T / 40, 0, 7); cx.fill(); }
+  for (let q = 0; q < 12; q++){ const h = hsh(q, 31), tw = .5 + .5 * Math.sin(t * 5 + q * 2.7); starAt(X + (hsh(q, 7) - .5) * R * 1.5, Y + (h - .5) * R * 1.5, T * .03 * (1 + tw), `rgba(255,255,255,${.4 + .6 * tw})`); }
+  cx.restore();
+  const N = 10; cx.strokeStyle = `rgba(170,220,255,${.35 + .45 * k})`; cx.lineWidth = 1.2; cx.beginPath();   // anel de constelação
+  for (let q = 0; q <= N; q++){ const b = q / N * 6.283 - t * .3, rr = R * (q % 2 ? .92 : 1.03), px = X + Math.cos(b) * rr, py = Y + Math.sin(b) * rr; if (q) cx.lineTo(px, py); else cx.moveTo(px, py); } cx.stroke();
+  for (let q = 0; q < N; q++){ const b = q / N * 6.283 - t * .3, rr = R * (q % 2 ? .92 : 1.03); starAt(X + Math.cos(b) * rr, Y + Math.sin(b) * rr, T * (.06 + .035 * Math.sin(t * 6 + q)), q % 2 ? '#bfe9ff' : '#ffffff'); }
+  cx.strokeStyle = '#bfe9ff'; cx.lineWidth = 4; cx.beginPath(); cx.arc(X, Y, R + 5, -Math.PI / 2, -Math.PI / 2 + k * 6.283); cx.stroke();   // contagem
+  glow(X, Y, C * (1.1 + .8 * k), `rgba(140,220,255,${.2 + .5 * k})`, 'rgba(60,80,220,.2)');
+  const fall = k * k, hx = X + (1 - fall) * T * 2.4, hy = Y - (1 - fall) * T * 7.5, sz = T * (.14 + .3 * fall), L = .35 + .65 * fall;   // estrela cadente
+  const tg = cx.createLinearGradient(hx, hy, hx + T * 1.7 * L, hy - T * 4.6 * L); tg.addColorStop(0, 'rgba(225,245,255,.95)'); tg.addColorStop(.4, 'rgba(150,200,255,.5)'); tg.addColorStop(1, 'rgba(120,120,255,0)');
+  cx.strokeStyle = tg; cx.lineCap = 'round'; cx.lineWidth = sz * 1.5; cx.beginPath(); cx.moveTo(hx, hy); cx.lineTo(hx + T * 1.7 * L, hy - T * 4.6 * L); cx.stroke(); cx.lineCap = 'butt';
+  glow(hx, hy, sz * 3.2, 'rgba(255,255,255,.95)', 'rgba(110,190,255,.5)'); starAt(hx, hy, sz * 1.3, '#ffffff');
+  cx.strokeStyle = `rgba(190,235,255,${.25 + .35 * fall})`; cx.lineWidth = 1.5; cx.beginPath(); cx.ellipse(X, Y + T * .05, sz * 2.2, sz * .9, 0, 0, 7); cx.stroke();   // sombra de onde vai cair
+}
 function drawMark(m){ const k = clamp(1 - m.t / m.d.delay, 0, 1), X = sx(m.x), Y = sy(m.y), R = m.d.rad * T, C = R * (m.co || m.d.core || .35), t = G.t;
   const g = cx.createRadialGradient(X, Y, 0, X, Y, R); g.addColorStop(0, `rgba(40,0,70,${.55 + .3 * k})`); g.addColorStop(C / R, `rgba(110,30,170,${.4 + .2 * k})`); g.addColorStop(1, 'rgba(177,77,255,.06)');
   cx.fillStyle = g; cx.beginPath(); cx.arc(X, Y, R, 0, 7); cx.fill();
@@ -3081,7 +3115,7 @@ function draw(){
         cx.fillStyle = '#ffd23f'; cx.beginPath(); cx.moveTo(0, yy - ww * .5); cx.quadraticCurveTo(hh * .4, yy - ww * .25, hh * .65, yy); cx.quadraticCurveTo(hh * .4, yy + ww * .25, 0, yy + ww * .5); cx.fill(); } }
     cx.restore(); }
   // Premonição: área marcada
-  for (const m of G.marks){ const F = skinFx(m.o); if (F) cx.filter = F.f; drawMark(m); if (F){ cx.filter = 'none'; if (F.star) starDust(m.x, m.y, (m.d.rad || 1.5) * .9, 8); } }
+  for (const m of G.marks){ const F = skinFx(m.o); if (F && F.star){ drawMarkCosmo(m); continue; } if (F) cx.filter = F.f; drawMark(m); if (F){ cx.filter = 'none'; if (F.star) starDust(m.x, m.y, (m.d.rad || 1.5) * .9, 8); } }
   // avisos (Hidro Bomba carregando)
   for (const u of G.units) if (u.alive && u.wind && u.wind.nova && (u.sp === 76 || u.sp === 6)){ const w = u.wind, k = clamp(1 - Math.max(0, w.t) / (w.d.windup || .55), 0, 1), r = w.d.rad * T, X = sx(u.x), Y = sy(u.y);
     if (u.sp === 76){ cx.fillStyle = `rgba(110,80,45,${.15 + .2 * k})`; cx.beginPath(); cx.arc(X, Y, r, 0, 7); cx.fill();   // Magnitude: o chão rachando em volta
@@ -3282,7 +3316,7 @@ function draw(){
   // efeitos
   for (const f of G.fx){ const k = 1 - f.t / f.life;
     if (f.ring && !f.dec && f.r >= 1.6 && G.phase === 'play'){ f.dec = 1; if (!G.decals) G.decals = []; if (G.decals.length < 30) G.decals.push({ x:f.x, y:f.y, r:f.r * .6, t0:performance.now() / 1000 }); }
-    if (f.ring){ if (!f.sk){ f.sk = 1; if (f.r >= 2) G.shake = Math.max(G.shake || 0, Math.min(8, f.r * (f.st === 'boom' ? 2.6 : 1.8))); } drawRingFx(f); continue; }
+    if (f.ring){ if (!f.sk){ f.sk = 1; if (f.r >= 2) G.shake = Math.max(G.shake || 0, Math.min(8, f.r * (f.st === 'boom' || f.st === 'cosmo' ? 2.6 : 1.8))); } drawRingFx(f); continue; }
     if (f.beam){ if (!f.sk){ f.sk = 1; if (f.len > 5) G.shake = Math.max(G.shake || 0, 4); } drawBeamFx(f); continue; }
     cx.globalAlpha = k * .9; cx.fillStyle = f.col; cx.beginPath(); cx.arc(sx(f.x), sy(f.y), Math.max(1.5, f.size * k * .5), 0, 7); cx.fill(); cx.globalAlpha = 1; }
   drawVision();
